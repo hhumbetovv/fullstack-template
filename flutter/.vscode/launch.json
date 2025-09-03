@@ -1,0 +1,89 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Dev Debug",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "cwd": "${workspaceFolder}/app",
+            "args": [
+                "--flavor",
+                "dev",
+                "--dart-define",
+                "FLAVOR=dev",
+                "--no-pub"
+            ]
+        },
+        {
+            "name": "Dev Release",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "cwd": "${workspaceFolder}/app",
+            "args": [
+                "--flavor",
+                "dev",
+                "--dart-define",
+                "FLAVOR=dev",
+                "--no-pub"
+            ]
+        },
+        {
+            "name": "Dev Profile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "cwd": "${workspaceFolder}/app",
+            "args": [
+                "--flavor",
+                "dev",
+                "--dart-define",
+                "FLAVOR=dev",
+                "--no-pub"
+            ]
+        },
+        {
+            "name": "Prod Debug",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "cwd": "${workspaceFolder}/app",
+            "args": [
+                "--flavor",
+                "prod",
+                "--dart-define",
+                "FLAVOR=prod",
+                "--no-pub"
+            ]
+        },
+        {
+            "name": "Prod Release",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "cwd": "${workspaceFolder}/app",
+            "args": [
+                "--flavor",
+                "prod",
+                "--dart-define",
+                "FLAVOR=prod",
+                "--no-pub"
+            ]
+        },
+        {
+            "name": "Prod Profile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "cwd": "${workspaceFolder}/app",
+            "args": [
+                "--flavor",
+                "prod",
+                "--dart-define",
+                "FLAVOR=prod",
+                "--no-pub"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+sh scripts/gen_clean.sh && sh scripts/gen_build.sh $1

@@ -1,0 +1,100 @@
+{
+    "State Object": {
+        "prefix": "state",
+        "scope": "dart",
+        "body": [
+            "import 'package:processor/processor.dart';",
+            "",
+            "part 'state.g.dart';",
+            "",
+            "@data",
+            "class ${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}State {",
+            "\tconst factory ${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}State({",
+            "\t\t$2",
+            "\t}) = _${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}State;",
+            "}",
+            ""
+        ]
+    },
+    "ViewModel": {
+        "prefix": "viewmodel",
+        "scope": "dart",
+        "body": [
+            "import 'package:core/framework.dart';",
+            "import 'package:processor/processor.dart';",
+            "",
+            "${1:import 'state.dart';}",
+            "",
+            "${2:export 'state.dart';}",
+            "",
+            "part 'view_model.g.dart';",
+            "",
+            "@viewModel",
+            "final class ${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}ViewModel extends _${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}ViewModel {",
+            "\t@override",
+            "\t${4:${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}State} get initialState => ${5:const ${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}State()};",
+            "}",
+            ""
+        ]
+    },
+    "View": {
+        "prefix": "view",
+        "scope": "dart",
+        "body": [
+            "import 'package:auto_route/auto_route.dart';",
+            "import 'package:core/framework.dart';",
+            "import 'package:flutter/material.dart';",
+            "import 'package:processor/processor.dart';",
+            "",
+            "import 'view_model.dart';",
+            "",
+            "part 'view.g.dart';",
+            "",
+            "@view",
+            "@RoutePage()",
+            "final class ${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}View extends _${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}View {",
+            "\tconst ${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}View({",
+            "\t\tsuper.key,",
+            "\t});",
+            "",
+            "\t@override",
+            "\tWidget buildView(BuildContext context) {",
+            "\t\treturn ${2:Container()};",
+            "\t}",
+            "}",
+            ""
+        ]
+    },
+    "Provider": {
+        "prefix": "provider",
+        "scope": "dart",
+        "body": [
+            "import 'package:core/framework.dart';",
+            "import 'package:flutter/material.dart';",
+            "import 'package:processor/processor.dart';",
+            "",
+            "import 'view_model.dart';",
+            "",
+            "part 'provider.g.dart';",
+            "",
+            "@provider",
+            "final class ${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}Provider extends _${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}Provider {",
+            "\tconst ${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}Provider({super.key, super.child});",
+            "\t$2",
+            "}",
+            ""
+        ]
+    },
+    "Intent Method": {
+        "prefix": "intent",
+        "scope": "dart",
+        "body": [
+            "@intent",
+            "void _${1:name}($2) {",
+            "\trunWithLoading(() async {",
+            "\t\t$3",
+            "\t});",
+            "}"
+        ]
+    }
+}

@@ -1,0 +1,183 @@
+{
+    //! Utility Snippets
+    "Capitalized File Name": {
+        "prefix": "filename",
+        "body": "${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}"
+    },
+    "Capitalized Directory Name": {
+        "prefix": "directory",
+        "body": "${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}"
+    },
+    //! Import Snippets
+    "Material UI": {
+        "scope": "dart",
+        "prefix": "impM",
+        "body": "import 'package:flutter/material.dart';"
+    },
+    "Cupertino UI": {
+        "scope": "dart",
+        "prefix": "impC",
+        "body": "import 'package:flutter/cupertino.dart';"
+    },
+    "Widget UI": {
+        "scope": "dart",
+        "prefix": "impW",
+        "body": "import 'package:flutter/widgets.dart';"
+    },
+    //! App
+    "Material App": {
+        "scope": "dart",
+        "prefix": "mApp",
+        "body": [
+            "import 'package:flutter/material.dart';",
+            "import 'package:flutter/services.dart';",
+            "",
+            "void main() {",
+            "\trunApp(const $1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}());",
+            "}",
+            "",
+            "final class $1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} extends StatelessWidget {",
+            "\tconst $1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}({Key? key,}) : super(key: key);",
+            "",
+            "\t@override",
+            "\tWidget build(BuildContext context) {",
+            "\t\tSystemChrome.setPreferredOrientations([",
+            "\t\t\tDeviceOrientation.portraitUp,",
+            "\t\t\tDeviceOrientation.portraitDown,",
+            "\t\t]);",
+            "\t\treturn MaterialApp(",
+            "\t\t\ttitle: '${2:Flutter Demo}',",
+            "\t\t\ttheme: ThemeData(",
+            "\t\t\t\tprimarySwatch: Colors.blue,",
+            "\t\t\t),",
+            "\t\t\tdebugShowCheckedModeBanner: false,",
+            "\t\t\thome: Scaffold(",
+            "\t\t\t\tappBar: AppBar(",
+            "\t\t\t\t\tcenterTitle: true,",
+            "\t\t\t\t\ttitle: const Text(",
+            "\t\t\t\t\t\t'${2:Flutter Demo}',",
+            "\t\t\t\t\t),",
+            "\t\t\t\t),",
+            "\t\t\t),",
+            "\t\t);",
+            "\t}",
+            "}",
+            ""
+        ]
+    },
+    //! Functions
+    "Void Function": {
+        "scope": "dart",
+        "prefix": "func",
+        "body": ["void $1($2) $3{", "\t$4", "}"]
+    },
+    "Future Function": {
+        "scope": "dart",
+        "prefix": "ffunc",
+        "body": ["Future<$1> $2($3) async {", "\t$4", "}"]
+    },
+    "Widget Function": {
+        "scope": "dart",
+        "prefix": "wfunc",
+        "body": [
+            "${1:Widget} ${2:widget}($3) {",
+            "\treturn ${4:Container}($5);",
+            "}"
+        ]
+    },
+    //! Widgets
+    "Stateless Widget": {
+        "scope": "dart",
+        "prefix": "stless",
+        "body": [
+            "final class $1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} extends StatelessWidget {",
+            "\tconst $1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}({",
+            "\t\tsuper.key,",
+            "\t});",
+            "",
+            "\t@override",
+            "\tWidget build(BuildContext context) {",
+            "\t\treturn ${2:Container}();",
+            "\t}",
+            "}",
+            ""
+        ]
+    },
+    "Statefull Widget": {
+        "scope": "dart",
+        "prefix": "stful",
+        "body": [
+            "final class $1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} extends StatefulWidget {",
+            "\tconst $1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}({",
+            "\t\tsuper.key,",
+            "\t});",
+            "",
+            "\t@override",
+            "\tState<$1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}> createState() => _$1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}State();",
+            "}",
+            "",
+            "class _$1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}State extends State<$1${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}> {",
+            "\t@override",
+            "\tWidget build(BuildContext context) {",
+            "\t\treturn ${2:Container}();",
+            "\t}",
+            "}",
+            ""
+        ]
+    },
+    //! Constants
+    "Static Constant Color": {
+        "scope": "dart",
+        "prefix": "ccolor",
+        "body": "static const ${1:name} = Color(0xFF${2:000000});"
+    },
+    "Static Constant String": {
+        "scope": "dart",
+        "prefix": "cstring",
+        "body": "static const ${1:name} = '${3:value}';"
+    },
+    "Static Getter Color": {
+        "scope": "dart",
+        "prefix": "gcolor",
+        "body": "static Color get ${1:name} => Color(0xFF${2:000000});"
+    },
+    "Static Getter String": {
+        "scope": "dart",
+        "prefix": "gstring",
+        "body": "static String get ${1:name} => '${3:value}';"
+    },
+    //! DebugPrint
+    "Print for debugging": {
+        "scope": "dart",
+        "prefix": "dPrint",
+        "body": "if(kDebugMode) print('${1:item}: ${${1:item}.toString()}');"
+    },
+    //! Print
+    "Print": {
+        "scope": "dart",
+        "prefix": "kPrint",
+        "body": "if(kDebugMode) print(${1:item});"
+    },
+    "Logger": {
+        "scope": "dart",
+        "prefix": "logger",
+        "body": "Logger.$1('${2:message}', tag: '${3:tag}'$4);"
+    },
+    //! Localization
+    "AppLocalization Instance": {
+        "scope": "dart",
+        "prefix": "l10n",
+        "body": "final l10n = AppLocalizations.of(context)!;"
+    },
+    //! Layout
+    "Vertical Gap with SizedBox": {
+        "scope": "dart",
+        "prefix": "vGap",
+        "body": "SizedBox(height: $1),"
+    },
+    "Horizontal Gap with SizedBox": {
+        "scope": "dart",
+        "prefix": "hGap",
+        "body": "SizedBox(width: $1),"
+    }
+}

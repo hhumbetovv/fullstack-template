@@ -1,0 +1,83 @@
+{
+    "Remote Data Service": {
+        "prefix": "api",
+        "body": [
+            "import 'package:data/src/core/api_base_options.dart';",
+            "import 'package:dio/dio.dart';",
+            "import 'package:retrofit/retrofit.dart';",
+            "",
+            "part '$TM_FILENAME_BASE.g.dart';",
+            "",
+            "@RestApi()",
+            "abstract class ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} {",
+            "\tfactory ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}(Dio dio) {",
+            "\t\tdio.options = ApiBaseOptions();",
+            "\t\treturn _${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}(dio);",
+            "\t}",
+            "",
+            "\t$1",
+            "}",
+            ""
+        ]
+    },
+    "Local Data Service": {
+        "prefix": "store",
+        "body": [
+            "import 'package:data/objectbox.g.dart';",
+            "",
+            "class ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} {",
+            "\t${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}(this.store);",
+            "",
+            "\tfinal Store store;",
+            "\tlate final Box<$1> box = store.box<$1>();",
+            "",
+            "\t$2",
+            "}",
+            ""
+        ]
+    },
+    "Data Repository Implementation": {
+        "prefix": "repository",
+        "body": [
+            "import 'package:domain/repositories.dart';",
+            "import 'package:injectable/injectable.dart';",
+            "",
+            "@LazySingleton(as: ${TM_FILENAME_BASE/^(.*?)(?:_impl)?$/${1:/pascalcase}/})",
+            "class ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} implements ${TM_FILENAME_BASE/^(.*?)(?:impl)?$/${1:/pascalcase}/} {",
+            "\t${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}();",
+            "",
+            "\t$1",
+            "}",
+            ""
+        ]
+    },
+    "Enum Mapper": {
+        "prefix": "enumMap",
+        "body": [
+            "import 'package:domain/entities.dart';",
+            "",
+            "extension $2Ext on $2 {",
+            "\t$1 toEntity() {",
+            "\t\treturn $1.values.firstWhere(",
+            "\t\t\t(element) => element.name == name,",
+            "\t\t\torElse: () {",
+            "\t\t\t\tthrow Exception('Entity not found for this model: $$this');",
+            "\t\t\t},",
+            "\t\t);",
+            "\t}",
+            "}",
+            "",
+            "extension $1Ext on $1 {",
+            "\t$2 toModel() {",
+            "\t\treturn $2.values.firstWhere(",
+            "\t\t\t(element) => element.name == name,",
+            "\t\t\torElse: () {",
+            "\t\t\t\tthrow Exception('Model not found for this entity: $$this');",
+            "\t\t\t},",
+            "\t\t);",
+            "\t}",
+            "}",
+            ""
+        ]
+    }
+}

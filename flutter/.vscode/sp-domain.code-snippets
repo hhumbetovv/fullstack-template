@@ -1,0 +1,93 @@
+{
+    "Entity": {
+        "prefix": "entity",
+        "scope": "dart",
+        "body": [
+            "import 'package:processor/processor.dart';",
+            "",
+            "part '$TM_FILENAME_BASE.g.dart';",
+            "",
+            "@data",
+            "class ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} {",
+            "\tconst factory ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}({",
+            "\t\t$1",
+            "\t}) = _${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g};",
+            "}",
+            ""
+        ]
+    },
+    "UseCase": {
+        "prefix": "usecase",
+        "body": [
+            "import 'package:domain/core.dart';",
+            "import 'package:domain/entities.dart';",
+            "import 'package:domain/repositories.dart';",
+            "import 'package:injectable/injectable.dart';",
+            "",
+            "@injectable",
+            "final class ${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCase extends UseCase<${2:Unit}, ${3:Unit}> {",
+            "\tconst ${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCase(this._$5Repository);",
+            "",
+            "final $4Repository _$5Repository;",
+            "",
+            "\t@override",
+            "\tAsyncResult<${3:Unit}> execute({",
+            "\t\trequired ${2:Unit} params,",
+            "\t}) {",
+            "\t\treturn _$5Repository.$6;",
+            "\t}",
+            "}",
+            ""
+        ]
+    },
+    "Flow UseCase": {
+        "prefix": "flowusecase",
+        "body": [
+            "import 'package:domain/core.dart';",
+            "import 'package:domain/entities.dart';",
+            "import 'package:domain/repositories.dart';",
+            "import 'package:injectable/injectable.dart';",
+            "",
+            "@injectable",
+            "final class ${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCase extends FlowUseCase<${2:Unit}, ${3:Unit}> {",
+            "\t${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCase(this._$5Repository);",
+            "",
+            "\tfinal $4Repository _$5Repository;",
+            "",
+            "\t@override",
+            "\tFlowResult<${3:Unit}> execute({",
+            "\t\trequired ${2:Unit} params,",
+            "\t}) {",
+            "\t\treturn _$5Repository.$6;",
+            "\t}",
+            "}",
+            ""
+        ]
+    },
+    "Pagination UseCase": {
+        "prefix": "pagusecase",
+        "body": [
+            "import 'package:domain/core.dart';",
+            "import 'package:domain/entities.dart';",
+            "import 'package:domain/repositories.dart';",
+            "import 'package:injectable/injectable.dart';",
+            "",
+            "@injectable",
+            "final class ${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCase extends PaginationUseCase<${2:Unit}, ${3:Unit}> {",
+            "\t${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCase(this._$5Repository);",
+            "",
+            "\tfinal $4Repository _$5Repository;",
+            "",
+            "\t@override",
+            "\tPagedResult<${3:Unit}> execute({",
+            "\t\trequired ${2:Unit} params,",
+            "\t\trequired int page,",
+            "\t\trequired int size,",
+            "\t}) {",
+            "\t\treturn _$5Repository.$6;",
+            "\t}",
+            "}",
+            ""
+        ]
+    }
+}

@@ -1,0 +1,8 @@
+targets:
+    $default:
+        builders:
+            # ! Package Generators
+            json_serializable|json_serializable:
+                enabled: true
+                generate_for:
+                    include: [ "lib/src/configs/**" ]

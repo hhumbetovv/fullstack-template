@@ -1,0 +1,23 @@
+{
+    "Palette variable with Context": {
+        "prefix": "palettevar",
+        "body": "final palette = Palette.of(context);"
+    },
+    //! Palette
+    "Palette with Generated File": {
+        "prefix": "palette",
+        "body": [
+            "import 'package:processor/processor.dart';",
+            "",
+            "part '$TM_FILENAME_BASE.g.dart';",
+            "",
+            "@palette",
+            "class ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}Palette {",
+            "\tconst factory ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}Palette({",
+            "\t\t$1",
+            "\t}) = _${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}Palette;",
+            "}",
+            ""
+        ]
+    }
+}

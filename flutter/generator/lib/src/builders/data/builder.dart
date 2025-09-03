@@ -1,0 +1,29 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:generator/src/base/base_builder.dart';
+import 'package:generator/src/builders/data/factory.dart';
+import 'package:generator/src/builders/data/resolver.dart';
+import 'package:processor/processor.dart';
+
+class DataBuilder extends BaseBuilder<DataConfig, ClassElement> {
+  DataBuilder({
+    super.options,
+    super.name = 'data',
+  }) : super(
+         allowSyntaxErrors: true,
+         resolver: DataResolver(),
+         buildFactory: DataFactory(),
+         annotation: Data,
+       );
+
+  @override
+  int calculateUpdatableHash(CompilationUnit unit) {
+    return 0;
+  }
+
+  @override
+  DataConfig fromJson(Map<String, dynamic> json) => DataConfig.fromJson(json);
+
+  @override
+  Map<String, dynamic>? toJson(DataConfig? config) => config?.toJson();
+}

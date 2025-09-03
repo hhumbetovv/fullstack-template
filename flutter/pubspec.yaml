@@ -1,0 +1,17 @@
+name: template
+publish_to: none
+
+environment:
+    sdk: ^3.9.0
+
+workspace:
+    - app
+    - processor
+    - generator
+
+dev_dependencies:
+    #! Analysis
+    very_good_analysis: ^7.0.0
+
+flutter:
+    uses-material-design: true

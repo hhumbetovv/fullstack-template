@@ -1,0 +1,17 @@
+name: processor
+
+environment:
+    sdk: ^3.9.0
+resolution: workspace
+
+dependencies:
+    #! Annotations
+    meta: ^1.15.0
+    #! Serialization
+    json_annotation: ^4.9.0
+
+dev_dependencies:
+    #! Generator
+    build_runner: ^2.4.15
+    #? Serialization
+    json_serializable: ^6.9.4
