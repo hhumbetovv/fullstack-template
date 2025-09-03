@@ -24,13 +24,13 @@ abstract class BaseBuilder<Config, Target> extends Builder {
     List<String> additionalOutputExtensions = const [],
     this.allowSyntaxErrors = false,
     this.options,
-  })  : generatedExtension = '.g.dart',
-        buildExtensions = validatedBuildExtensionsFrom(options != null ? Map.of(options.config) : null, {
-          '.dart': [
-            '.g.dart',
-            ...additionalOutputExtensions,
-          ],
-        }) {
+  }) : generatedExtension = '.g.dart',
+       buildExtensions = validatedBuildExtensionsFrom(options != null ? Map.of(options.config) : null, {
+         '.dart': [
+           '.g.dart',
+           ...additionalOutputExtensions,
+         ],
+       }) {
     if (generatedExtension.isEmpty || !generatedExtension.startsWith('.')) {
       throw ArgumentError.value(
         generatedExtension,
@@ -45,7 +45,7 @@ abstract class BaseBuilder<Config, Target> extends Builder {
         'can be given. Not both.',
       );
     }
-    _typeChecker = TypeChecker.fromRuntime(annotation);
+    _typeChecker = TypeChecker.typeNamed(annotation);
   }
   final String name;
 
@@ -147,7 +147,7 @@ abstract class BaseBuilder<Config, Target> extends Builder {
 
     throwIf(
       annotatedElement is! Target,
-      '${annotatedElement.name} is not a $Target',
+      '${annotatedElement.displayName} is not a $Target',
     );
 
     final element = annotatedElement as Target;
@@ -176,7 +176,8 @@ source formatter.''',
 
   Future<void> _writeContent(BuildStep buildStep, Config generated) async {
     var output = await onGenerateContent(buildStep, generated);
-    output = '''
+    output =
+        '''
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 // **************************************************************************

@@ -190,7 +190,7 @@ class ViewModelFactory extends BaseFactory<ViewModelConfig> {
     if (config.intents.isNotEmpty) {
       final intentMethod = Method.returnsVoid((methodDef) {
         methodDef
-          ..name = '${config.name.uncapitalize()}Intent'
+          ..name = '${config.name.unCapitalize()}Intent'
           ..requiredParameters.addAll([
             Parameter((paramDef) {
               paramDef
@@ -215,7 +215,7 @@ class ViewModelFactory extends BaseFactory<ViewModelConfig> {
     if (config.state.typeName != Strings.unitType && config.state.typeName != null) {
       final selectMethod = Method((methodDef) {
         methodDef
-          ..name = '${config.name.uncapitalize()}Select'
+          ..name = '${config.name.unCapitalize()}Select'
           ..returns = refer('Value')
           ..types.add(refer('Value'))
           ..requiredParameters.addAll([
@@ -239,7 +239,7 @@ class ViewModelFactory extends BaseFactory<ViewModelConfig> {
 
       final stateMethod = Method((methodDef) {
         methodDef
-          ..name = '${config.name.uncapitalize()}State'
+          ..name = '${config.name.unCapitalize()}State'
           ..returns = refer('${config.name}State')
           ..requiredParameters.add(
             Parameter((paramDef) {

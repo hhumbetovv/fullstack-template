@@ -4,7 +4,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:generator/src/base/base_resolver.dart';
 import 'package:generator/src/constants/strings.dart';
 import 'package:generator/src/extensions/dart_type.dart';
@@ -13,12 +13,12 @@ import 'package:generator/src/utils/throw.dart';
 import 'package:processor/processor.dart';
 import 'package:source_gen/source_gen.dart';
 
-class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement> {
+class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {
   @override
-  Future<ViewModelConfig?> resolve(ClassElement element) async {
-    final baseName = element.name.trimBefore('ViewModel');
+  Future<ViewModelConfig?> resolve(ClassElement2 element) async {
+    final baseName = element.displayName.trimBefore('ViewModel');
 
-    final effects = getEffectConfigs(element.name);
+    final effects = getEffectConfigs(element.displayName);
     final intents = getIntentConfigs(
       element,
       effects.map((effect) => effect.method).toList(),
@@ -26,17 +26,17 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement> {
 
     return ViewModelConfig(
       name: baseName,
-      effects: getEffectConfigs(element.name),
+      effects: getEffectConfigs(element.displayName),
       state: getStateConfig(element, baseName),
       intents: intents,
     );
   }
 
-  StateConfig getStateConfig(ClassElement element, String baseName) {
+  StateConfig getStateConfig(ClassElement2 element, String baseName) {
     String? stateType;
     var isStatePrimitive = false;
-    for (final field in element.fields) {
-      if (field.name == 'initialState' && field.type.toString() != Strings.unitType) {
+    for (final field in element.fields2) {
+      if (field.displayName == 'initialState' && field.type.toString() != Strings.unitType) {
         stateType = field.type.toString();
         isStatePrimitive = field.type.isPrimitive;
       }
@@ -74,7 +74,7 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement> {
           );
         }
       } on Exception catch (e) {
-        print('Error occured: $e');
+        print('Error occurred: $e');
         return [];
       }
     }
@@ -83,16 +83,16 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement> {
   }
 
   List<MethodConfig> getIntentConfigs(
-    ClassElement element,
+    ClassElement2 element,
     List<MethodConfig> effects,
   ) {
     final intents = <MethodConfig>[];
     try {
-      for (final methodElement in element.methods) {
-        if (const TypeChecker.fromRuntime(Intent).hasAnnotationOf(methodElement)) {
+      for (final methodElement in element.methods2) {
+        if (const TypeChecker.typeNamed(Intent).hasAnnotationOf(methodElement)) {
           throwIf(
             effects.any((effect) {
-              return effect.name.normalize() == methodElement.name.normalize();
+              return effect.name.normalize() == methodElement.displayName.normalize();
             }),
             'there is an effect method with this name',
             element: methodElement,
@@ -100,16 +100,16 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement> {
 
           intents.add(
             MethodConfig(
-              name: methodElement.name,
-              params: methodElement.parameters.map((param) {
-                return ParamConfig(name: param.name, type: param.type.toString());
+              name: methodElement.displayName,
+              params: methodElement.formalParameters.map((param) {
+                return ParamConfig(name: param.displayName, type: param.type.toString());
               }).toList(),
             ),
           );
         }
       }
     } on Exception catch (e) {
-      print('error ocurred: $e');
+      print('error occurred: $e');
       return [];
     }
 

@@ -1,11 +1,11 @@
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:generator/src/base/base_builder.dart';
 import 'package:generator/src/builders/view_model/factory.dart';
 import 'package:generator/src/builders/view_model/resolver.dart';
 import 'package:processor/processor.dart';
 
-class ViewModelBuilder extends BaseBuilder<ViewModelConfig, ClassElement> {
+class ViewModelBuilder extends BaseBuilder<ViewModelConfig, ClassElement2> {
   ViewModelBuilder({super.options})
     : super(
         name: 'view_model',

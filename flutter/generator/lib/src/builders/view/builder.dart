@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:build/build.dart';
 import 'package:generator/src/base/base_builder.dart';
 import 'package:generator/src/builders/view/factory.dart';
@@ -11,7 +11,7 @@ import 'package:generator/src/constants/strings.dart';
 import 'package:processor/processor.dart';
 import 'package:source_gen/source_gen.dart';
 
-class ViewBuilder extends BaseBuilder<ViewConfig, ClassElement> {
+class ViewBuilder extends BaseBuilder<ViewConfig, ClassElement2> {
   ViewBuilder({
     super.options,
     super.name = 'view',

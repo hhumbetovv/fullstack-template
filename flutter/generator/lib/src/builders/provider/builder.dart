@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:generator/src/base/base_factory.dart';
 import 'package:generator/src/base/base_resolver.dart';
 import 'package:generator/src/builders/provider/factory.dart';
@@ -19,7 +19,7 @@ class ProviderBuilder extends ViewBuilder {
   BaseFactory<ViewConfig> get buildFactory => ProviderFactory();
 
   @override
-  BaseResolver<ViewConfig, ClassElement> get resolver => ProviderResolver();
+  BaseResolver<ViewConfig, ClassElement2> get resolver => ProviderResolver();
 
   @override
   String get suffix => 'Provider';

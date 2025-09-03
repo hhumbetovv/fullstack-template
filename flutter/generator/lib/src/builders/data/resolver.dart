@@ -1,35 +1,35 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:generator/src/base/base_resolver.dart';
 import 'package:generator/src/extensions/dart_type.dart';
 import 'package:generator/src/utils/throw.dart';
 import 'package:processor/processor.dart';
 import 'package:source_gen/source_gen.dart';
 
-class DataResolver extends BaseResolver<DataConfig, ClassElement> {
+class DataResolver extends BaseResolver<DataConfig, ClassElement2> {
   @override
-  Future<DataConfig?> resolve(ClassElement element) async {
-    final constructor = element.constructors[0];
-    final params = constructor.parameters;
+  Future<DataConfig?> resolve(ClassElement2 element) async {
+    final constructor = element.constructors2[0];
+    final params = constructor.formalParameters;
     final isFactory = constructor.isFactory;
     return DataConfig(
-      name: element.name,
+      name: element.displayName,
       isFactory: isFactory,
       fields: params.map((param) {
         final defaultValue = getDefault(param);
         if (constructor.isFactory) {
           throwIf(
             !param.type.isNullable && !param.isRequired && defaultValue == null,
-            'Field ${param.name} must be marked as required or have a default value.',
+            'Field ${param.displayName} must be marked as required or have a default value.',
           );
 
           throwIf(
             param.isRequired && defaultValue != null,
-            "Field ${param.name} can't be marked as required and have a default value at the same time.",
+            "Field ${param.displayName} can't be marked as required and have a default value at the same time.",
           );
         }
 
         return FieldConfig(
-          name: param.name,
+          name: param.displayName,
           type: param.type.toString(),
           isNullable: param.type.isNullable,
           isRequired: param.isRequired,
@@ -39,16 +39,16 @@ class DataResolver extends BaseResolver<DataConfig, ClassElement> {
     );
   }
 
-  String? getDefault(ParameterElement parameter) {
+  String? getDefault(FormalParameterElement parameter) {
     const matcher = TypeChecker.fromRuntime(Default);
-    for (final meta in parameter.metadata) {
+    for (final meta in parameter.metadata2.annotations) {
       final obj = meta.computeConstantValue()!;
       if (matcher.isExactlyType(obj.type!)) {
         final source = meta.toSource();
         final res = source.substring('@Default('.length, source.length - 1);
 
         final needsConstModifier =
-            !parameter.declaration.type.isDartCoreString &&
+            !parameter.type.isDartCoreString &&
             !res.trimLeft().startsWith('const') &&
             (res.contains('(') || res.contains('[') || res.contains('{'));
 

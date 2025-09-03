@@ -3,7 +3,7 @@ extension StringExtension on String {
     return '${this[0].toUpperCase()}${substring(1)}';
   }
 
-  String uncapitalize() {
+  String unCapitalize() {
     return '${this[0].toLowerCase()}${substring(1)}';
   }
 
