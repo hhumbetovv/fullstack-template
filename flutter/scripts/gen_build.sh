@@ -1,6 +1,18 @@
 #!/bin/bash
 
-MODULES_ORDER=("./processor" "./common" "./data" "./domain" "./core" "./uikit" "./app")
+MODULES_ORDER=(
+    "./processor"
+    "./common/shared" 
+    "./common/presentation" 
+    "./core/domain" 
+    "./core/data" 
+    "./core/presentation" 
+    "./data" 
+    "./domain" 
+    "./core" 
+    "./uikit" 
+    "./app"
+)
 
 declare -a pids
 

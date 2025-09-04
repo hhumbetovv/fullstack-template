@@ -10,7 +10,7 @@ analyzer:
         avoid_dynamic_calls: ignore
         invalid_annotation_target: ignore
         avoid_redundant_argument_values: ignore
-        # ! Remove this when Fix Update comes to the Auto Router package
+        #! Remove this when Fix Update comes to the Auto Router package
         inference_failure_on_instance_creation: ignore
     exclude:
         [

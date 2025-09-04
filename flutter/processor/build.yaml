@@ -1,7 +1,7 @@
 targets:
     $default:
         builders:
-            # ! Package Generators
+            #! Package Generators
             json_serializable|json_serializable:
                 enabled: true
                 generate_for:

@@ -1,0 +1,16 @@
+name: common_shared
+
+environment:
+  sdk: ^3.9.0
+resolution: workspace
+
+dependencies:
+  #! Environment
+  flutter_dotenv: ^5.2.1
+
+dev_dependencies:
+  #! Generator
+  build_runner: ^2.4.15
+
+  #? Modules
+  generator: any

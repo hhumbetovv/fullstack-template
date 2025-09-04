@@ -40,7 +40,7 @@ class PaletteResolver extends BaseResolver<DataConfig, ClassElement2> {
   }
 
   String? getDefault(FormalParameterElement parameter) {
-    const matcher = TypeChecker.fromRuntime(Default);
+    const matcher = TypeChecker.typeNamed(Default);
     for (final meta in parameter.metadata2.annotations) {
       final obj = meta.computeConstantValue()!;
       if (matcher.isExactlyType(obj.type!)) {

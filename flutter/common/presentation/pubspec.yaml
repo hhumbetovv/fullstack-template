@@ -1,0 +1,19 @@
+name: common_presentation
+
+environment:
+  sdk: ^3.9.0
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  #! Modules
+  common_shared: any
+
+dev_dependencies:
+  #! Generator
+  build_runner: ^2.4.15
+
+  #? Modules
+  generator: any

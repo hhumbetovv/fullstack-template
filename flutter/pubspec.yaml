@@ -8,6 +8,11 @@ workspace:
     - app
     - processor
     - generator
+    - common/shared
+    - common/presentation
+    - core/presentation
+    - core/data
+    - core/domain
 
 dev_dependencies:
     #! Analysis

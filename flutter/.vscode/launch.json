@@ -7,13 +7,13 @@
             "type": "dart",
             "flutterMode": "debug",
             "cwd": "${workspaceFolder}/app",
-            "args": [
-                "--flavor",
-                "dev",
-                "--dart-define",
-                "FLAVOR=dev",
-                "--no-pub"
-            ]
+            // "args": [
+            //     "--flavor",
+            //     "dev",
+            //     "--dart-define",
+            //     "FLAVOR=dev",
+            //     "--no-pub"
+            // ]
         },
         {
             "name": "Dev Release",
@@ -21,13 +21,13 @@
             "type": "dart",
             "flutterMode": "release",
             "cwd": "${workspaceFolder}/app",
-            "args": [
-                "--flavor",
-                "dev",
-                "--dart-define",
-                "FLAVOR=dev",
-                "--no-pub"
-            ]
+            // "args": [
+            //     "--flavor",
+            //     "dev",
+            //     "--dart-define",
+            //     "FLAVOR=dev",
+            //     "--no-pub"
+            // ]
         },
         {
             "name": "Dev Profile",
@@ -35,13 +35,13 @@
             "type": "dart",
             "flutterMode": "profile",
             "cwd": "${workspaceFolder}/app",
-            "args": [
-                "--flavor",
-                "dev",
-                "--dart-define",
-                "FLAVOR=dev",
-                "--no-pub"
-            ]
+            // "args": [
+            //     "--flavor",
+            //     "dev",
+            //     "--dart-define",
+            //     "FLAVOR=dev",
+            //     "--no-pub"
+            // ]
         },
         {
             "name": "Prod Debug",
@@ -49,13 +49,13 @@
             "type": "dart",
             "flutterMode": "debug",
             "cwd": "${workspaceFolder}/app",
-            "args": [
-                "--flavor",
-                "prod",
-                "--dart-define",
-                "FLAVOR=prod",
-                "--no-pub"
-            ]
+            // "args": [
+            //     "--flavor",
+            //     "prod",
+            //     "--dart-define",
+            //     "FLAVOR=prod",
+            //     "--no-pub"
+            // ]
         },
         {
             "name": "Prod Release",
@@ -63,13 +63,13 @@
             "type": "dart",
             "flutterMode": "release",
             "cwd": "${workspaceFolder}/app",
-            "args": [
-                "--flavor",
-                "prod",
-                "--dart-define",
-                "FLAVOR=prod",
-                "--no-pub"
-            ]
+            // "args": [
+            //     "--flavor",
+            //     "prod",
+            //     "--dart-define",
+            //     "FLAVOR=prod",
+            //     "--no-pub"
+            // ]
         },
         {
             "name": "Prod Profile",
@@ -77,13 +77,13 @@
             "type": "dart",
             "flutterMode": "profile",
             "cwd": "${workspaceFolder}/app",
-            "args": [
-                "--flavor",
-                "prod",
-                "--dart-define",
-                "FLAVOR=prod",
-                "--no-pub"
-            ]
+            // "args": [
+            //     "--flavor",
+            //     "prod",
+            //     "--dart-define",
+            //     "FLAVOR=prod",
+            //     "--no-pub"
+            // ]
         }
     ]
 }

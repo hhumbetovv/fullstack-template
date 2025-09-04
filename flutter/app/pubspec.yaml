@@ -1,6 +1,6 @@
 name: app
 description: "A template Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
@@ -11,10 +11,16 @@ dependencies:
   flutter:
     sdk: flutter
 
+  #! Modules
+  common_shared: any
+  common_presentation: any
+
+  #! Localization
+  intl: ^0.20.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
 flutter:
-
   uses-material-design: true
