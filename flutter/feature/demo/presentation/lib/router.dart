@@ -16,6 +16,7 @@ final class DemoRouter extends RootStackRouter {
     return [
       AutoRoute(
         page: FirstRoute.page,
+        initial: true,
       ),
     ];
   }

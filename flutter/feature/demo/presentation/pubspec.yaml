@@ -17,6 +17,10 @@ dependencies:
   #! Navigation
   auto_route: ^10.1.0
 
+  #! Dependency Injection
+  injectable: ^2.5.0
+  get_it: ^8.0.3
+
 dev_dependencies:
   #! Generator
   build_runner: ^2.4.15
@@ -26,3 +30,6 @@ dev_dependencies:
 
   #? Navigation
   auto_route_generator: ^10.1.0
+
+  #? Dependency Injection
+  injectable_generator: ^2.7.0

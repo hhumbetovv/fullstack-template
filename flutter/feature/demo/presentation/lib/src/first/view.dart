@@ -16,6 +16,23 @@ final class FirstView extends _FirstView {
 
   @override
   Widget buildView(BuildContext context) {
-    return Container();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Demo'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            firstIntent(context, const FirstMethod());
+          },
+          child: Text(
+            firstSelect(
+              context,
+              (state) => state.value.toString(),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

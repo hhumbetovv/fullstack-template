@@ -15,6 +15,11 @@ final class FirstViewModel extends _FirstViewModel {
 
   final _demoUseCase = useCase<DemoUseCase>();
 
+  @override
+  void onCreate() {
+    _method();
+  }
+
   @intent
   void _method() {
     final result = _demoUseCase();

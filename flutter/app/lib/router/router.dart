@@ -2,7 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:demo_presentation/router.dart';
 import 'package:injectable/injectable.dart';
 
-@singleton
+@Singleton()
 @AutoRouterConfig(replaceInRouteName: AppRouter._replaceRouteName)
 final class AppRouter extends RootStackRouter {
   static const String _replaceRouteName = 'View,Route';
