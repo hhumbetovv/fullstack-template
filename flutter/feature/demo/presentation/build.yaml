@@ -1,0 +1,42 @@
+targets:
+  $default:
+    builders:
+      # ! Package Generators
+      auto_route_generator:
+        enabled: true
+        generate_for:
+          include:
+            - "**/wrapper.dart"
+            - "**/view.dart"
+            - "lib/router/router.dart"
+      # ! Project Generators
+      generator|palette:
+        enabled: false
+      generator|exporter:
+        enabled: false
+      generator|data:
+        enabled: true
+        generate_for:
+          include: ["**/state.dart", "**/source/**"]
+      generator|view:
+        enabled: true
+        generate_for:
+          include: ["**/view.dart"]
+      generator|provider:
+        enabled: true
+        generate_for:
+          include: ["**/provider.dart"]
+      generator|view_model:
+        enabled: true
+        generate_for:
+          include: ["**/view_model.dart"]
+        options:
+          enable_cached_builds: true
+
+global_options:
+  generator|view:
+    runs_before:
+      - generator|view_model
+  generator|provider:
+    runs_before:
+      - generator|view_model

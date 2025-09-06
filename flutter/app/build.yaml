@@ -1,0 +1,11 @@
+targets:
+  $default:
+    builders:
+      # ! Package Generators
+      auto_route_generator:
+        enabled: true
+        generate_for:
+          include:
+            - "**/wrapper.dart"
+            - "**/view.dart"
+            - "lib/router/router.dart"

@@ -20,7 +20,7 @@
         "prefix": "viewmodel",
         "scope": "dart",
         "body": [
-            "import 'package:core/framework.dart';",
+            "import 'package:core_presentation/state.dart';",
             "import 'package:processor/processor.dart';",
             "",
             "${1:import 'state.dart';}",

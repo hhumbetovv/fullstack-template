@@ -2,21 +2,25 @@ name: template
 publish_to: none
 
 environment:
-    sdk: ^3.9.0
+  sdk: ^3.9.0
 
 workspace:
-    - app
-    - processor
-    - generator
-    - common/shared
-    - common/presentation
-    - core/presentation
-    - core/data
-    - core/domain
+  - app
+  - processor
+  - generator
+  - common/shared
+  - common/presentation
+  - core/presentation
+  - core/data
+  - core/domain
+  - feature/demo/domain
+  - feature/demo/data
+  - feature/demo/presentation
+  - uikit/foundation
 
 dev_dependencies:
-    #! Analysis
-    very_good_analysis: ^7.0.0
+  #? Analysis
+  very_good_analysis: ^7.0.0
 
 flutter:
-    uses-material-design: true
+  uses-material-design: true

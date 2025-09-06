@@ -12,13 +12,12 @@ dependencies:
   processor: any
   common_shared: any
   common_presentation: any
+  core_domain: any
+  foundation: any
 
-  # ! Dependency Injection
+  #! Dependency Injection
+  get_it: ^8.0.3
   provider: ^6.1.4
 
-dev_dependencies:
-  #! Generator
-  build_runner: ^2.4.15
-
-  #? Modules
-  generator: any
+  #! Navigation
+  auto_route: ^10.1.0

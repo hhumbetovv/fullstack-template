@@ -7,10 +7,11 @@ MODULES_ORDER=(
     "./core/domain" 
     "./core/data" 
     "./core/presentation" 
-    "./data" 
-    "./domain" 
-    "./core" 
-    "./uikit" 
+    "./feature/demo/domain" 
+    "./feature/demo/data" 
+    "./feature/demo/presentation" 
+    "./uikit/foundation"
+    "./uikit/components"
     "./app"
 )
 

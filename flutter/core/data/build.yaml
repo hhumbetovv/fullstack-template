@@ -17,3 +17,11 @@ targets:
         options:
           folders:
             - common
+            - core
+            - model
+            - module
+
+global_options:
+  generator|exporter:
+    runs_before:
+      - injectable_generator|injectable_builder
