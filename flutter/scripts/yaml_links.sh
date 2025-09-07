@@ -1,0 +1,1 @@
+sh scripts/pubspec_links.sh && sh scripts/build_links.sh

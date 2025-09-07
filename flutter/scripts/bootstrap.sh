@@ -5,5 +5,6 @@ cd app
 fvm flutter clean
 cd ..
 fvm flutter pub get
+sh scripts/yaml_links.sh
 sh scripts/gen_build.sh
 dart pub global activate flutterfire_cli
