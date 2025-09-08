@@ -1,7 +1,5 @@
-import 'package:common_shared/utils.dart';
-import 'package:core_domain/entity.dart';
-import 'package:core_domain/result.dart';
-import 'package:core_domain/usecase.dart';
+import 'package:common_shared/public.dart';
+import 'package:core_domain/public.dart';
 
 extension UseCaseExt<Data, Params> on UseCase<Params, Data> {
   AsyncResult<Data> call(Params params) => _callWithParams(params);

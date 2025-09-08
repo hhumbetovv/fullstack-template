@@ -1,0 +1,28 @@
+targets:
+  $default:
+    builders:
+      #! Package Generators
+      source_gen|combining_builder:
+        options:
+          ignore_for_file:
+            - "type=lint"
+
+builders:
+  view:
+    import: "package:gen_view_kit/builder.dart"
+    builder_factories: ["viewBuilder"]
+    build_extensions: { ".dart": [".g.dart"] }
+    auto_apply: dependents
+    build_to: source
+  provider:
+    import: "package:gen_view_kit/builder.dart"
+    builder_factories: ["providerBuilder"]
+    build_extensions: { ".dart": [".g.dart"] }
+    auto_apply: dependents
+    build_to: source
+  view_model:
+    import: "package:gen_view_kit/builder.dart"
+    builder_factories: ["viewModelBuilder"]
+    build_extensions: { ".dart": [".g.dart"] }
+    auto_apply: dependents
+    build_to: source

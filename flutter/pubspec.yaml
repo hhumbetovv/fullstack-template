@@ -7,7 +7,11 @@ environment:
 workspace:
   - app
   - processor
-  - generator
+  - generator/core
+  - generator/builder/data
+  - generator/builder/exporter
+  - generator/builder/palette
+  - generator/builder/view_kit
   - common/shared
   - common/presentation
   - core/presentation

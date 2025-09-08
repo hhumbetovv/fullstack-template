@@ -1,4 +1,4 @@
-import 'package:common_presentation/utils.dart';
+import 'package:common_presentation/public.dart';
 
 String compareAndFormat<T>(T oldObject, T newObject) {
   if (oldObject.runtimeType != newObject.runtimeType) {

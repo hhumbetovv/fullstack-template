@@ -2,17 +2,7 @@ targets:
   $default:
     builders:
       #! Project Generators
-      generator|data:
-        enabled: false
-      generator|view:
-        enabled: false
-      generator|provider:
-        enabled: false
-      generator|view_model:
-        enabled: false
-      generator|palette:
-        enabled: false
-      generator|exporter:
+      gen_exporter|exporter:
         enabled: true
         options:
           folders:

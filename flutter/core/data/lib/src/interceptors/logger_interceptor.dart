@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:common_shared/utils.dart';
+import 'package:common_shared/public.dart';
 import 'package:dio/dio.dart';
 
 class LoggerInterceptor extends Interceptor {

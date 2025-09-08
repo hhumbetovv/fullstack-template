@@ -48,24 +48,33 @@ find . -name "build.yaml" \
         continue
     fi
     
-    # Get file path
+    # Get directory path and normalize it
     dir_path=$(dirname "$build_file")
-    dir_name=$(basename "$dir_path")
     
-    # If directory with same name exists, add parent directory name
-    link_name="$dir_name"
-    parent_dir=$(basename "$(dirname "$dir_path")")
-    
-    # Check for root build
+    # Create link name based on full path
     if [ "$dir_path" = "." ]; then
         link_name="root"
-    # If same name link exists, add parent directory name
-    elif [ -e "$BUILDS_DIR/${link_name}_build.yaml" ]; then
-        link_name="${parent_dir}_${dir_name}"
+    else
+        # Remove leading './' and convert path separators to underscores
+        # Also handle cases where path starts without './'
+        link_name=$(echo "$dir_path" | sed 's|^./||' | sed 's|^/||' | tr '/' '_')
+        
+        # If link_name is empty (shouldn't happen but safety check)
+        if [ -z "$link_name" ]; then
+            link_name=$(basename "$dir_path")
+        fi
     fi
     
+    # Ensure unique naming in case of conflicts
+    original_link_name="$link_name"
+    counter=1
+    while [ -e "$BUILDS_DIR/${link_name}.yaml" ]; do
+        link_name="${original_link_name}_${counter}"
+        counter=$((counter + 1))
+    done
+    
     # Symlink file name
-    symlink_file="$BUILDS_DIR/${link_name}_build.yaml"
+    symlink_file="$BUILDS_DIR/${link_name}.yaml"
     
     # Get absolute path
     if command -v realpath > /dev/null 2>&1; then
@@ -89,7 +98,7 @@ done
 wait
 
 # Count actual symlinks created
-actual_count=$(find "$BUILDS_DIR" -name "*_build.yaml" 2>/dev/null | wc -l | tr -d ' ')
+actual_count=$(find "$BUILDS_DIR" -name "*.yaml" 2>/dev/null | wc -l | tr -d ' ')
 
 # Result summary
 printf "\n${BLUE}=====================================${NC}\n"
@@ -100,5 +109,6 @@ fi
 printf "${BLUE}=====================================${NC}\n"
 
 printf "• You can re-run this script after any changes\n"
+printf "• Path structure is preserved in symlink names\n"
 
 printf "\n${GREEN}Script completed successfully!${NC}\n"

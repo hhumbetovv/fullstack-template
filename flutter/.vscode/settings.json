@@ -1,43 +1,42 @@
 {
-    "cmake.ignoreCMakeListsMissing": true,
-    "dart.flutterSdkPath": ".fvm/versions/3.35.0",
-    "dart.autoImportCompletions": true,
-    "dart.debugExternalPackageLibraries": false,
-    "dart.debugSdkLibraries": false,
-    "dart.lineLength": 120,
-    "explorer.fileNesting.expand": false,
-    "debug.console.wordWrap": true,
-    "files.exclude": {
-        "**/*.freezed.dart": true,
-        "**/*.g.dart": true,
-        "**/*.gr.dart": true,
-        "**/*.config.dart": true,
-        // "**/*.module.dart": true,
-        "**/build/": true,
-        "**/.dart_tool": true
-    },
-    "files.associations": {
-        "export.dart": "julia"
-    },
-    "[julia]": {
-        "editor.formatOnSave": false
-    },
-    "editor.codeActionsOnSave": {
-        "source.fixAll": "always",
-        "source.organizeImports": "always"
-    },
-    "dart.flutterHotReloadOnSave": "allIfDirty",
-    "dart.hotReloadOnSave": "allIfDirty",
-    "editor.formatOnSave": true,
-    "editor.tabSize": 4,
-    "explorer.fileNesting.enabled": true,
-    "explorer.fileNesting.patterns": {
-        "*.dart": "${capture}.freezed.dart, ${capture}.g.dart, ${capture}.gr.dart, ${capture}.config.dart",
-        ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap",
-        "pubspec.yaml": "pubspec.lock, pubspec_overrides.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata, analysis_options.yaml",
-        "readme.*": "authors, backers.md, changelog, citation"
-    },
-    "git.ignoreLimitWarning": true,
-    "mobileEmulator.androidSDKPath": "/Users/humbthumbtov/Library/Android/sdk",
-    "mobileEmulator.xcodeDevPath": "/Applications/Xcode.app/Contents/Developer",
+  "cmake.ignoreCMakeListsMissing": true,
+  "dart.flutterSdkPath": ".fvm/versions/3.35.0",
+  "dart.autoImportCompletions": true,
+  "dart.debugExternalPackageLibraries": false,
+  "dart.debugSdkLibraries": false,
+  "dart.lineLength": 120,
+  "explorer.fileNesting.expand": false,
+  "debug.console.wordWrap": true,
+  "files.exclude": {
+    "**/*.freezed.dart": true,
+    "**/*.g.dart": true,
+    "**/*.gr.dart": true,
+    "**/*.config.dart": true,
+    "**/build/": true,
+    "**/.dart_tool": true
+  },
+  "files.associations": {
+    "export.dart": "julia"
+  },
+  "[julia]": {
+    "editor.formatOnSave": false
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always",
+    "source.organizeImports": "always"
+  },
+  "dart.flutterHotReloadOnSave": "allIfDirty",
+  "dart.hotReloadOnSave": "allIfDirty",
+  "editor.formatOnSave": true,
+  "editor.tabSize": 4,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.dart": "${capture}.freezed.dart, ${capture}.module.dart, ${capture}.g.dart, ${capture}.gr.dart, ${capture}.config.dart",
+    ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap",
+    "pubspec.yaml": "pubspec.lock, pubspec_overrides.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata, analysis_options.yaml",
+    "readme.*": "authors, backers.md, changelog, citation"
+  },
+  "git.ignoreLimitWarning": true,
+  "mobileEmulator.androidSDKPath": "/Users/humbthumbtov/Library/Android/sdk",
+  "mobileEmulator.xcodeDevPath": "/Applications/Xcode.app/Contents/Developer"
 }

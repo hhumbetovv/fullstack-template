@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:common_shared/utils.dart';
+import 'package:common_shared/public.dart';
 import 'package:core_data/src/model/network_response.dart';
 import 'package:dio/dio.dart';
 

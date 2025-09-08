@@ -1,4 +1,4 @@
-import 'package:common_shared/utils.dart';
+import 'package:common_shared/public.dart';
 import 'package:core_data/src/core/api_base_options.dart';
 import 'package:core_data/src/interceptors/form_interceptor.dart';
 import 'package:core_data/src/interceptors/logger_interceptor.dart';

@@ -1,7 +1,7 @@
 import 'package:app/router/router.dart';
-import 'package:common_presentation/constants.dart';
+import 'package:common_presentation/public.dart';
 import 'package:flutter/material.dart';
-import 'package:foundation/constants.dart';
+import 'package:foundation/public.dart';
 import 'package:get_it/get_it.dart';
 
 final router = GetIt.I<AppRouter>();

@@ -1,4 +1,4 @@
-import 'package:core_domain/entity.dart';
+import 'package:core_domain/public.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'paged_model.g.dart';

@@ -10,23 +10,19 @@ targets:
             - "**/view.dart"
             - "lib/router/router.dart"
       # ! Project Generators
-      generator|palette:
-        enabled: false
-      generator|exporter:
-        enabled: false
-      generator|data:
+      gen_data|data:
         enabled: true
         generate_for:
           include: ["**/state.dart", "**/source/**"]
-      generator|view:
+      gen_view_kit|view:
         enabled: true
         generate_for:
           include: ["**/view.dart"]
-      generator|provider:
+      gen_view_kit|provider:
         enabled: true
         generate_for:
           include: ["**/provider.dart"]
-      generator|view_model:
+      gen_view_kit|view_model:
         enabled: true
         generate_for:
           include: ["**/view_model.dart"]
@@ -34,9 +30,9 @@ targets:
           enable_cached_builds: true
 
 global_options:
-  generator|view:
+  gen_view_kit|view:
     runs_before:
-      - generator|view_model
-  generator|provider:
+      - gen_view_kit|view_model
+  gen_view_kit|provider:
     runs_before:
-      - generator|view_model
+      - gen_view_kit|view_model

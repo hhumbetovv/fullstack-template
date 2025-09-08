@@ -1,5 +1,5 @@
 import 'package:common_presentation/config.dart';
-import 'package:common_presentation/constants.dart';
+import 'package:common_presentation/public.dart';
 import 'package:core_presentation/src/state/base_view_model.dart';
 import 'package:core_presentation/src/state/state_notifier.dart';
 import 'package:flutter/widgets.dart';

@@ -1,7 +1,7 @@
 import 'package:app/config/injectable.dart';
 import 'package:common_shared/config.dart';
 import 'package:common_shared/environment.dart';
-import 'package:common_shared/utils.dart';
+import 'package:common_shared/public.dart';
 import 'package:intl/intl.dart';
 
 final class AppConfig {

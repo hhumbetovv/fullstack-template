@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:developer' as dev;
 
-import 'package:common_shared/utils.dart';
+import 'package:common_shared/public.dart';
 
 typedef LogEntry = ({String message, AnsiColors color, DateTime timestamp, String tag});
 typedef ConsoleFormatter = String Function([String? dateFormat, DateTime? date]);

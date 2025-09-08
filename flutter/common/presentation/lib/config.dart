@@ -1,4 +1,4 @@
-import 'package:common_shared/constants.dart';
+import 'package:common_shared/public.dart';
 import 'package:flutter/material.dart';
 
 class CommonPresentationConfig {

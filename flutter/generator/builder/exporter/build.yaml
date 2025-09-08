@@ -1,0 +1,16 @@
+targets:
+  $default:
+    builders:
+      #! Package Generators
+      source_gen|combining_builder:
+        options:
+          ignore_for_file:
+            - "type=lint"
+
+builders:
+  exporter:
+    import: "package:gen_exporter/builder.dart"
+    builder_factories: ["exporterBuilder"]
+    build_extensions: { "$lib$": [".exports.dart"] }
+    auto_apply: dependents
+    build_to: source

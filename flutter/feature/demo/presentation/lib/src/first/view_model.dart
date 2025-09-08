@@ -1,5 +1,5 @@
-import 'package:core_presentation/state.dart';
-import 'package:demo_domain/usecase.dart';
+import 'package:core_presentation/exports.dart';
+import 'package:demo_domain/public.dart';
 import 'package:processor/processor.dart';
 
 import 'state.dart';

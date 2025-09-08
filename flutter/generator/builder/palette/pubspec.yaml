@@ -1,0 +1,19 @@
+name: gen_palette
+
+environment:
+  sdk: ^3.9.0
+resolution: workspace
+
+dependencies:
+  #? Modules
+  processor: any
+  gen_core: any
+  gen_data: any
+
+  #! Analyzer
+  analyzer: ^7.4.5
+
+  #! Builders Core
+  build: ^3.0.0
+  source_gen: ^3.0.0
+  code_builder: ^4.10.1

@@ -1,7 +1,5 @@
-import 'package:core_data/common.dart';
-import 'package:core_data/src/model/network_response.dart';
-import 'package:core_domain/entity.dart';
-import 'package:core_domain/result.dart';
+import 'package:core_data/public.dart';
+import 'package:core_domain/public.dart';
 
 Future<Result<Response, Failure>> safeMapperCall<Data, Response>(
   Future<NetworkResponse<Data>> Function() requestCallback, {
