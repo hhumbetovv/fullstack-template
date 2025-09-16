@@ -1,8 +1,17 @@
 targets:
-    $default:
-        builders:
-            #! Package Generators
-            json_serializable|json_serializable:
-                enabled: true
-                generate_for:
-                    include: [ "lib/src/configs/**" ]
+  $default:
+    builders:
+      #! Package Generators
+      json_serializable|json_serializable:
+        enabled: true
+        generate_for:
+          include: ["lib/src/configs/**"]
+      #! Module Generators
+      gen_exporter|exporter:
+        enabled: true
+        options:
+          folders:
+            - annotations
+            - configs
+            - helpers
+            - utils

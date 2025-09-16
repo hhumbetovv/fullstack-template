@@ -9,14 +9,21 @@ part of 'view_model.dart';
 
 sealed class FirstIntent {
   const FirstIntent();
+
+  const factory FirstIntent.method() = _FirstMethod;
+
+  void dispatch(BuildContext context) {
+    if (!context.mounted) return;
+    context.read<FirstViewModel>()._postIntent(this);
+  }
 }
 
-final class FirstMethod extends FirstIntent {
-  const FirstMethod();
+final class _FirstMethod extends FirstIntent {
+  const _FirstMethod();
 
   @override
   String toString() {
-    return 'FirstMethod';
+    return '_FirstMethod';
   }
 }
 
@@ -31,14 +38,9 @@ abstract class _FirstViewModel
   @override
   Future<void> onIntentUpdate(FirstIntent intent) async {
     return switch (intent) {
-      FirstMethod() => (this as FirstViewModel)._method(),
+      _FirstMethod() => (this as FirstViewModel)._method(),
     };
   }
-}
-
-void firstIntent(BuildContext context, FirstIntent intent) {
-  if (!context.mounted) return;
-  context.read<FirstViewModel>()._postIntent(intent);
 }
 
 Value firstSelect<Value>(

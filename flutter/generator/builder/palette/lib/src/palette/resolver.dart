@@ -2,7 +2,7 @@ import 'package:analyzer/dart/element/element2.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_core/extensions.dart';
 import 'package:gen_core/utils.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 import 'package:source_gen/source_gen.dart';
 
 class PaletteResolver extends BaseResolver<DataConfig, ClassElement2> {

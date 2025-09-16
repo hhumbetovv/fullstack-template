@@ -23,7 +23,7 @@ final class FirstView extends _FirstView {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            firstIntent(context, const FirstMethod());
+            const FirstIntent.method().dispatch(context);
           },
           child: Text(
             firstSelect(

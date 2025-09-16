@@ -5,7 +5,7 @@ environment:
 resolution: workspace
 
 dependencies:
-  #? Modules
+  #! Modules
   processor: any
   gen_core: any
   gen_data: any

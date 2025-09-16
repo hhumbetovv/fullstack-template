@@ -1,7 +1,7 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_core/extensions.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 
 class DataFactory extends BaseFactory<DataConfig> {
   bool get generateCopy => true;
@@ -9,14 +9,15 @@ class DataFactory extends BaseFactory<DataConfig> {
   bool get generateApply => true;
   bool get generateEquatable => true;
 
+  List<Reference> getAdditionalImplements(DataConfig config) => [];
+  List<Method> getAdditionalMethods(DataConfig config) => [];
+
   @override
   void build(DataConfig config) {
     createClass(config);
-
     createGetters(config);
 
     if (generateCopy) createCopy(config);
-
     if (generateApply) createApply(config);
   }
 
@@ -24,6 +25,7 @@ class DataFactory extends BaseFactory<DataConfig> {
     final isLoadableState = config.fields.any((element) {
       return element.name == 'isLoading';
     });
+
     final dataClass = Class((classDef) {
       classDef
         ..annotations.add(refer('immutable'))
@@ -33,6 +35,7 @@ class DataFactory extends BaseFactory<DataConfig> {
         ..implements.addAll([
           if (config.isFactory) refer(config.name),
           if (isLoadableState) refer('$LoadableState'),
+          ...getAdditionalImplements(config),
         ])
         ..methods.addAll([
           if (isLoadableState) ...[
@@ -51,6 +54,7 @@ class DataFactory extends BaseFactory<DataConfig> {
                 ..body = const Code('return applyIsLoading(isLoading);');
             }),
           ],
+          ...getAdditionalMethods(config),
         ])
         ..constructors.add(
           Constructor((constDef) {

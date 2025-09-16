@@ -9,7 +9,7 @@ import 'package:gen_core/base.dart';
 import 'package:gen_core/constants.dart';
 import 'package:gen_core/extensions.dart';
 import 'package:gen_core/utils.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 import 'package:source_gen/source_gen.dart';
 
 class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {

@@ -4,9 +4,17 @@
         "prefix": "filename",
         "body": "${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}"
     },
-    "Capitalized Directory Name": {
-        "prefix": "directory",
+    "Parent Directory Name": {
+        "prefix": "par1pascal",
         "body": "${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}"
+    },
+    "Parent, Parent Name": {
+        "prefix": "par2",
+        "body": "${TM_DIRECTORY/(.*[\\/])([^\\/]+)[\\/][^\\/]+/$2/}"
+    },
+    "Parent, Parent, Parent Directory Name": {
+        "prefix": "par3pascal",
+        "body": "${TM_FILEPATH/.*\\/([^\\/]+)\\/[^\\/]+\\/[^\\/]+\\/[^\\/]+$/${1:/pascalcase}/}",
     },
     //! Import Snippets
     "Material UI": {
@@ -69,12 +77,20 @@
     "Void Function": {
         "scope": "dart",
         "prefix": "func",
-        "body": ["void $1($2) $3{", "\t$4", "}"]
+        "body": [
+            "void $1($2) $3{",
+            "\t$4",
+            "}"
+        ]
     },
     "Future Function": {
         "scope": "dart",
         "prefix": "ffunc",
-        "body": ["Future<$1> $2($3) async {", "\t$4", "}"]
+        "body": [
+            "Future<$1> $2($3) async {",
+            "\t$4",
+            "}"
+        ]
     },
     "Widget Function": {
         "scope": "dart",

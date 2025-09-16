@@ -7,12 +7,13 @@
 import 'dart:async' as _i687;
 
 import 'package:demo_data/src/repository/demo_repository_impl.dart' as _i143;
+import 'package:demo_domain/public.dart' as _i0;
 import 'package:injectable/injectable.dart' as _i526;
 
 class DemoDataPackageModule extends _i526.MicroPackageModule {
 // initializes the registration of main-scope dependencies inside of GetIt
   @override
   _i687.FutureOr<void> init(_i526.GetItHelper gh) {
-    gh.singleton<_i143.DemoRepositoryImpl>(() => _i143.DemoRepositoryImpl());
+    gh.singleton<_i0.DemoRepository>(() => _i143.DemoRepositoryImpl());
   }
 }

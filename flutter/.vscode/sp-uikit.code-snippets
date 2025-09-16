@@ -7,7 +7,7 @@
     "Palette with Generated File": {
         "prefix": "palette",
         "body": [
-            "import 'package:processor/processor.dart';",
+            "import 'package:processor/public.dart';",
             "",
             "part '$TM_FILENAME_BASE.g.dart';",
             "",

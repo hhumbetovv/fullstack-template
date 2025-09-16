@@ -3,7 +3,7 @@ import 'package:gen_core/base.dart';
 import 'package:gen_view_kit/src/provider/factory.dart';
 import 'package:gen_view_kit/src/provider/resolver.dart';
 import 'package:gen_view_kit/src/view/builder.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 
 class ProviderBuilder extends ViewBuilder {
   ProviderBuilder({

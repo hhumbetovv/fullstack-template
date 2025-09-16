@@ -2,7 +2,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_core/constants.dart';
 import 'package:gen_core/extensions.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 
 class ViewModelFactory extends BaseFactory<ViewModelConfig> {
   @override
@@ -15,7 +15,14 @@ class ViewModelFactory extends BaseFactory<ViewModelConfig> {
     }
 
     // ! Intents
-    generateContractClass(config.name, 'Intent', config.intents);
+    generateContractClass(
+      config.name,
+      'Intent',
+      config.intents,
+      additionalMethods: [
+        intentDispatchMethod(config),
+      ],
+    );
 
     //! Effects
     generateContractClass(
@@ -30,23 +37,66 @@ class ViewModelFactory extends BaseFactory<ViewModelConfig> {
     generateContractMethods(config);
   }
 
+  Method intentDispatchMethod(ViewModelConfig config) {
+    return Method.returnsVoid((methodDef) {
+      methodDef
+        ..name = 'dispatch'
+        ..requiredParameters.add(
+          Parameter((paramDef) {
+            paramDef
+              ..type = refer(Strings.contextType)
+              ..name = 'context';
+          }),
+        )
+        ..body = Code(
+          'if(!context.mounted) return; '
+          'context.read<${config.name}ViewModel>()._postIntent(this);',
+        );
+    });
+  }
+
   void generateContractClass(
     String baseName,
     String contractName,
-    List<MethodConfig> methods,
-  ) {
+    List<MethodConfig> methods, {
+    List<Method> additionalMethods = const [],
+  }) {
     if (methods.isEmpty) {
       buffer.writeln('typedef $baseName$contractName = ${Strings.unitType};\n');
     } else {
+      final prefix = contractName == 'Effect' ? '' : '_';
       final contractClass = Class((classDec) {
         classDec
           ..sealed = true
           ..name = '$baseName$contractName'
-          ..constructors.add(
+          ..constructors.addAll([
             Constructor((constDec) {
               constDec.constant = true;
             }),
-          );
+            ...methods.map((method) {
+              final filteredParams = method.params
+                ..removeWhere((param) {
+                  return param.type == Strings.contextType && contractName == 'Effect';
+                });
+              return Constructor((constDec) {
+                constDec
+                  ..constant = true
+                  ..factory = true
+                  ..name = method.name.normalize()
+                  ..requiredParameters.addAll(
+                    filteredParams.map((param) {
+                      return Parameter((paramDec) {
+                        paramDec
+                          ..name = param.name
+                          ..type = refer(param.type);
+                      });
+                    }),
+                  )
+                  ..redirect = refer('$prefix$baseName${method.name.normalize().capitalize()}');
+              });
+            }),
+          ])
+          ..methods.addAll(additionalMethods);
       });
 
       writeSpec(contractClass);
@@ -61,7 +111,7 @@ class ViewModelFactory extends BaseFactory<ViewModelConfig> {
             return param.type == Strings.contextType && contractName == 'Effect';
           });
         final contractSubClass = Class((classDec) {
-          final subClassName = '$baseName${method.name.normalize().capitalize()}';
+          final subClassName = '$prefix$baseName${method.name.normalize().capitalize()}';
           classDec
             ..name = subClassName
             ..modifier = ClassModifier.final$
@@ -122,7 +172,7 @@ class ViewModelFactory extends BaseFactory<ViewModelConfig> {
   void generateBaseClass(ViewModelConfig config) {
     final intents = config.intents.map((method) {
       final intentName = '${config.name}${method.name.normalize().capitalize()}';
-      return '$intentName() => (this as ${config.name}ViewModel).${method.name}('
+      return '_$intentName() => (this as ${config.name}ViewModel).${method.name}('
           '${method.params.map((param) => 'intent.${param.name}').join(',')}'
           '),';
     }).join();
@@ -187,31 +237,6 @@ class ViewModelFactory extends BaseFactory<ViewModelConfig> {
   }
 
   void generateContractMethods(ViewModelConfig config) {
-    if (config.intents.isNotEmpty) {
-      final intentMethod = Method.returnsVoid((methodDef) {
-        methodDef
-          ..name = '${config.name.unCapitalize()}Intent'
-          ..requiredParameters.addAll([
-            Parameter((paramDef) {
-              paramDef
-                ..name = 'context'
-                ..type = refer(Strings.contextType);
-            }),
-            Parameter((paramDef) {
-              paramDef
-                ..name = 'intent'
-                ..type = refer('${config.name}Intent');
-            }),
-          ])
-          ..body = Code(
-            'if(!context.mounted) return; '
-            'context.read<${config.name}ViewModel>()._postIntent(intent);',
-          );
-      });
-
-      writeSpec(intentMethod);
-    }
-
     if (config.state.typeName != Strings.unitType && config.state.typeName != null) {
       final selectMethod = Method((methodDef) {
         methodDef

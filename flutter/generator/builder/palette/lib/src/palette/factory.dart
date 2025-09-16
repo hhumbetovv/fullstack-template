@@ -1,6 +1,6 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:gen_data/builder.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 
 class PaletteFactory extends DataFactory {
   @override
@@ -16,24 +16,28 @@ class PaletteFactory extends DataFactory {
   void build(DataConfig config) {
     super.build(config);
 
-    createLerp(config);
+    writeSpec(createLerp(config));
   }
 
-  void createLerp(DataConfig config) {
-    final lerpParams = config.fields
+  String getLerpParams(List<FieldConfig> fields) {
+    return fields
         .map((param) {
           final fieldType = param.type.replaceAll('?', '');
           if (fieldType == 'Color' || fieldType == 'LinearGradient') {
             return '${param.name}: $fieldType.lerp(${param.name}, other.${param.name}, t) ?? other.${param.name},';
           }
           if (fieldType.contains('Palette')) {
-            return '${param.name}: ${param.name}.lerp(other.${param.name}, t) ?? other.${param.name},';
+            return '${param.name}: ${param.name}.lerp(other.${param.name}, t),';
           }
           return '${param.name}: other.${param.name},';
         })
         .join('\n');
+  }
 
-    final applyExt = Extension((extDef) {
+  Spec createLerp(DataConfig config) {
+    final lerpParams = getLerpParams(config.fields);
+
+    return Extension((extDef) {
       extDef
         ..name = '${config.name}Lerp'
         ..on = refer(config.name)
@@ -58,7 +62,5 @@ class PaletteFactory extends DataFactory {
           }),
         );
     });
-
-    writeSpec(applyExt);
   }
 }

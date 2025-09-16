@@ -31,9 +31,9 @@
   "editor.tabSize": 4,
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
-    "*.dart": "${capture}.freezed.dart, ${capture}.module.dart, ${capture}.g.dart, ${capture}.gr.dart, ${capture}.config.dart",
+    "*.dart": "${capture}.freezed.dart, ${capture}.g.dart, ${capture}.gr.dart, ${capture}.config.dart",
     ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap",
-    "pubspec.yaml": "pubspec.lock, pubspec_overrides.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata, analysis_options.yaml",
+    "pubspec.yaml": "pubspec.lock, pubspec_overrides.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata, analysis_options.yaml, build.yaml",
     "readme.*": "authors, backers.md, changelog, citation"
   },
   "git.ignoreLimitWarning": true,

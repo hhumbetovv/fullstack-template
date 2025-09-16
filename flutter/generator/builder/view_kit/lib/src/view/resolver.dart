@@ -1,7 +1,7 @@
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_core/extensions.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 
 class ViewResolver extends BaseResolver<ViewConfig, ClassElement2> {
   String get suffix => 'view';

@@ -3,7 +3,7 @@ import 'package:analyzer/dart/element/element2.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_view_kit/src/view_model/factory.dart';
 import 'package:gen_view_kit/src/view_model/resolver.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 
 class ViewModelBuilder extends BaseBuilder<ViewModelConfig, ClassElement2> {
   ViewModelBuilder({super.options})

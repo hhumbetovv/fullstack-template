@@ -8,7 +8,7 @@ import 'package:gen_core/base.dart';
 import 'package:gen_core/constants.dart';
 import 'package:gen_view_kit/src/view/factory.dart';
 import 'package:gen_view_kit/src/view/resolver.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 import 'package:source_gen/source_gen.dart';
 
 class ViewBuilder extends BaseBuilder<ViewConfig, ClassElement2> {

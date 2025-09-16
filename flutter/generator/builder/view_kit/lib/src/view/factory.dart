@@ -2,7 +2,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_core/constants.dart';
 import 'package:gen_core/extensions.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 
 class ViewFactory extends BaseFactory<ViewConfig> {
   String get suffix => 'View';

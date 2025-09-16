@@ -8,9 +8,15 @@ targets:
             - "type=lint"
 
 builders:
-  data:
+  palette:
     import: "package:gen_palette/builder.dart"
     builder_factories: ["paletteBuilder"]
     build_extensions: { ".dart": [".g.dart"] }
+    auto_apply: dependents
+    build_to: source
+  rootPalette:
+    import: "package:gen_palette/builder.dart"
+    builder_factories: ["rootPaletteBuilder"]
+    build_extensions: { ".dart": [".pal.dart"] }
     auto_apply: dependents
     build_to: source
