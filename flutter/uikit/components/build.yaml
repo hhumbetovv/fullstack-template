@@ -1,0 +1,27 @@
+targets:
+  $default:
+    builders:
+      #! Project Generators
+      gen_palette|palette:
+        enabled: true
+        generate_for:
+          include: ["lib/src/palette/**"]
+      gen_palette|rootPalette:
+        enabled: true
+        generate_for:
+          include: ["lib/src/theme/palette.dart"]
+      gen_exporter|exporter:
+        enabled: true
+        options:
+          folders:
+            - common
+            - components
+            - constants
+            - managers
+            - palette
+            - theme
+
+global_options:
+  gen_palette|palette:
+    runs_before:
+      - gen_exporter|exporter

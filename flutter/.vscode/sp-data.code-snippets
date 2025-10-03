@@ -1,19 +1,59 @@
 {
+    "Request Model": {
+        "prefix": "requestmodel",
+        "scope": "dart",
+        "body": [
+            "import 'package:json_annotation/json_annotation.dart';",
+            "",
+            "part '$TM_FILENAME_BASE.g.dart';",
+            "",
+            "@JsonSerializable(createFactory: false)",
+            "class ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} {",
+            "\tconst ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}();",
+            "",
+            "\tMap<String, dynamic> toJson() {",
+            "\t\treturn _$${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}ToJson(this);",
+            "\t}",
+            "",
+            "\t$2",
+            "}",
+        ]
+    },
+    "Response Model": {
+        "prefix": "responsemodel",
+        "scope": "dart",
+        "body": [
+            "import 'package:json_annotation/json_annotation.dart';",
+            "",
+            "part '$TM_FILENAME_BASE.g.dart';",
+            "",
+            "@JsonSerializable(createToJson: false)",
+            "class ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} {",
+            "\tconst ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}();",
+            "",
+            "\tfactory ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}.fromJson(Map<String, dynamic> json){",
+            "\t\treturn _$${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}FromJson(json);",
+            "\t}",
+            "",
+            "\t$2",
+            "}",
+        ]
+    },
     "Remote Data Service": {
         "prefix": "api",
+        "scope": "dart",
         "body": [
-            "import 'package:data/src/core/api_base_options.dart';",
             "import 'package:dio/dio.dart';",
+            "import 'package:injectable/injectable.dart';",
             "import 'package:retrofit/retrofit.dart';",
             "",
             "part '$TM_FILENAME_BASE.g.dart';",
             "",
             "@RestApi()",
+            "@injectable",
             "abstract class ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} {",
-            "\tfactory ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}(Dio dio) {",
-            "\t\tdio.options = ApiBaseOptions();",
-            "\t\treturn _${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}(dio);",
-            "\t}",
+            "\t@factoryMethod",
+            "\tfactory ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}(Dio dio) => _${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}(dio);",
             "",
             "\t$1",
             "}",
@@ -22,6 +62,7 @@
     },
     "Local Data Service": {
         "prefix": "store",
+        "scope": "dart",
         "body": [
             "import 'package:data/objectbox.g.dart';",
             "",
@@ -38,8 +79,8 @@
     },
     "Data Repository Implementation": {
         "prefix": "repository",
+        "scope": "dart",
         "body": [
-            "import 'package:domain/repositories.dart';",
             "import 'package:injectable/injectable.dart';",
             "",
             "@LazySingleton(as: ${TM_FILENAME_BASE/^(.*?)(?:_impl)?$/${1:/pascalcase}/})",
@@ -53,9 +94,8 @@
     },
     "Enum Mapper": {
         "prefix": "enumMap",
+        "scope": "dart",
         "body": [
-            "import 'package:domain/entities.dart';",
-            "",
             "extension $2Ext on $2 {",
             "\t$1 toEntity() {",
             "\t\treturn $1.values.firstWhere(",

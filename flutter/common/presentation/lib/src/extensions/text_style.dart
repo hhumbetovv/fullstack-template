@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 extension TextStyleX on TextStyle {
-  TextStyle withScaler(TextScaler scaler) {
+  TextStyle scaled(TextScaler scaler) {
     return copyWith(
       fontSize: fontSize != null ? scaler.scale(fontSize!) : null,
     );
   }
 
-  TextStyle withColor(Color? color) {
+  TextStyle colored(Color? color) {
     return copyWith(color: color);
   }
 }

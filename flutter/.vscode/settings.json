@@ -1,6 +1,6 @@
 {
   "cmake.ignoreCMakeListsMissing": true,
-  "dart.flutterSdkPath": ".fvm/versions/3.35.0",
+  "dart.flutterSdkPath": ".fvm/versions/3.35.2",
   "dart.autoImportCompletions": true,
   "dart.debugExternalPackageLibraries": false,
   "dart.debugSdkLibraries": false,

@@ -1,6 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:foundation/public.dart';
+import 'package:ui_foundation/public.dart';
 
 final class FadeRoute extends CustomRoute<void> {
   FadeRoute({

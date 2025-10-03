@@ -1,5 +1,7 @@
 enum AppIcons {
-  demo('');
+  chevronLeft('chevron-left'),
+  loader('loader'),
+  chevronRight('chevron-right');
 
   const AppIcons(this._name);
 

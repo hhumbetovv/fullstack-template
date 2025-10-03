@@ -282,31 +282,6 @@ Future<Map<String, dynamic>?> readPubspec(String filePath) async {
   }
 }
 
-// Normalize path
-String normalizePath(String basePath, String relativePath) {
-  // Simple path normalization without using package:path
-  if (relativePath.startsWith('/')) {
-    return relativePath;
-  }
-
-  final parts = <String>[...basePath.split('/'), ...relativePath.split('/')];
-
-  final normalized = <String>[];
-  for (final part in parts) {
-    if (part == '.' || part.isEmpty) {
-      continue;
-    } else if (part == '..') {
-      if (normalized.isNotEmpty) {
-        normalized.removeLast();
-      }
-    } else {
-      normalized.add(part);
-    }
-  }
-
-  return normalized.join('/');
-}
-
 // Get package name from pubspec
 String? getPackageName(Map<String, dynamic> pubspec) {
   return pubspec['name']?.toString();
@@ -326,39 +301,6 @@ bool shouldIgnoreModule(String moduleName) {
   return moduleName.startsWith('gen_') || moduleName.contains('generator') || moduleName.contains('_gen');
 }
 
-// Get relative path
-String getRelativePath(String from, String to) {
-  final fromParts = from.split('/');
-  final toParts = to.split('/');
-
-  // Find common prefix
-  var commonLength = 0;
-  final minLength = fromParts.length < toParts.length ? fromParts.length : toParts.length;
-
-  for (var i = 0; i < minLength; i++) {
-    if (fromParts[i] == toParts[i]) {
-      commonLength++;
-    } else {
-      break;
-    }
-  }
-
-  // Build relative path
-  final result = <String>[];
-
-  // Add .. for each remaining part in from
-  for (var i = commonLength; i < fromParts.length; i++) {
-    result.add('..');
-  }
-
-  // Add remaining parts from to
-  for (var i = commonLength; i < toParts.length; i++) {
-    result.add(toParts[i]);
-  }
-
-  return result.isEmpty ? '.' : result.join('/');
-}
-
 Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
   final workspacePaths = workspace.whereType<String>();
 
@@ -375,10 +317,14 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
   for (final workspacePath in workspacePaths) {
     Logger.debug('Analyzing workspace path: $workspacePath');
 
-    // Resolve relative path
-    final currentDir = Directory.current.path;
-    final resolvedPath = normalizePath(currentDir, workspacePath);
-    final pubspecPath = '/$resolvedPath/pubspec.yaml';
+    // Check pubspec directly with the workspace path
+    var cleanPath = workspacePath;
+    // Ensure path starts with ./ for consistency
+    if (!cleanPath.startsWith('./') && !cleanPath.startsWith('/')) {
+      cleanPath = './$cleanPath';
+    }
+
+    final pubspecPath = '$cleanPath/pubspec.yaml';
 
     Logger.debug('   Checking: $pubspecPath');
 
@@ -408,11 +354,11 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
       continue;
     }
 
-    // Store module info
-    state.modulePaths[actualModuleName] = getRelativePath(currentDir, resolvedPath);
+    // Store module info with clean path
+    state.modulePaths[actualModuleName] = cleanPath;
     state.moduleBuildStatus[actualModuleName] = BuildStatus.pending;
 
-    Logger.verbose('✅ Module found: $actualModuleName → $workspacePath');
+    Logger.verbose('✅ Module found: $actualModuleName → $cleanPath');
     discoveredCount++;
   }
 
@@ -471,10 +417,13 @@ Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
       continue;
     }
 
-    // Resolve relative path
-    final currentDir = Directory.current.path;
-    final resolvedPath = normalizePath(currentDir, depPath);
-    final pubspecPath = '$resolvedPath/pubspec.yaml';
+    // Clean path
+    var cleanPath = depPath;
+    if (!cleanPath.startsWith('./') && !cleanPath.startsWith('/')) {
+      cleanPath = './$cleanPath';
+    }
+
+    final pubspecPath = '$cleanPath/pubspec.yaml';
 
     Logger.debug('   Checking: $pubspecPath');
 
@@ -505,10 +454,10 @@ Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
     }
 
     // Store module info
-    state.modulePaths[actualModuleName] = getRelativePath(currentDir, resolvedPath);
+    state.modulePaths[actualModuleName] = cleanPath;
     state.moduleBuildStatus[actualModuleName] = BuildStatus.pending;
 
-    Logger.verbose('✅ Module found: $actualModuleName → $depPath');
+    Logger.verbose('✅ Module found: $actualModuleName → $cleanPath');
     discoveredCount++;
   }
 

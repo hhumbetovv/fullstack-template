@@ -7,20 +7,26 @@ environment:
 workspace:
   - app
   - processor
+  #? Generator
   - generator/core
   - generator/builder/data
   - generator/builder/exporter
   - generator/builder/palette
   - generator/builder/view_kit
+  #? Common
   - common/shared
   - common/presentation
+  #? Core
   - core/presentation
   - core/data
   - core/domain
+  #? UiKit
+  - uikit/foundation
+  - uikit/components
+  #? Demo
   - feature/demo/domain
   - feature/demo/data
   - feature/demo/presentation
-  - uikit/foundation
 
 dev_dependencies:
   #? Analysis

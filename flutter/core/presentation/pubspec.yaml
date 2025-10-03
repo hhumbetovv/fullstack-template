@@ -13,7 +13,7 @@ dependencies:
   common_shared: any
   common_presentation: any
   core_domain: any
-  foundation: any
+  ui_foundation: any
 
   #! Dependency Injection
   get_it: ^8.0.3

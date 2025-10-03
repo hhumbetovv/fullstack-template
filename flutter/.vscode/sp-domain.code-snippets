@@ -19,9 +19,7 @@
     "UseCase": {
         "prefix": "usecase",
         "body": [
-            "import 'package:domain/core.dart';",
-            "import 'package:domain/entities.dart';",
-            "import 'package:domain/repositories.dart';",
+            "import 'package:core_domain/public.dart';",
             "import 'package:injectable/injectable.dart';",
             "",
             "@injectable",
@@ -40,12 +38,42 @@
             ""
         ]
     },
+    "UseCase with Parameter": {
+        "prefix": "usecasewithparam",
+        "body": [
+            "import 'package:core_domain/public.dart';",
+            "import 'package:injectable/injectable.dart';",
+            "import 'package:processor/public.dart';",
+            "",
+            "part '$TM_FILENAME_BASE.g.dart';",
+            "",
+            "@injectable",
+            "final class ${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCase extends UseCase<${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCaseParams, ${3:Unit}> {",
+            "\tconst ${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCase(this._$5Repository);",
+            "",
+            "final $4Repository _$5Repository;",
+            "",
+            "\t@override",
+            "\tAsyncResult<${3:Unit}> execute({",
+            "\t\trequired ${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCaseParams params,",
+            "\t}) {",
+            "\t\treturn _$5Repository.$7;",
+            "\t}",
+            "}",
+            "",
+            "@data",
+            "class ${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCaseParams {",
+            "\tconst factory ${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCaseParams({",
+            "\t\t$6",
+            "\t}) = _${TM_FILENAME_BASE/^(.*?)(?:_usecase)?$/${1:/pascalcase}/}UseCaseParams;",
+            "}",
+            ""
+        ]
+    },
     "Flow UseCase": {
         "prefix": "flowusecase",
         "body": [
-            "import 'package:domain/core.dart';",
-            "import 'package:domain/entities.dart';",
-            "import 'package:domain/repositories.dart';",
+            "import 'package:core_domain/public.dart';",
             "import 'package:injectable/injectable.dart';",
             "",
             "@injectable",
@@ -67,9 +95,7 @@
     "Pagination UseCase": {
         "prefix": "pagusecase",
         "body": [
-            "import 'package:domain/core.dart';",
-            "import 'package:domain/entities.dart';",
-            "import 'package:domain/repositories.dart';",
+            "import 'package:core_domain/public.dart';",
             "import 'package:injectable/injectable.dart';",
             "",
             "@injectable",

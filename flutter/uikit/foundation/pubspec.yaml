@@ -1,4 +1,4 @@
-name: foundation
+name: ui_foundation
 
 environment:
   sdk: ^3.9.0
@@ -17,3 +17,7 @@ dev_dependencies:
 
   #? Modules
   gen_exporter: any
+
+flutter:
+  assets:
+    - assets/icons/

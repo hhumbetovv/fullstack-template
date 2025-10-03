@@ -27,7 +27,9 @@ class ExporterBuilder implements Builder {
     final expList = <String>[];
 
     for (final folder in folders) {
-      final exports = buildStep.findAssets(Glob('lib/src/$folder/**'));
+      final exports = buildStep.findAssets(Glob('lib/src/$folder/**')).where((file) {
+        return file.path.endsWith('.dart');
+      });
 
       await for (final exportLibrary in exports) {
         try {

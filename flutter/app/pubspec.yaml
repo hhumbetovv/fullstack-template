@@ -20,7 +20,7 @@ dependencies:
   core_data: any
   core_presentation: any
   #? UIKit
-  foundation: any
+  ui_foundation: any
   #? Demo
   demo_presentation: any
 

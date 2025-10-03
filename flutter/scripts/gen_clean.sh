@@ -19,6 +19,6 @@ for pid in "${pids[@]}"; do
 done
 
 echo "\n🧹 Cleaning build artifacts to prevent conflicts..."
-find . -name "*.g.dart" -o -name "*.freezed.dart" -o -name "*.gr.dart" -o -name "*.config.dart" -o -name "public.dart" | xargs rm -f 2>/dev/null
+find . -name "*.g.dart" -o -name "*.freezed.dart" -o -name "*.gr.dart" -o -name "*.module.dart" -o -name "*.config.dart" -o -name "public.dart" | xargs rm -f 2>/dev/null
 rm -rf .dart_tool/build
 echo "\n✅ All cleanups completed\n"
