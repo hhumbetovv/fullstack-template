@@ -1,17 +1,39 @@
 targets:
   $default:
     builders:
+      #! Package Generators
+      json_serializable|json_serializable:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/model/remote/**"
+      retrofit_generator|retrofit_generator:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/datasource/remote/**"
+      injectable_generator|injectable_builder:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/module/**"
+            - "lib/src/repository/**"
+            - "lib/src/datasource/**"
       #! Project Generators
       gen_exporter|exporter:
         enabled: true
         options:
           folders:
             - common
+            - mapper
             - core
             - model
             - module
 
 global_options:
   gen_exporter|exporter:
+    runs_before:
+      - injectable_generator|injectable_builder
+  json_serializable|json_serializable:
     runs_before:
       - injectable_generator|injectable_builder

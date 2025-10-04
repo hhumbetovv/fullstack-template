@@ -4,10 +4,10 @@
 part of 'result.dart';
 
 final class Error<S, E> extends Result<S, E> {
-  const Error(this._error);
+  const Error(this._error, {super.action});
 
-  static Error<S, Unit> unit<S>() {
-    return Error<S, Unit>(Unit());
+  static Error<S, Unit> unit<S>({String? action}) {
+    return Error<S, Unit>(Unit(), action: action);
   }
 
   final E _error;
@@ -31,7 +31,7 @@ final class Error<S, E> extends Result<S, E> {
     required SuccessCallback<W, S> onSuccess,
     required ErrorCallback<W, E> onError,
   }) {
-    return onError(_error);
+    return onError(_error, action);
   }
 
   @override

@@ -5,10 +5,7 @@ final class ApiBaseOptions extends BaseOptions {
   ApiBaseOptions()
     : super(
         baseUrl: Environment.baseUrl,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        contentType: 'application/json',
+        contentType: Headers.jsonContentType,
         connectTimeout: const Duration(seconds: 10),
       );
 }

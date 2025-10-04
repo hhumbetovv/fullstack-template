@@ -11,7 +11,7 @@ final class UIButton extends StatefulWidget {
     this.isDisabled = false,
     this.isLoading = false,
     super.key,
-    this.onTap,
+    this.onClick,
     this.radius = const AppRadius.large(),
     this.suffixIcon,
     this.prefixIcon,
@@ -33,7 +33,7 @@ final class UIButton extends StatefulWidget {
          'One of these must be setted: textSpan, text or children',
        );
 
-  final VoidCallback? onTap;
+  final VoidCallback? onClick;
   final VoidCallback? onSuffixTap;
   final ButtonTypePalette palette;
   final String? text;
@@ -152,7 +152,7 @@ class _UIButtonState extends State<UIButton> {
     return AnimatedSize(
       duration: const AppDuration.fast(),
       child: Clickable(
-        onTap: widget.onTap,
+        onTap: widget.onClick,
         onAnimationChanged: (value) => setState(() => animationValue = value),
         isDisabled: widget.isDisabled || widget.isLoading,
         pressedOpacity: 1,

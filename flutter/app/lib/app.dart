@@ -1,10 +1,7 @@
-import 'package:app/router/router.dart';
+import 'package:app/config/router.dart';
 import 'package:common_presentation/public.dart';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 import 'package:ui_foundation/public.dart';
-
-final router = GetIt.I<AppRouter>();
 
 final class App extends StatelessWidget {
   const App({
@@ -33,7 +30,7 @@ final class App extends StatelessWidget {
       //   return RootView(child: child ?? const SizedBox.shrink());
       // },
       themeAnimationCurve: const AppCurves.fastInFastOut(),
-      routerConfig: router.config(
+      routerConfig: AppRouter.instance.config(
         navigatorObservers: () => [
           // if (Console.isEnabled) RouteLogger(),
           HeroController(),

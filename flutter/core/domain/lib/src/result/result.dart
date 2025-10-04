@@ -3,17 +3,19 @@ import 'package:core_domain/src/entity/unit.dart';
 part 'error.dart';
 part 'success.dart';
 
-typedef SuccessCallback<W, S> = W Function(S success);
-typedef ErrorCallback<W, E> = W Function(E failure);
+typedef SuccessCallback<W, S> = W Function(S success, String? action);
+typedef ErrorCallback<W, E> = W Function(E failure, String? action);
 
 typedef ResultOf<S, E> = Result<S, E>;
 
 sealed class Result<S, E> {
-  const Result();
+  const Result({this.action});
 
   const factory Result.success(S s) = Success;
 
   const factory Result.error(E e) = Error;
+
+  final String? action;
 
   S getOrThrow();
 

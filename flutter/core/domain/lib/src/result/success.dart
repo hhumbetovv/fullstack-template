@@ -4,12 +4,10 @@
 part of 'result.dart';
 
 final class Success<S, E> extends Result<S, E> {
-  const Success(
-    this._success,
-  );
+  const Success(this._success, {super.action});
 
-  static Success<Unit, E> unit<E>() {
-    return Success<Unit, E>(Unit());
+  static Success<Unit, E> unit<E>({String? action}) {
+    return Success<Unit, E>(Unit(), action: action);
   }
 
   final S _success;
@@ -49,7 +47,7 @@ final class Success<S, E> extends Result<S, E> {
 
   @override
   W when<W>({required SuccessCallback<W, S> onSuccess, required ErrorCallback<W, E> onError}) {
-    return onSuccess(_success);
+    return onSuccess(_success, action);
   }
 
   @override

@@ -7,7 +7,7 @@ import 'package:core_presentation/src/state/event_bus.dart';
 import 'package:core_presentation/src/state/state_notifier.dart';
 import 'package:core_presentation/src/utils/compare_and_format.dart';
 import 'package:get_it/get_it.dart';
-import 'package:processor/processor.dart';
+import 'package:processor/public.dart';
 
 typedef ViewMessage = ({String content, MessageType type});
 
@@ -73,7 +73,7 @@ abstract class BaseViewModel<UIntent, UIState, UIEffect> extends StateNotifier<U
 
   final _intentController = StreamController<UIntent>();
   final _effectController = StreamController<UIEffect>.broadcast();
-  final _messageController = StreamController<ViewMessage>();
+  final _messageController = StreamController<ViewMessage>.broadcast();
 
   Stream<UIEffect> get effectStream => _effectController.stream;
 

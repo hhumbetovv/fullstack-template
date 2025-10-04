@@ -6,11 +6,11 @@ Future<Result<Response, Failure>> safeMapperCall<Data, Response>(
   required Response Function(Data data) mapper,
 }) async {
   final response = await safeRequest(requestCallback);
-  if (response.success && response.data != null) {
+  if (response.isSuccess && response.data != null) {
     final data = response.data as Data;
 
-    return Success(mapper(data));
+    return Success(mapper(data), action: response.action);
   }
 
-  return response.mapToError();
+  return response.mapToError(action: response.action);
 }

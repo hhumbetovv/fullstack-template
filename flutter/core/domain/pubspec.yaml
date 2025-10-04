@@ -13,7 +13,7 @@ dependencies:
   common_shared: any
 
 dev_dependencies:
-  #! Generator
+  #? Generator
   build_runner: ^2.4.15
 
   #? Modules

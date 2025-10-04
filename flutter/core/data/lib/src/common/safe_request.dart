@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:common_shared/public.dart';
-import 'package:core_data/src/model/network_response.dart';
+import 'package:core_data/src/model/remote/network_response.dart';
 import 'package:dio/dio.dart';
 
 Future<NetworkResponse<Data?>> safeRequest<Data>(
@@ -33,7 +33,7 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
         final json = dioError.response?.data! as Map<String, dynamic>;
         return NetworkResponse.fromJson(json, (_) => null);
       } else {
-        return NetworkResponse(success: false, message: dioError.error.toString());
+        return NetworkResponse(isSuccess: false, message: dioError.error.toString());
       }
     } on Exception catch (error) {
       Console.firebaseRecordError(
@@ -42,7 +42,7 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
         reason: 'Dio Error parse Failed',
       );
       return NetworkResponse(
-        success: false,
+        isSuccess: false,
         message: error.toString(),
       );
     }
@@ -62,7 +62,7 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
     );
 
     return NetworkResponse(
-      success: false,
+      isSuccess: false,
       message: error.toString(),
     );
   }

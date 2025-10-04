@@ -8,4 +8,5 @@ targets:
           folders:
             - entity
             - result
+            - repository
             - usecase

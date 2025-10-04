@@ -5,8 +5,6 @@ import 'package:injectable/injectable.dart';
 
 import 'injectable.config.dart';
 
-final locator = GetIt.I;
-
 @InjectableInit(
   initializerName: r'$initLocator',
   preferRelativeImports: true,
@@ -17,5 +15,5 @@ final locator = GetIt.I;
   ],
 )
 Future<void> configureDependencies() async {
-  await locator.$initLocator();
+  await GetIt.I.$initLocator();
 }

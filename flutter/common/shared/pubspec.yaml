@@ -8,6 +8,9 @@ dependencies:
   #! Environment
   flutter_dotenv: ^5.2.1
 
+  #! Localization
+  intl: ^0.20.2
+
 dev_dependencies:
   #! Generator
   build_runner: ^2.4.15

@@ -21,6 +21,9 @@ dependencies:
   core_presentation: any
   #? UIKit
   ui_foundation: any
+  ui_components: any
+  #? Console
+  console_presentation: any
   #? Demo
   demo_presentation: any
 

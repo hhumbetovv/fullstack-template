@@ -1,8 +1,10 @@
+export 'src/entity/auth_status.dart';
 export 'src/entity/failure.dart';
 export 'src/entity/identifiable.dart';
 export 'src/entity/paged.dart';
 export 'src/entity/types.dart';
 export 'src/entity/unit.dart';
+export 'src/repository/session_repository.dart';
 export 'src/result/result.dart';
 export 'src/usecase/flow_usecase.dart';
 export 'src/usecase/pagination_usecase.dart';

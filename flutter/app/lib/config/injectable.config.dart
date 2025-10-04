@@ -14,7 +14,7 @@ import 'package:demo_presentation/init.module.dart' as _i407;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
-import '../router/router.dart' as _i285;
+import './router.dart' as _i285;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
