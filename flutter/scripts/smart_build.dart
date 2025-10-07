@@ -8,14 +8,10 @@ enum BuildStatus { pending, building, completed, failed }
 // Global state
 class BuildState {
   Map<String, String> modulePaths = {}; // module_name -> path
-  Map<String, String> allModulePaths =
-      {}; // module_name -> path (includes non-build_runner modules)
-  Map<String, Set<String>> moduleDependencies =
-      {}; // module_name -> dependencies
-  Map<String, Set<String>> allModuleDependencies =
-      {}; // module_name -> full dependencies for visualization
-  Map<String, Set<String>> moduleUnusedDependencies =
-      {}; // module_name -> declared deps without package imports
+  Map<String, String> allModulePaths = {}; // module_name -> path (includes non-build_runner modules)
+  Map<String, Set<String>> moduleDependencies = {}; // module_name -> dependencies
+  Map<String, Set<String>> allModuleDependencies = {}; // module_name -> full dependencies for visualization
+  Map<String, Set<String>> moduleUnusedDependencies = {}; // module_name -> declared deps without package imports
   Map<String, BuildStatus> moduleBuildStatus = {}; // module_name -> status
   Map<String, Process> modulePids = {}; // module_name -> process
   Map<String, int> moduleBuildLevel = {}; // module_name -> build_level
@@ -221,9 +217,7 @@ class YamlParser {
       final trimmedLine = line.trim();
 
       // Skip empty lines and comment lines.
-      if (trimmedLine.isEmpty ||
-          trimmedLine.startsWith('#') ||
-          trimmedLine.startsWith('!')) {
+      if (trimmedLine.isEmpty || trimmedLine.startsWith('#') || trimmedLine.startsWith('!')) {
         continue;
       }
 
@@ -249,9 +243,7 @@ class YamlParser {
           final value = trimmedLine.substring(1).trim();
           parent.add(value);
         } else {
-          if (parent is Map &&
-              parent.isNotEmpty &&
-              parent.values.last is List) {
+          if (parent is Map && parent.isNotEmpty && parent.values.last is List) {
             final list = parent.values.last as List;
             final value = trimmedLine.substring(1).trim();
             list.add(value);
@@ -261,9 +253,7 @@ class YamlParser {
         // Handle key-value pairs or nested map/list definitions.
         final parts = trimmedLine.split(':');
         final key = parts[0].trim();
-        final valuePart = parts.length > 1
-            ? parts.sublist(1).join(':').trim()
-            : '';
+        final valuePart = parts.length > 1 ? parts.sublist(1).join(':').trim() : '';
 
         // Check if the value is empty, indicating a nested map or list.
         if (valuePart.isEmpty) {
@@ -320,9 +310,7 @@ bool hasBuildRunner(Map<String, dynamic> pubspec) {
 
 // Check if module should be ignored (generators)
 bool shouldIgnoreModule(String moduleName) {
-  return moduleName.startsWith('gen_') ||
-      moduleName.contains('generator') ||
-      moduleName.contains('_gen');
+  return moduleName.startsWith('gen_') || moduleName.contains('generator') || moduleName.contains('_gen');
 }
 
 Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
@@ -409,8 +397,7 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
 
 Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
   final dependencies = rootPubspec['dependencies'] as Map<String, dynamic>?;
-  final devDependencies =
-      rootPubspec['dev_dependencies'] as Map<String, dynamic>?;
+  final devDependencies = rootPubspec['dev_dependencies'] as Map<String, dynamic>?;
 
   if (dependencies == null && devDependencies == null) {
     Logger.warning('No dependencies found in root pubspec.yaml');
@@ -629,9 +616,7 @@ Future<void> buildDependencyGraph() async {
     state.allModuleDependencies[moduleName] = fullDependencies;
 
     if (state.modulePaths.containsKey(moduleName)) {
-      final buildDependencies = fullDependencies
-          .where(state.modulePaths.containsKey)
-          .toSet();
+      final buildDependencies = fullDependencies.where(state.modulePaths.containsKey).toSet();
       state.moduleDependencies[moduleName] = buildDependencies;
 
       if (buildDependencies.isNotEmpty) {
@@ -833,44 +818,116 @@ Future<void> generateMermaidGraph() async {
     ..writeln('## Visual Representation')
     ..writeln('')
     ..writeln('```mermaid')
-    ..writeln('graph TD');
+    ..writeln('graph LR');
 
-  // Add nodes with styling and build levels
-  for (final entry in state.allModulePaths.entries) {
-    final moduleName = entry.key;
+  String? classifyModule(String moduleName) {
+    if (moduleName.startsWith('common_') || moduleName.contains('_common')) {
+      return 'common';
+    }
+    if (moduleName.startsWith('core_') || moduleName.contains('_core')) {
+      return 'core';
+    }
+    if (moduleName.startsWith('ui_') || moduleName.contains('_ui')) {
+      return 'ui';
+    }
+    if (moduleName.contains('_presentation') || moduleName.endsWith('_ui')) {
+      return 'presentation';
+    }
+    if (moduleName.contains('_domain') || moduleName.contains('_business')) {
+      return 'domain';
+    }
+    if (moduleName.contains('_data') || moduleName.contains('_repository')) {
+      return 'data';
+    }
+
+    return null;
+  }
+
+  String moduleEdgeColor(String moduleName) {
+    switch (classifyModule(moduleName)) {
+      case 'presentation':
+        return '#0277bd';
+      case 'domain':
+        return '#7b1fa2';
+      case 'data':
+        return '#2e7d32';
+      case 'ui':
+        return '#f57c00';
+      case 'common':
+        return '#c2185b';
+      case 'core':
+        return '#00695c';
+      default:
+        return '#546e7a';
+    }
+  }
+
+  void writeNode(String moduleName) {
     final level = state.moduleBuildLevel[moduleName];
     final waveLabel = level != null ? '🌊 Wave $level' : '🚫 No build';
     content.writeln('    $moduleName["$moduleName\n$waveLabel"]');
 
-    // Style based on module naming patterns
-    if (moduleName.contains('_presentation') || moduleName.endsWith('_ui')) {
-      content.writeln('    $moduleName:::presentation');
-    } else if (moduleName.contains('_domain') ||
-        moduleName.contains('_business')) {
-      content.writeln('    $moduleName:::domain');
-    } else if (moduleName.contains('_data') ||
-        moduleName.contains('_repository')) {
-      content.writeln('    $moduleName:::data');
-    } else if (moduleName.startsWith('ui_') || moduleName.contains('_ui')) {
-      content.writeln('    $moduleName:::ui');
-    } else if (moduleName.startsWith('common_') ||
-        moduleName.contains('_common')) {
-      content.writeln('    $moduleName:::common');
-    } else if (moduleName.startsWith('core_') || moduleName.contains('_core')) {
-      content.writeln('    $moduleName:::core');
+    final clazz = classifyModule(moduleName);
+    if (clazz != null) {
+      content.writeln('    $moduleName:::$clazz');
     }
   }
 
-  content.writeln('');
+  final orderedModules = state.allModulePaths.keys.toList()
+    ..sort((a, b) {
+      final levelA = state.moduleBuildLevel[a] ?? 999;
+      final levelB = state.moduleBuildLevel[b] ?? 999;
+      if (levelA != levelB) return levelA.compareTo(levelB);
+      return a.compareTo(b);
+    });
 
-  // Add dependencies
-  for (final entry in state.allModuleDependencies.entries) {
-    for (final dep in entry.value) {
-      content.writeln('    $dep --> ${entry.key}');
+  for (final moduleName in orderedModules) {
+    writeNode(moduleName);
+  }
+
+  content
+    ..writeln('')
+    ..writeln('    %% Edge colours follow the target module category')
+    ..writeln(
+      '    linkStyle default stroke:#b0bec5,stroke-width:1,opacity:0.35',
+    );
+
+  final edges = <String>[];
+  final edgeStyles = <int, String>{};
+  var edgeIndex = 0;
+
+  final dependencyOrder = state.allModuleDependencies.keys.toList()..sort();
+  for (final moduleName in dependencyOrder) {
+    final deps = state.allModuleDependencies[moduleName];
+    if (deps == null || deps.isEmpty) {
+      continue;
+    }
+
+    final sortedDeps = deps.toList()..sort();
+
+    for (final dep in sortedDeps) {
+      final colour = moduleEdgeColor(dep);
+      edges.add('    $dep --> $moduleName');
+      edgeStyles[edgeIndex] = colour;
+      edgeIndex++;
     }
   }
 
-  // Add styling
+  for (final edge in edges) {
+    content.writeln(edge);
+  }
+
+  if (edgeStyles.isNotEmpty) {
+    content.writeln('');
+    final indices = edgeStyles.keys.toList()..sort();
+    for (final index in indices) {
+      final colour = edgeStyles[index]!;
+      content.writeln(
+        '    linkStyle $index stroke:$colour,stroke-width:1.9,opacity:0.9',
+      );
+    }
+  }
+
   content
     ..writeln('')
     ..writeln(
@@ -898,8 +955,6 @@ Future<void> generateMermaidGraph() async {
 
   // Add statistics
   final totalModules = state.allModulePaths.length;
-  final buildRunnerModules = state.modulePaths.length;
-  final modulesWithoutBuildRunner = totalModules - buildRunnerModules;
   var totalDependencies = 0;
   for (final deps in state.allModuleDependencies.values) {
     totalDependencies += deps.length;
@@ -907,11 +962,13 @@ Future<void> generateMermaidGraph() async {
 
   content
     ..writeln('- **Total Modules**: $totalModules')
-    ..writeln('- **Modules With build_runner**: $buildRunnerModules')
-    ..writeln('- **Modules Without build_runner**: $modulesWithoutBuildRunner')
+    ..writeln('- **Modules With build_runner**: ${state.modulePaths.length}')
+    ..writeln(
+      '- **Modules Without build_runner**: ${totalModules - state.modulePaths.length}',
+    )
     ..writeln('- **Total Dependencies**: $totalDependencies')
     ..writeln(
-      '- **Average Dependencies**: ${totalModules > 0 ? (totalDependencies / totalModules).toStringAsFixed(2) : 0}',
+      '- **Average Dependencies**: ${totalModules > 0 ? (totalDependencies / totalModules).toStringAsFixed(2) : '0'}',
     )
     ..writeln('- **Max Parallel Builds**: ${state.maxParallelBuilds}')
     ..writeln('')
@@ -951,34 +1008,6 @@ Future<void> generateMermaidGraph() async {
           }
         }
       }
-    }
-  }
-
-  final unusedEntries =
-      state.moduleUnusedDependencies.entries
-          .map(
-            (entry) => MapEntry(
-              entry.key,
-              entry.value.toList()..sort(),
-            ),
-          )
-          .toList()
-        ..sort((a, b) => a.key.compareTo(b.key));
-
-  content
-    ..writeln('')
-    ..writeln('## Unused Modules')
-    ..writeln('')
-    ..writeln(
-      'The following declared module dependencies appear unused (no `package:` import found):',
-    )
-    ..writeln('');
-
-  if (unusedEntries.isEmpty) {
-    content.writeln('No unused module dependencies detected.');
-  } else {
-    for (final entry in unusedEntries) {
-      content.writeln('- **${entry.key}** → unused: ${entry.value.join(', ')}');
     }
   }
 
@@ -1180,9 +1209,7 @@ Future<Map<String, dynamic>> buildModule(String moduleName) async {
   // Determine command
   final usesFvm = File('$modulePath/.fvm').existsSync();
   final command = usesFvm ? 'fvm' : 'dart';
-  final args = usesFvm
-      ? ['dart', 'run', 'build_runner', 'build', '-d']
-      : ['run', 'build_runner', 'build', '-d'];
+  final args = usesFvm ? ['dart', 'run', 'build_runner', 'build', '-d'] : ['run', 'build_runner', 'build', '-d'];
 
   // Start process
   final buildProcess = await Process.start(
@@ -1427,8 +1454,7 @@ Future<void> main(List<String> args) async {
         while (changed) {
           changed = false;
           for (final moduleName in requiredModules.toList()) {
-            final dependencies =
-                state.moduleDependencies[moduleName] ?? <String>{};
+            final dependencies = state.moduleDependencies[moduleName] ?? <String>{};
             for (final dep in dependencies) {
               if (!requiredModules.contains(dep)) {
                 requiredModules.add(dep);
