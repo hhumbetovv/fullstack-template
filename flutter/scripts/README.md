@@ -9,10 +9,17 @@ dart run scripts <command> [options]
 
 ## Available commands
 
-- `smart-build` – incremental `build_runner` orchestration with dependency graph awareness.
+- `gen-build [modules…]` – listed veya tüm modüller için `build_runner build` çalıştırır.
+- `gen-clean` – tüm `build_runner` modüllerinde `build_runner clean` ve artifakt siler.
+- `gen-watch [modules…] [--pre-build]` – seçili modüller için `build_runner watch` başlatır.
+- `smart-build` – incremental `build_runner` orkestrasyonu (akıllı bağımlılık takibi).
   - Kısayol: `dart run scripts:smart_build --dry-run`
 - `module-graph` – bağımlılık grafiğini ve istatistikleri `build_graph.md` dosyasına üretir.
   - Kısayol: `dart run scripts:module_graph`
+- `pubspec-links` – tüm `pubspec.yaml` dosyalarını `yaml/pubspecs/` altına bağlar.
+- `build-links` – tüm `build.yaml` dosyalarını `yaml/builds/` altına bağlar.
+- `yaml-links` – `pubspec-links` ve `build-links` komutlarını ardışık çalıştırır.
+- `locale --input <dir> --output <file>` – JSON çeviri dosyalarından `LocaleKeys` üretir.
 
 ## Adding a new command
 
