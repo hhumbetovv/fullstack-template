@@ -5,6 +5,7 @@ environment:
   sdk: ^3.9.0
 
 workspace:
+  - scripts
   - app
   - processor
   #? Generator

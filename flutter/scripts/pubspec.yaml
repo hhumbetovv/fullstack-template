@@ -1,0 +1,8 @@
+name: scripts
+
+environment:
+  sdk: ^3.9.0
+resolution: workspace
+
+dependencies:
+  args: ^2.5.0

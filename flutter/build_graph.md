@@ -13,6 +13,7 @@ graph LR
     demo_domain["demo_domain
 🌊 Wave 0"]
     demo_domain:::domain
+    class demo_domain unused;
     processor["processor
 🌊 Wave 0"]
     common_presentation["common_presentation
@@ -24,6 +25,7 @@ graph LR
     demo_data["demo_data
 🌊 Wave 2"]
     demo_data:::data
+    class demo_data unused;
     ui_components["ui_components
 🌊 Wave 2"]
     ui_components:::ui
@@ -41,6 +43,8 @@ graph LR
     core_presentation["core_presentation
 🚫 No build"]
     core_presentation:::core
+    scripts["scripts
+🚫 No build"]
     ui_foundation["ui_foundation
 🚫 No build"]
     ui_foundation:::ui
@@ -127,16 +131,17 @@ graph LR
     classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
     classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
     classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000
+    classDef unused fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000
 ```
 
 ## Build Statistics
 
-- **Total Modules**: 14
+- **Total Modules**: 15
 - **Modules With build_runner**: 11
-- **Modules Without build_runner**: 3
+- **Modules Without build_runner**: 4
 - **Total Dependencies**: 36
-- **Average Dependencies**: 2.57
-- **Max Parallel Builds**: 8
+- **Average Dependencies**: 2.40
+- **Max Parallel Builds**: 4
 
 ## Build Waves
 
@@ -168,3 +173,10 @@ The modules requiring build_runner will be built in the following waves:
 ### Wave 4
 
 - **app** → depends on: common_shared, common_presentation, core_data, core_navigation, ui_components, console_presentation, demo_presentation
+
+## Unused Module Dependencies
+
+The following modules declare workspace dependencies that are never imported:
+
+- **demo_data** → core_data
+- **demo_domain** → core_domain

@@ -10,5 +10,5 @@ pod repo update
 pod install
 cd ../..
 fvm flutter pub get
-dart scripts/smart_build.dart
+dart run scripts smart-build
 dart pub global activate flutterfire_cli

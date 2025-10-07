@@ -1,5 +1,4 @@
-#!/usr/bin/env dart
-
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,10 +7,14 @@ enum BuildStatus { pending, building, completed, failed }
 // Global state
 class BuildState {
   Map<String, String> modulePaths = {}; // module_name -> path
-  Map<String, String> allModulePaths = {}; // module_name -> path (includes non-build_runner modules)
-  Map<String, Set<String>> moduleDependencies = {}; // module_name -> dependencies
-  Map<String, Set<String>> allModuleDependencies = {}; // module_name -> full dependencies for visualization
-  Map<String, Set<String>> moduleUnusedDependencies = {}; // module_name -> declared deps without package imports
+  Map<String, String> allModulePaths =
+      {}; // module_name -> path (includes non-build_runner modules)
+  Map<String, Set<String>> moduleDependencies =
+      {}; // module_name -> dependencies
+  Map<String, Set<String>> allModuleDependencies =
+      {}; // module_name -> full dependencies for visualization
+  Map<String, Set<String>> moduleUnusedDependencies =
+      {}; // module_name -> declared deps without package imports
   Map<String, BuildStatus> moduleBuildStatus = {}; // module_name -> status
   Map<String, Process> modulePids = {}; // module_name -> process
   Map<String, int> moduleBuildLevel = {}; // module_name -> build_level
@@ -24,7 +27,31 @@ class BuildState {
   String? targetModule;
 }
 
-final BuildState state = BuildState();
+class SmartBuildOptions {
+  const SmartBuildOptions({
+    required this.verbose,
+    required this.dryRun,
+    required this.maxParallelBuilds,
+    this.targetModule,
+  });
+
+  final bool verbose;
+  final bool dryRun;
+  final int maxParallelBuilds;
+  final String? targetModule;
+}
+
+class SmartBuildException implements Exception {
+  SmartBuildException(this.message, {this.exitCode = 1});
+
+  final String message;
+  final int exitCode;
+
+  @override
+  String toString() => message;
+}
+
+BuildState state = BuildState();
 
 class Colors {
   static const String red = '\x1b[0;31m';
@@ -75,53 +102,6 @@ sealed class Logger {
   }
 }
 
-// Parse command line arguments
-void parseArguments(List<String> args) {
-  for (var i = 0; i < args.length; i++) {
-    switch (args[i]) {
-      case '--verbose':
-      case '-v':
-        state.verbose = true;
-      case '--dry-run':
-        state.dryRun = true;
-      case '--parallel':
-      case '-p':
-        if (i + 1 < args.length) {
-          state.maxParallelBuilds = int.tryParse(args[++i]) ?? 4;
-        }
-      case '--help':
-      case '-h':
-        showHelp();
-        exit(0);
-      default:
-        state.targetModule = args[i];
-    }
-  }
-}
-
-// Show help
-void showHelp() {
-  log('''
-Flutter Smart Build System
-
-Usage: dart build.dart [OPTIONS] [MODULE_NAME]
-
-Options:
-    --verbose, -v       Enable verbose debug output
-    --dry-run          Show what would be built without actually building
-    --parallel, -p N    Set max parallel builds (default: 4)
-    --help, -h         Show this help message
-
-Examples:
-    dart build.dart                          # Build all modules
-    dart build.dart --verbose               # Build all with debug output
-    dart build.dart demo_presentation        # Build specific module by name
-    dart build.dart --dry-run --verbose     # Show build plan without executing
-
-Note: Module names are taken directly from pubspec.yaml files, not derived from paths.
-''');
-}
-
 Future<void> validateEnvironment() async {
   Logger.debug('Validating environment...');
 
@@ -132,20 +112,18 @@ Future<void> validateEnvironment() async {
     try {
       await Process.run('which', ['fvm']);
     } on Exception catch (_) {
-      Logger.error(
+      throw SmartBuildException(
         "Neither 'dart' nor 'fvm' command found. Please ensure Flutter is installed.",
       );
-      exit(1);
     }
   }
 
   // Check if we're in a Flutter project
   final rootPubspec = File('pubspec.yaml');
   if (!rootPubspec.existsSync()) {
-    Logger.error(
+    throw SmartBuildException(
       'No pubspec.yaml found in current directory. Please run from Flutter project root.',
     );
-    exit(1);
   }
 
   Logger.debug('Environment validation passed');
@@ -217,7 +195,9 @@ class YamlParser {
       final trimmedLine = line.trim();
 
       // Skip empty lines and comment lines.
-      if (trimmedLine.isEmpty || trimmedLine.startsWith('#') || trimmedLine.startsWith('!')) {
+      if (trimmedLine.isEmpty ||
+          trimmedLine.startsWith('#') ||
+          trimmedLine.startsWith('!')) {
         continue;
       }
 
@@ -243,7 +223,9 @@ class YamlParser {
           final value = trimmedLine.substring(1).trim();
           parent.add(value);
         } else {
-          if (parent is Map && parent.isNotEmpty && parent.values.last is List) {
+          if (parent is Map &&
+              parent.isNotEmpty &&
+              parent.values.last is List) {
             final list = parent.values.last as List;
             final value = trimmedLine.substring(1).trim();
             list.add(value);
@@ -253,7 +235,9 @@ class YamlParser {
         // Handle key-value pairs or nested map/list definitions.
         final parts = trimmedLine.split(':');
         final key = parts[0].trim();
-        final valuePart = parts.length > 1 ? parts.sublist(1).join(':').trim() : '';
+        final valuePart = parts.length > 1
+            ? parts.sublist(1).join(':').trim()
+            : '';
 
         // Check if the value is empty, indicating a nested map or list.
         if (valuePart.isEmpty) {
@@ -310,7 +294,9 @@ bool hasBuildRunner(Map<String, dynamic> pubspec) {
 
 // Check if module should be ignored (generators)
 bool shouldIgnoreModule(String moduleName) {
-  return moduleName.startsWith('gen_') || moduleName.contains('generator') || moduleName.contains('_gen');
+  return moduleName.startsWith('gen_') ||
+      moduleName.contains('generator') ||
+      moduleName.contains('_gen');
 }
 
 Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
@@ -397,7 +383,8 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
 
 Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
   final dependencies = rootPubspec['dependencies'] as Map<String, dynamic>?;
-  final devDependencies = rootPubspec['dev_dependencies'] as Map<String, dynamic>?;
+  final devDependencies =
+      rootPubspec['dev_dependencies'] as Map<String, dynamic>?;
 
   if (dependencies == null && devDependencies == null) {
     Logger.warning('No dependencies found in root pubspec.yaml');
@@ -524,8 +511,7 @@ Future<void> discoverModulesFromRoot() async {
   final rootPubspec = await readPubspec('pubspec.yaml');
 
   if (rootPubspec == null) {
-    Logger.error('Could not read root pubspec.yaml');
-    exit(1);
+    throw SmartBuildException('Could not read root pubspec.yaml');
   }
 
   // Check for workspace configuration first
@@ -616,7 +602,9 @@ Future<void> buildDependencyGraph() async {
     state.allModuleDependencies[moduleName] = fullDependencies;
 
     if (state.modulePaths.containsKey(moduleName)) {
-      final buildDependencies = fullDependencies.where(state.modulePaths.containsKey).toSet();
+      final buildDependencies = fullDependencies
+          .where(state.modulePaths.containsKey)
+          .toSet();
       state.moduleDependencies[moduleName] = buildDependencies;
 
       if (buildDependencies.isNotEmpty) {
@@ -820,6 +808,8 @@ Future<void> generateMermaidGraph() async {
     ..writeln('```mermaid')
     ..writeln('graph LR');
 
+  final modulesWithUnusedDeps = state.moduleUnusedDependencies.keys.toSet();
+
   String? classifyModule(String moduleName) {
     if (moduleName.startsWith('common_') || moduleName.contains('_common')) {
       return 'common';
@@ -870,6 +860,9 @@ Future<void> generateMermaidGraph() async {
     final clazz = classifyModule(moduleName);
     if (clazz != null) {
       content.writeln('    $moduleName:::$clazz');
+    }
+    if (modulesWithUnusedDeps.contains(moduleName)) {
+      content.writeln('    class $moduleName unused;');
     }
   }
 
@@ -948,6 +941,9 @@ Future<void> generateMermaidGraph() async {
     ..writeln(
       '    classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000',
     )
+    ..writeln(
+      '    classDef unused fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000',
+    )
     ..writeln('```')
     ..writeln('')
     ..writeln('## Build Statistics')
@@ -1008,6 +1004,25 @@ Future<void> generateMermaidGraph() async {
           }
         }
       }
+    }
+  }
+
+  if (state.moduleUnusedDependencies.isNotEmpty) {
+    content
+      ..writeln('')
+      ..writeln('## Unused Module Dependencies')
+      ..writeln('')
+      ..writeln(
+        'The following modules declare workspace dependencies that are never imported:',
+      )
+      ..writeln('');
+
+    final sortedEntries = state.moduleUnusedDependencies.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    for (final entry in sortedEntries) {
+      final unused = entry.value.toList()..sort();
+      content.writeln('- **${entry.key}** → ${unused.join(', ')}');
     }
   }
 
@@ -1097,7 +1112,7 @@ void topologicalSort() {
       }
     }
 
-    exit(1);
+    throw SmartBuildException('', exitCode: 1);
   }
 
   Logger.success('Build order determined: ${state.buildOrder.length} modules');
@@ -1209,7 +1224,9 @@ Future<Map<String, dynamic>> buildModule(String moduleName) async {
   // Determine command
   final usesFvm = File('$modulePath/.fvm').existsSync();
   final command = usesFvm ? 'fvm' : 'dart';
-  final args = usesFvm ? ['dart', 'run', 'build_runner', 'build', '-d'] : ['run', 'build_runner', 'build', '-d'];
+  final args = usesFvm
+      ? ['dart', 'run', 'build_runner', 'build', '-d']
+      : ['run', 'build_runner', 'build', '-d'];
 
   // Start process
   final buildProcess = await Process.start(
@@ -1408,17 +1425,21 @@ Future<bool> executeSmartBuild() async {
   }
 }
 
-Future<void> main(List<String> args) async {
+Future<int> runSmartBuild(SmartBuildOptions options) async {
+  state = BuildState()
+    ..verbose = options.verbose
+    ..dryRun = options.dryRun
+    ..maxParallelBuilds = options.maxParallelBuilds
+    ..targetModule = options.targetModule;
+
+  final subscriptions = <StreamSubscription<ProcessSignal>>[];
+
   log('');
   Logger.info('🎯 Flutter Smart Build System v2.0 (Dart)');
   Logger.info('════════════════════════════════════════');
   log('');
 
   try {
-    // Parse arguments
-    parseArguments(args);
-
-    // Show configuration
     if (state.verbose) {
       Logger.debug('Configuration:');
       Logger.debug('   Verbose: ${state.verbose}');
@@ -1429,12 +1450,11 @@ Future<void> main(List<String> args) async {
       log('');
     }
 
-    // Validate environment
     await validateEnvironment();
 
-    // Set up signal handlers
-    ProcessSignal.sigint.watch().listen((_) => cleanup());
-    ProcessSignal.sigterm.watch().listen((_) => cleanup());
+    subscriptions
+      ..add(ProcessSignal.sigint.watch().listen((_) => cleanup()))
+      ..add(ProcessSignal.sigterm.watch().listen((_) => cleanup()));
 
     if (state.targetModule != null) {
       Logger.info('🎯 Building specific module: ${state.targetModule}');
@@ -1442,19 +1462,16 @@ Future<void> main(List<String> args) async {
       await discoverModulesFromRoot();
 
       if (state.modulePaths.containsKey(state.targetModule)) {
-        // Build dependency graph for single module
         await buildDependencyGraph();
         await analyzeUnusedModuleDependencies();
 
-        // Find all dependencies of target module
         final requiredModules = <String>{state.targetModule!};
-
-        // Recursively find all dependencies
         var changed = true;
         while (changed) {
           changed = false;
           for (final moduleName in requiredModules.toList()) {
-            final dependencies = state.moduleDependencies[moduleName] ?? <String>{};
+            final dependencies =
+                state.moduleDependencies[moduleName] ?? <String>{};
             for (final dep in dependencies) {
               if (!requiredModules.contains(dep)) {
                 requiredModules.add(dep);
@@ -1465,7 +1482,6 @@ Future<void> main(List<String> args) async {
           }
         }
 
-        // Filter to only required modules
         final modulesToRemove = <String>[];
         for (final moduleName in state.modulePaths.keys) {
           if (!requiredModules.contains(moduleName)) {
@@ -1506,14 +1522,16 @@ Future<void> main(List<String> args) async {
         if (!state.dryRun) {
           await executeSmartBuild();
         }
+      } else {
+        throw SmartBuildException(
+          'Module ${state.targetModule} not found among workspace packages.',
+        );
       }
     } else {
-      // Full smart build
       await discoverModulesFromRoot();
 
       if (state.modulePaths.isEmpty) {
-        Logger.error('No modules with build_runner found!');
-        exit(1);
+        throw SmartBuildException('No modules with build_runner found!');
       }
 
       await buildDependencyGraph();
@@ -1535,19 +1553,28 @@ Future<void> main(List<String> args) async {
     Logger.success('🏁 Smart build process completed!');
     log('');
 
-    // Show helpful information
     if (!state.dryRun && File('build_graph.md').existsSync()) {
       Logger.info('📊 View dependency graph: build_graph.md');
     }
     if (!state.dryRun && Directory(state.buildLogsDir).existsSync()) {
       Logger.info('📁 Build logs available in: ${state.buildLogsDir}/');
     }
-    exit(0);
+
+    return 0;
+  } on SmartBuildException catch (error) {
+    if (error.message.isNotEmpty) {
+      Logger.error(error.message);
+    }
+    return error.exitCode;
   } on Exception catch (e, stackTrace) {
     Logger.error('Fatal error: $e');
     if (state.verbose) {
       log(stackTrace);
     }
-    exit(1);
+    return 1;
+  } finally {
+    for (final subscription in subscriptions) {
+      await subscription.cancel();
+    }
   }
 }

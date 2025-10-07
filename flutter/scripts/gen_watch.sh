@@ -12,7 +12,7 @@ for arg in "$@"; do
 done
 
 if [ "$PRE_BUILD" = true ]; then
-  dart scripts/smart_build.dart
+  dart run scripts smart-build
 fi
 
 declare -a pids
