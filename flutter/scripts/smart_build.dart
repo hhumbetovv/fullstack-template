@@ -8,7 +8,14 @@ enum BuildStatus { pending, building, completed, failed }
 // Global state
 class BuildState {
   Map<String, String> modulePaths = {}; // module_name -> path
-  Map<String, Set<String>> moduleDependencies = {}; // module_name -> dependencies
+  Map<String, String> allModulePaths =
+      {}; // module_name -> path (includes non-build_runner modules)
+  Map<String, Set<String>> moduleDependencies =
+      {}; // module_name -> dependencies
+  Map<String, Set<String>> allModuleDependencies =
+      {}; // module_name -> full dependencies for visualization
+  Map<String, Set<String>> moduleUnusedDependencies =
+      {}; // module_name -> declared deps without package imports
   Map<String, BuildStatus> moduleBuildStatus = {}; // module_name -> status
   Map<String, Process> modulePids = {}; // module_name -> process
   Map<String, int> moduleBuildLevel = {}; // module_name -> build_level
@@ -129,7 +136,9 @@ Future<void> validateEnvironment() async {
     try {
       await Process.run('which', ['fvm']);
     } on Exception catch (_) {
-      Logger.error("Neither 'dart' nor 'fvm' command found. Please ensure Flutter is installed.");
+      Logger.error(
+        "Neither 'dart' nor 'fvm' command found. Please ensure Flutter is installed.",
+      );
       exit(1);
     }
   }
@@ -137,7 +146,9 @@ Future<void> validateEnvironment() async {
   // Check if we're in a Flutter project
   final rootPubspec = File('pubspec.yaml');
   if (!rootPubspec.existsSync()) {
-    Logger.error('No pubspec.yaml found in current directory. Please run from Flutter project root.');
+    Logger.error(
+      'No pubspec.yaml found in current directory. Please run from Flutter project root.',
+    );
     exit(1);
   }
 
@@ -151,7 +162,9 @@ void cleanup() {
   // Kill all running builds
   for (final entry in state.modulePids.entries) {
     try {
-      Logger.debug('Killing build process for ${entry.key} (PID: ${entry.value.pid})');
+      Logger.debug(
+        'Killing build process for ${entry.key} (PID: ${entry.value.pid})',
+      );
       entry.value.kill();
     } on Exception catch (e) {
       Logger.debug('Error killing process for ${entry.key}: $e');
@@ -179,7 +192,10 @@ class YamlParser {
 
     if (trimmedInput.startsWith('{') && trimmedInput.endsWith('}')) {
       final correctedJson = trimmedInput
-          .replaceAllMapped(RegExp(r'(\w+):'), (match) => '"${match.group(1)}":')
+          .replaceAllMapped(
+            RegExp(r'(\w+):'),
+            (match) => '"${match.group(1)}":',
+          )
           .replaceAll(' ', '')
           .replaceAll('"', ' ')
           .replaceAll('{ ', '{')
@@ -205,7 +221,9 @@ class YamlParser {
       final trimmedLine = line.trim();
 
       // Skip empty lines and comment lines.
-      if (trimmedLine.isEmpty || trimmedLine.startsWith('#') || trimmedLine.startsWith('!')) {
+      if (trimmedLine.isEmpty ||
+          trimmedLine.startsWith('#') ||
+          trimmedLine.startsWith('!')) {
         continue;
       }
 
@@ -231,7 +249,9 @@ class YamlParser {
           final value = trimmedLine.substring(1).trim();
           parent.add(value);
         } else {
-          if (parent is Map && parent.isNotEmpty && parent.values.last is List) {
+          if (parent is Map &&
+              parent.isNotEmpty &&
+              parent.values.last is List) {
             final list = parent.values.last as List;
             final value = trimmedLine.substring(1).trim();
             list.add(value);
@@ -241,7 +261,9 @@ class YamlParser {
         // Handle key-value pairs or nested map/list definitions.
         final parts = trimmedLine.split(':');
         final key = parts[0].trim();
-        final valuePart = parts.length > 1 ? parts.sublist(1).join(':').trim() : '';
+        final valuePart = parts.length > 1
+            ? parts.sublist(1).join(':').trim()
+            : '';
 
         // Check if the value is empty, indicating a nested map or list.
         if (valuePart.isEmpty) {
@@ -298,7 +320,9 @@ bool hasBuildRunner(Map<String, dynamic> pubspec) {
 
 // Check if module should be ignored (generators)
 bool shouldIgnoreModule(String moduleName) {
-  return moduleName.startsWith('gen_') || moduleName.contains('generator') || moduleName.contains('_gen');
+  return moduleName.startsWith('gen_') ||
+      moduleName.contains('generator') ||
+      moduleName.contains('_gen');
 }
 
 Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
@@ -309,9 +333,7 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
     return;
   }
 
-  var discoveredCount = 0;
   final totalPaths = workspacePaths.length;
-
   Logger.info('Found $totalPaths workspace paths to analyze');
 
   for (final workspacePath in workspacePaths) {
@@ -342,15 +364,26 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
       continue;
     }
 
-    // Check if has build_runner
-    if (!hasBuildRunner(modulePubspec)) {
-      Logger.debug('   ⏭️  Skipped (no build_runner): $actualModuleName → $workspacePath');
+    // Skip generator modules
+    if (shouldIgnoreModule(actualModuleName)) {
+      Logger.debug(
+        '   ⏭️  Skipped (generator module): $actualModuleName → $workspacePath',
+      );
       continue;
     }
 
-    // Skip generator modules
-    if (shouldIgnoreModule(actualModuleName)) {
-      Logger.debug('   ⏭️  Skipped (generator module): $actualModuleName → $workspacePath');
+    // Track for visualization regardless of build_runner usage
+    final wasKnownModule = state.allModulePaths.containsKey(actualModuleName);
+    state.allModulePaths[actualModuleName] = cleanPath;
+
+    final usesBuildRunner = hasBuildRunner(modulePubspec);
+
+    if (!usesBuildRunner) {
+      if (state.verbose && !wasKnownModule) {
+        Logger.verbose(
+          'ℹ️  Module (no build_runner): $actualModuleName → $cleanPath',
+        );
+      }
       continue;
     }
 
@@ -359,10 +392,12 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
     state.moduleBuildStatus[actualModuleName] = BuildStatus.pending;
 
     Logger.verbose('✅ Module found: $actualModuleName → $cleanPath');
-    discoveredCount++;
   }
 
-  Logger.success('Discovered $discoveredCount modules with build_runner (out of $totalPaths workspace paths)');
+  Logger.success(
+    'Analyzed $totalPaths workspace paths → ${state.modulePaths.length} build_runner modules, '
+    '${state.allModulePaths.length} total modules for visualization',
+  );
 
   if (state.verbose) {
     Logger.info('📋 All discovered modules:');
@@ -374,7 +409,8 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
 
 Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
   final dependencies = rootPubspec['dependencies'] as Map<String, dynamic>?;
-  final devDependencies = rootPubspec['dev_dependencies'] as Map<String, dynamic>?;
+  final devDependencies =
+      rootPubspec['dev_dependencies'] as Map<String, dynamic>?;
 
   if (dependencies == null && devDependencies == null) {
     Logger.warning('No dependencies found in root pubspec.yaml');
@@ -394,9 +430,7 @@ Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
     });
   }
 
-  var discoveredCount = 0;
   final totalDeps = allDeps.length;
-
   Logger.info('Found $totalDeps dependencies to analyze');
 
   for (final entry in allDeps.entries) {
@@ -441,15 +475,26 @@ Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
       continue;
     }
 
-    // Check if has build_runner
-    if (!hasBuildRunner(modulePubspec)) {
-      Logger.debug('   ⏭️  Skipped (no build_runner): $actualModuleName → $depPath');
+    // Skip generator modules
+    if (shouldIgnoreModule(actualModuleName)) {
+      Logger.debug(
+        '   ⏭️  Skipped (generator module): $actualModuleName → $depPath',
+      );
       continue;
     }
 
-    // Skip generator modules
-    if (shouldIgnoreModule(actualModuleName)) {
-      Logger.debug('   ⏭️  Skipped (generator module): $actualModuleName → $depPath');
+    // Track all modules for visualization
+    final wasKnownModule = state.allModulePaths.containsKey(actualModuleName);
+    state.allModulePaths[actualModuleName] = cleanPath;
+
+    final usesBuildRunner = hasBuildRunner(modulePubspec);
+
+    if (!usesBuildRunner) {
+      if (state.verbose && !wasKnownModule) {
+        Logger.verbose(
+          'ℹ️  Module (no build_runner): $actualModuleName → $cleanPath',
+        );
+      }
       continue;
     }
 
@@ -458,10 +503,12 @@ Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
     state.moduleBuildStatus[actualModuleName] = BuildStatus.pending;
 
     Logger.verbose('✅ Module found: $actualModuleName → $cleanPath');
-    discoveredCount++;
   }
 
-  Logger.success('Discovered $discoveredCount modules with build_runner (out of $totalDeps dependencies)');
+  Logger.success(
+    'Analyzed $totalDeps path dependencies → ${state.modulePaths.length} build_runner modules, '
+    '${state.allModulePaths.length} total modules for visualization',
+  );
 
   if (state.verbose) {
     Logger.info('📋 All discovered modules:');
@@ -475,6 +522,17 @@ Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
 Future<void> discoverModulesFromRoot() async {
   Logger.info('🔍 Discovering modules from root pubspec.yaml...');
 
+  state.modulePaths.clear();
+  state.allModulePaths.clear();
+  state.moduleDependencies.clear();
+  state.allModuleDependencies.clear();
+  state.moduleUnusedDependencies.clear();
+  state.moduleBuildStatus.clear();
+  state.modulePids.clear();
+  state.moduleBuildLevel.clear();
+  state.buildOrder.clear();
+  state.currentlyBuilding.clear();
+
   // Read root pubspec
   final rootPubspec = await readPubspec('pubspec.yaml');
 
@@ -487,7 +545,9 @@ Future<void> discoverModulesFromRoot() async {
   final workspace = rootPubspec['workspace'];
 
   if (workspace != null && workspace is List) {
-    Logger.info('Found workspace configuration, analyzing workspace modules...');
+    Logger.info(
+      'Found workspace configuration, analyzing workspace modules...',
+    );
     await _discoverWorkspaceModules(workspace);
     return;
   }
@@ -498,7 +558,11 @@ Future<void> discoverModulesFromRoot() async {
 }
 
 // Parse dependencies from pubspec.yaml
-Future<Set<String>> parseDependencies(String pubspecPath, String moduleName) async {
+Future<Set<String>> parseDependencies(
+  String pubspecPath,
+  String moduleName,
+  Map<String, String> knownModules,
+) async {
   final dependencies = <String>{};
 
   try {
@@ -516,7 +580,7 @@ Future<Set<String>> parseDependencies(String pubspecPath, String moduleName) asy
         final depName = key;
 
         // Skip if this dependency is not in our module list
-        if (!state.modulePaths.containsKey(depName)) {
+        if (!knownModules.containsKey(depName)) {
           return;
         }
 
@@ -543,26 +607,148 @@ Future<Set<String>> parseDependencies(String pubspecPath, String moduleName) asy
 Future<void> buildDependencyGraph() async {
   Logger.info('🕸️  Building dependency graph...');
 
-  for (final entry in state.modulePaths.entries) {
+  state.moduleDependencies.clear();
+  state.allModuleDependencies.clear();
+  state.moduleUnusedDependencies.clear();
+
+  if (state.allModulePaths.isEmpty) {
+    Logger.warning('No modules discovered for dependency analysis');
+    return;
+  }
+
+  for (final entry in state.allModulePaths.entries) {
     final moduleName = entry.key;
     final modulePath = entry.value;
     final pubspecFile = '$modulePath/pubspec.yaml';
 
-    final dependencies = await parseDependencies(pubspecFile, moduleName);
-    state.moduleDependencies[moduleName] = dependencies;
+    final fullDependencies = await parseDependencies(
+      pubspecFile,
+      moduleName,
+      state.allModulePaths,
+    );
+    state.allModuleDependencies[moduleName] = fullDependencies;
 
-    if (dependencies.isNotEmpty) {
-      Logger.info('   📦 $moduleName depends on: ${dependencies.join(', ')}');
-    } else {
-      Logger.verbose('   📦 $moduleName has no internal dependencies');
+    if (state.modulePaths.containsKey(moduleName)) {
+      final buildDependencies = fullDependencies
+          .where(state.modulePaths.containsKey)
+          .toSet();
+      state.moduleDependencies[moduleName] = buildDependencies;
+
+      if (buildDependencies.isNotEmpty) {
+        Logger.info(
+          '   📦 $moduleName depends on: ${buildDependencies.join(', ')}',
+        );
+      } else {
+        Logger.verbose(
+          '   📦 $moduleName has no internal build_runner dependencies',
+        );
+      }
+
+      if (state.verbose) {
+        final additionalDeps = fullDependencies.difference(buildDependencies);
+        if (additionalDeps.isNotEmpty) {
+          Logger.verbose(
+            '   ↳ Additional non-build_runner deps: ${additionalDeps.join(', ')}',
+          );
+        }
+      }
+    } else if (state.verbose) {
+      if (fullDependencies.isNotEmpty) {
+        Logger.verbose(
+          '   🧩 $moduleName (graph) depends on: ${fullDependencies.join(', ')}',
+        );
+      } else {
+        Logger.verbose(
+          '   🧩 $moduleName (graph) has no internal dependencies',
+        );
+      }
     }
   }
 
   if (state.verbose) {
     Logger.info('📊 Dependency Summary:');
     for (final entry in state.moduleDependencies.entries) {
-      Logger.verbose('${entry.key}: ${entry.value.length} dependencies');
+      Logger.verbose(
+        '${entry.key}: ${entry.value.length} build_runner dependencies',
+      );
     }
+  }
+}
+
+Future<Set<String>> _collectImportedPackages(String moduleName) async {
+  final modulePath = state.allModulePaths[moduleName];
+  if (modulePath == null) {
+    return <String>{};
+  }
+
+  final importRegex = RegExp(
+    "(?:import|export)\\s+['\"]package:([^/'\"]+)",
+    multiLine: true,
+  );
+  final collected = <String>{};
+  final directories = <String>['lib', 'src', 'bin', 'test', 'tool'];
+
+  for (final dirName in directories) {
+    final dir = Directory('$modulePath/$dirName');
+    if (!dir.existsSync()) {
+      continue;
+    }
+
+    try {
+      await for (final entity in dir.list(
+        recursive: true,
+        followLinks: false,
+      )) {
+        if (entity is! File || !entity.path.endsWith('.dart')) {
+          continue;
+        }
+
+        try {
+          final content = await entity.readAsString();
+          for (final match in importRegex.allMatches(content)) {
+            final packageName = match.group(1);
+            if (packageName != null && packageName.isNotEmpty) {
+              collected.add(packageName);
+            }
+          }
+        } on Exception catch (e) {
+          Logger.debug('Error reading ${entity.path}: $e');
+        }
+      }
+    } on Exception catch (e) {
+      Logger.debug('Error scanning $modulePath/$dirName: $e');
+    }
+  }
+
+  return collected;
+}
+
+Future<void> analyzeUnusedModuleDependencies() async {
+  Logger.info('🧹 Analyzing unused module dependencies...');
+
+  state.moduleUnusedDependencies.clear();
+
+  for (final entry in state.allModuleDependencies.entries) {
+    final moduleName = entry.key;
+    final declaredDeps = entry.value;
+
+    if (declaredDeps.isEmpty) {
+      continue;
+    }
+
+    final importedPackages = await _collectImportedPackages(moduleName);
+    final unused = declaredDeps.difference(importedPackages);
+
+    if (unused.isNotEmpty) {
+      state.moduleUnusedDependencies[moduleName] = unused;
+      Logger.info('   🚫 $moduleName unused: ${unused.join(', ')}');
+    } else if (state.verbose) {
+      Logger.verbose('   ✅ $moduleName uses all declared modules');
+    }
+  }
+
+  if (state.moduleUnusedDependencies.isEmpty) {
+    Logger.success('No unused module dependencies detected.');
   }
 }
 
@@ -609,7 +795,9 @@ void calculateBuildLevels() {
       Logger.error('Circular dependency detected or disconnected modules!');
       for (final entry in tempInDegree.entries) {
         if (!state.moduleBuildLevel.containsKey(entry.key)) {
-          Logger.error('   Stuck module: ${entry.key} (in-degree: ${entry.value})');
+          Logger.error(
+            '   Stuck module: ${entry.key} (in-degree: ${entry.value})',
+          );
         }
       }
       throw Exception('Circular dependency detected');
@@ -648,21 +836,25 @@ Future<void> generateMermaidGraph() async {
     ..writeln('graph TD');
 
   // Add nodes with styling and build levels
-  for (final entry in state.modulePaths.entries) {
+  for (final entry in state.allModulePaths.entries) {
     final moduleName = entry.key;
-    final level = state.moduleBuildLevel[moduleName] ?? 0;
-    content.writeln('    $moduleName["$moduleName\n🌊 Wave $level"]');
+    final level = state.moduleBuildLevel[moduleName];
+    final waveLabel = level != null ? '🌊 Wave $level' : '🚫 No build';
+    content.writeln('    $moduleName["$moduleName\n$waveLabel"]');
 
     // Style based on module naming patterns
     if (moduleName.contains('_presentation') || moduleName.endsWith('_ui')) {
       content.writeln('    $moduleName:::presentation');
-    } else if (moduleName.contains('_domain') || moduleName.contains('_business')) {
+    } else if (moduleName.contains('_domain') ||
+        moduleName.contains('_business')) {
       content.writeln('    $moduleName:::domain');
-    } else if (moduleName.contains('_data') || moduleName.contains('_repository')) {
+    } else if (moduleName.contains('_data') ||
+        moduleName.contains('_repository')) {
       content.writeln('    $moduleName:::data');
     } else if (moduleName.startsWith('ui_') || moduleName.contains('_ui')) {
       content.writeln('    $moduleName:::ui');
-    } else if (moduleName.startsWith('common_') || moduleName.contains('_common')) {
+    } else if (moduleName.startsWith('common_') ||
+        moduleName.contains('_common')) {
       content.writeln('    $moduleName:::common');
     } else if (moduleName.startsWith('core_') || moduleName.contains('_core')) {
       content.writeln('    $moduleName:::core');
@@ -672,7 +864,7 @@ Future<void> generateMermaidGraph() async {
   content.writeln('');
 
   // Add dependencies
-  for (final entry in state.moduleDependencies.entries) {
+  for (final entry in state.allModuleDependencies.entries) {
     for (final dep in entry.value) {
       content.writeln('    $dep --> ${entry.key}');
     }
@@ -681,26 +873,42 @@ Future<void> generateMermaidGraph() async {
   // Add styling
   content
     ..writeln('')
-    ..writeln('    classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000')
-    ..writeln('    classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000')
-    ..writeln('    classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000')
-    ..writeln('    classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000')
-    ..writeln('    classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000')
-    ..writeln('    classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000')
+    ..writeln(
+      '    classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000',
+    )
+    ..writeln(
+      '    classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000',
+    )
+    ..writeln(
+      '    classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000',
+    )
+    ..writeln(
+      '    classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000',
+    )
+    ..writeln(
+      '    classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000',
+    )
+    ..writeln(
+      '    classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000',
+    )
     ..writeln('```')
     ..writeln('')
     ..writeln('## Build Statistics')
     ..writeln('');
 
   // Add statistics
-  final totalModules = state.modulePaths.length;
+  final totalModules = state.allModulePaths.length;
+  final buildRunnerModules = state.modulePaths.length;
+  final modulesWithoutBuildRunner = totalModules - buildRunnerModules;
   var totalDependencies = 0;
-  for (final deps in state.moduleDependencies.values) {
+  for (final deps in state.allModuleDependencies.values) {
     totalDependencies += deps.length;
   }
 
   content
     ..writeln('- **Total Modules**: $totalModules')
+    ..writeln('- **Modules With build_runner**: $buildRunnerModules')
+    ..writeln('- **Modules Without build_runner**: $modulesWithoutBuildRunner')
     ..writeln('- **Total Dependencies**: $totalDependencies')
     ..writeln(
       '- **Average Dependencies**: ${totalModules > 0 ? (totalDependencies / totalModules).toStringAsFixed(2) : 0}',
@@ -709,32 +917,68 @@ Future<void> generateMermaidGraph() async {
     ..writeln('')
     ..writeln('## Build Waves')
     ..writeln('')
-    ..writeln('The modules will be built in the following waves:')
+    ..writeln(
+      'The modules requiring build_runner will be built in the following waves:',
+    )
     ..writeln('');
 
   // Group modules by level
-  var maxLevel = 0;
+  var maxLevel = -1;
   for (final level in state.moduleBuildLevel.values) {
     if (level > maxLevel) {
       maxLevel = level;
     }
   }
 
-  for (var level = 0; level <= maxLevel; level++) {
-    content
-      ..writeln('')
-      ..writeln('### Wave $level')
-      ..writeln('');
+  if (maxLevel < 0) {
+    content.writeln('No modules require build_runner at this time.');
+  } else {
+    for (var level = 0; level <= maxLevel; level++) {
+      content
+        ..writeln('')
+        ..writeln('### Wave $level')
+        ..writeln('');
 
-    for (final entry in state.moduleBuildLevel.entries) {
-      if (entry.value == level) {
-        final deps = state.moduleDependencies[entry.key] ?? <String>{};
-        if (deps.isNotEmpty) {
-          content.writeln('- **${entry.key}** → depends on: ${deps.join(', ')}');
-        } else {
-          content.writeln('- **${entry.key}** → no dependencies');
+      for (final entry in state.moduleBuildLevel.entries) {
+        if (entry.value == level) {
+          final deps = state.moduleDependencies[entry.key] ?? <String>{};
+          if (deps.isNotEmpty) {
+            content.writeln(
+              '- **${entry.key}** → depends on: ${deps.join(', ')}',
+            );
+          } else {
+            content.writeln('- **${entry.key}** → no dependencies');
+          }
         }
       }
+    }
+  }
+
+  final unusedEntries =
+      state.moduleUnusedDependencies.entries
+          .map(
+            (entry) => MapEntry(
+              entry.key,
+              entry.value.toList()..sort(),
+            ),
+          )
+          .toList()
+        ..sort((a, b) => a.key.compareTo(b.key));
+
+  content
+    ..writeln('')
+    ..writeln('## Unused Modules')
+    ..writeln('')
+    ..writeln(
+      'The following declared module dependencies appear unused (no `package:` import found):',
+    )
+    ..writeln('');
+
+  if (unusedEntries.isEmpty) {
+    content.writeln('No unused module dependencies detected.');
+  } else {
+    for (final entry in unusedEntries) {
+      content.writeln('- **${entry.key}** → unused: ${entry.value.join(', ')}');
     }
   }
 
@@ -809,12 +1053,16 @@ void topologicalSort() {
   // Check for circular dependencies
   if (state.buildOrder.length != state.modulePaths.length) {
     Logger.error('Circular dependency detected! Cannot determine build order.');
-    Logger.error('Processed: ${state.buildOrder.length} out of ${state.modulePaths.length} modules');
+    Logger.error(
+      'Processed: ${state.buildOrder.length} out of ${state.modulePaths.length} modules',
+    );
 
     // Show which modules couldn't be processed
     for (final moduleName in state.modulePaths.keys) {
       if (!state.buildOrder.contains(moduleName)) {
-        Logger.error('   Stuck module: $moduleName (remaining in-degree: ${inDegree[moduleName]})');
+        Logger.error(
+          '   Stuck module: $moduleName (remaining in-degree: ${inDegree[moduleName]})',
+        );
         final deps = state.moduleDependencies[moduleName] ?? <String>{};
         Logger.error('   Dependencies: ${deps.join(' ')}');
       }
@@ -896,7 +1144,9 @@ bool canBuildModule(String moduleName) {
 
   for (final dep in dependencies) {
     if (state.moduleBuildStatus[dep] != BuildStatus.completed) {
-      Logger.debug('   $moduleName waiting for $dep (status: ${state.moduleBuildStatus[dep]})');
+      Logger.debug(
+        '   $moduleName waiting for $dep (status: ${state.moduleBuildStatus[dep]})',
+      );
       return false;
     }
   }
@@ -930,7 +1180,9 @@ Future<Map<String, dynamic>> buildModule(String moduleName) async {
   // Determine command
   final usesFvm = File('$modulePath/.fvm').existsSync();
   final command = usesFvm ? 'fvm' : 'dart';
-  final args = usesFvm ? ['dart', 'run', 'build_runner', 'build', '-d'] : ['run', 'build_runner', 'build', '-d'];
+  final args = usesFvm
+      ? ['dart', 'run', 'build_runner', 'build', '-d']
+      : ['run', 'build_runner', 'build', '-d'];
 
   // Start process
   final buildProcess = await Process.start(
@@ -949,7 +1201,9 @@ Future<Map<String, dynamic>> buildModule(String moduleName) async {
 
   final exitCode = await buildProcess.exitCode;
 
-  logSink.writeln('\n=== Build finished at ${DateTime.now().toIso8601String()} ===');
+  logSink.writeln(
+    '\n=== Build finished at ${DateTime.now().toIso8601String()} ===',
+  );
   await logSink.close();
 
   state.modulePids.remove(moduleName);
@@ -1031,7 +1285,9 @@ Future<bool> executeSmartBuild() async {
         .toList();
 
     if (state.currentlyBuilding.isEmpty && buildsInWave.isEmpty) {
-      Logger.error('Build process stalled. Some modules cannot be built due to failed dependencies.');
+      Logger.error(
+        'Build process stalled. Some modules cannot be built due to failed dependencies.',
+      );
 
       for (final moduleName in state.buildOrder) {
         if (state.moduleBuildStatus[moduleName] == BuildStatus.pending) {
@@ -1106,7 +1362,9 @@ Future<bool> executeSmartBuild() async {
     Logger.error('Failed modules:');
     for (final moduleName in state.buildOrder) {
       if (state.moduleBuildStatus[moduleName] == BuildStatus.failed) {
-        Logger.error('   • $moduleName → Check: ${state.buildLogsDir}/build_$moduleName.log');
+        Logger.error(
+          '   • $moduleName → Check: ${state.buildLogsDir}/build_$moduleName.log',
+        );
       }
     }
   }
@@ -1116,7 +1374,9 @@ Future<bool> executeSmartBuild() async {
     Logger.success('🎉 All builds completed successfully!');
     return true;
   } else {
-    Logger.error('💥 Some builds failed. Check individual log files in ${state.buildLogsDir}/');
+    Logger.error(
+      '💥 Some builds failed. Check individual log files in ${state.buildLogsDir}/',
+    );
     return false;
   }
 }
@@ -1157,6 +1417,7 @@ Future<void> main(List<String> args) async {
       if (state.modulePaths.containsKey(state.targetModule)) {
         // Build dependency graph for single module
         await buildDependencyGraph();
+        await analyzeUnusedModuleDependencies();
 
         // Find all dependencies of target module
         final requiredModules = <String>{state.targetModule!};
@@ -1166,7 +1427,8 @@ Future<void> main(List<String> args) async {
         while (changed) {
           changed = false;
           for (final moduleName in requiredModules.toList()) {
-            final dependencies = state.moduleDependencies[moduleName] ?? <String>{};
+            final dependencies =
+                state.moduleDependencies[moduleName] ?? <String>{};
             for (final dep in dependencies) {
               if (!requiredModules.contains(dep)) {
                 requiredModules.add(dep);
@@ -1189,6 +1451,19 @@ Future<void> main(List<String> args) async {
           state.modulePaths.remove(moduleName);
           state.moduleDependencies.remove(moduleName);
           state.moduleBuildStatus.remove(moduleName);
+          state.allModulePaths.remove(moduleName);
+          state.allModuleDependencies.remove(moduleName);
+          state.moduleUnusedDependencies.remove(moduleName);
+        }
+
+        for (final deps in state.moduleDependencies.values) {
+          deps.removeWhere(modulesToRemove.contains);
+        }
+        for (final deps in state.allModuleDependencies.values) {
+          deps.removeWhere(modulesToRemove.contains);
+        }
+        for (final deps in state.moduleUnusedDependencies.values) {
+          deps.removeWhere(modulesToRemove.contains);
         }
 
         Logger.info(
@@ -1216,6 +1491,7 @@ Future<void> main(List<String> args) async {
       }
 
       await buildDependencyGraph();
+      await analyzeUnusedModuleDependencies();
       calculateBuildLevels();
       await generateMermaidGraph();
       topologicalSort();

@@ -8,9 +8,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  #! Modules
-  processor: any
-
 dev_dependencies:
   #! Generator
   build_runner: ^2.4.15

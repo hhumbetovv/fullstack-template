@@ -16,7 +16,6 @@ dependencies:
   common_shared: any
   common_presentation: any
   #? Core
-  core_domain: any
   core_data: any
   core_presentation: any
   core_navigation: any
