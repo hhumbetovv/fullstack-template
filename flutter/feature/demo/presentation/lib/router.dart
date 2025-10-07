@@ -1,22 +1,17 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:core_navigation/public.dart';
+import 'package:demo_presentation/src/first/view.dart';
 
-import 'router.gr.dart';
-
-@AutoRouterConfig(replaceInRouteName: DemoRouter._replaceRouteName)
-final class DemoRouter extends RootStackRouter {
-  static const String _replaceRouteName = 'View,Route';
-
-  @override
-  RouteType get defaultRouteType => const RouteType.material(
-    enablePredictiveBackGesture: false,
-  );
-
+final class DemoRouter extends BaseRouter {
   @override
   List<AutoRoute> get routes {
     return [
-      AutoRoute(
-        page: FirstRoute.page,
+      FeatureRoute(
+        name: Routes.first,
         initial: true,
+        builder: (context, data) {
+          return const FirstView();
+        },
       ),
     ];
   }

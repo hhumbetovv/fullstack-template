@@ -11,6 +11,7 @@ dependencies:
   #! Modules
   processor: any
   core_presentation: any
+  core_navigation: any
   common_shared: any
   common_presentation: any
   ui_foundation: any
@@ -36,9 +37,6 @@ dev_dependencies:
   #? Modules
   gen_data: any
   gen_view_kit: any
-
-  #? Navigation
-  auto_route_generator: ^10.1.0
 
   #? Dependency Injection
   injectable_generator: ^2.7.0

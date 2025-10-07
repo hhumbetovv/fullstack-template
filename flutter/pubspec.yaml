@@ -18,6 +18,7 @@ workspace:
   - common/presentation
   #? Core
   - core/presentation
+  - core/navigation
   - core/data
   - core/domain
   #? UiKit

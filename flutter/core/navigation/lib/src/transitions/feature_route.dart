@@ -1,16 +1,20 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 
-class FeatureRoute extends CustomRoute<void> {
+class FeatureRoute extends NamedRouteDef {
   FeatureRoute({
-    required super.page,
+    required super.name,
+    required super.builder,
     super.children,
     super.initial,
     super.path,
     super.guards,
     super.keepHistory,
   }) : super(
-         customRouteBuilder: materialRoute,
+         type: RouteType.custom(
+           customRouteBuilder: materialRoute,
+           enablePredictiveBackGesture: false,
+         ),
        );
 }
 

@@ -15,5 +15,3 @@ export '/src/widgets/state_selector.dart';
 export '/src/widgets/stateful_wrapper.dart';
 export '/src/widgets/view_model_listener.dart';
 export '/src/widgets/view_model_provider.dart';
-export 'src/router/base_router.dart';
-export 'src/router/transition/export.dart';

@@ -19,6 +19,7 @@ dependencies:
   core_domain: any
   core_data: any
   core_presentation: any
+  core_navigation: any
   #? UIKit
   ui_foundation: any
   ui_components: any
@@ -40,9 +41,6 @@ dependencies:
 dev_dependencies:
   #! Generator
   build_runner: ^2.4.15
-
-  #? Navigation
-  auto_route_generator: ^10.1.0
 
   #? Dependency Injection
   injectable_generator: ^2.7.0

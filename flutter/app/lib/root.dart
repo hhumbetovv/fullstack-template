@@ -1,7 +1,7 @@
 import 'package:app/config/router.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:common_shared/public.dart';
-import 'package:console_presentation/router.gr.dart';
+import 'package:core_navigation/public.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ui_components/public.dart';
@@ -47,7 +47,9 @@ final class RootView extends StatelessWidget {
                         if (Console.isEnabled) {
                           return KonamiSwipeDetector(
                             onDetect: () {
-                              AppRouter.instance.navigate(const ConsoleRoute());
+                              AppRouter.instance.navigate(
+                                const NamedRoute(Routes.console),
+                              );
                             },
                             child: widget,
                           );
