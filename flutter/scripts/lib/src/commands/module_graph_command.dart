@@ -1,10 +1,11 @@
 import 'package:args/command_runner.dart';
+
 import 'package:scripts/src/common/options.dart';
 import 'package:scripts/src/core/errors.dart';
-import 'package:scripts/src/feature/smart_build/runner.dart';
+import 'package:scripts/src/feature/module_graph/runner.dart';
 
-class SmartBuildCommand extends Command<int> {
-  SmartBuildCommand() {
+class ModuleGraphCommand extends Command<int> {
+  ModuleGraphCommand() {
     argParser
       ..addFlag(
         'verbose',
@@ -12,37 +13,23 @@ class SmartBuildCommand extends Command<int> {
         help: 'Enable verbose logging output.',
         negatable: false,
       )
-      ..addFlag(
-        'dry-run',
-        help: 'Show the build plan without executing build_runner.',
-        negatable: false,
-      )
       ..addOption(
         'parallel',
         abbr: 'p',
-        help: 'Set the maximum number of modules built in parallel.',
+        help: 'Set the max parallel value used in stats.',
         valueHelp: 'count',
         defaultsTo: '4',
       );
   }
 
   @override
-  String get name => 'smart-build';
+  String get name => 'module-graph';
 
   @override
-  String get description =>
-      'Build module graph intelligently using build_runner.';
+  String get description => 'Generate the workspace dependency graph markdown.';
 
   @override
   Future<int> run() async {
-    final rest = argResults?.rest ?? <String>[];
-    if (rest.length > 1) {
-      throw const CommandError(
-        'Only one module name can be provided to smart-build.',
-        exitCode: 64,
-      );
-    }
-
     final parallelRaw = argResults?['parallel'] as String? ?? '4';
     final parallel = int.tryParse(parallelRaw);
     if (parallel == null || parallel <= 0) {
@@ -52,13 +39,11 @@ class SmartBuildCommand extends Command<int> {
       );
     }
 
-    final options = SmartBuildOptions(
+    final options = ModuleGraphOptions(
       verbose: argResults?['verbose'] as bool? ?? false,
-      dryRun: argResults?['dry-run'] as bool? ?? false,
       maxParallelBuilds: parallel,
-      targetModule: rest.isEmpty ? null : rest.first,
     );
 
-    return runSmartBuild(options);
+    return generateModuleGraph(options);
   }
 }

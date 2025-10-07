@@ -10,6 +10,9 @@ dart run scripts <command> [options]
 ## Available commands
 
 - `smart-build` – incremental `build_runner` orchestration with dependency graph awareness.
+  - Kısayol: `dart run scripts:smart_build --dry-run`
+- `module-graph` – bağımlılık grafiğini ve istatistikleri `build_graph.md` dosyasına üretir.
+  - Kısayol: `dart run scripts:module_graph`
 
 ## Adding a new command
 

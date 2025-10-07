@@ -1,4 +1,5 @@
 import 'package:args/command_runner.dart';
+import 'package:scripts/src/commands/module_graph_command.dart';
 import 'package:scripts/src/commands/smart_build_command.dart';
 
 CommandRunner<int> createScriptsCommandRunner() {
@@ -7,5 +8,7 @@ CommandRunner<int> createScriptsCommandRunner() {
     'Automation utilities for the template workspace.',
   );
 
-  return runner..addCommand(SmartBuildCommand());
+  return runner
+    ..addCommand(SmartBuildCommand())
+    ..addCommand(ModuleGraphCommand());
 }
