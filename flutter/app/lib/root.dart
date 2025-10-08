@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ui_components/public.dart';
 
-@RoutePage()
 final class RootView extends StatelessWidget {
   const RootView({
     required this.child,

@@ -51,7 +51,6 @@
             "part 'view.g.dart';",
             "",
             "@view",
-            "@RoutePage()",
             "final class ${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}View extends _${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}View {",
             "\tconst ${1:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}View({",
             "\t\tsuper.key,",

@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:console_presentation/src/console/components/app_bar.dart';
 import 'package:console_presentation/src/console/components/log_list.dart';
 import 'package:console_presentation/src/console/components/log_search_bar.dart';
@@ -13,7 +12,6 @@ import 'view_model.dart';
 part 'view.g.dart';
 
 @view
-@RoutePage()
 final class ConsoleView extends _ConsoleView {
   const ConsoleView({
     super.key,
