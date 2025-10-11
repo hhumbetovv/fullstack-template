@@ -1,4 +1,5 @@
 import 'package:args/command_runner.dart';
+import 'package:scripts/src/commands/build_command.dart';
 import 'package:scripts/src/commands/build_links_command.dart';
 import 'package:scripts/src/commands/gen_build_command.dart';
 import 'package:scripts/src/commands/gen_clean_command.dart';
@@ -16,6 +17,7 @@ CommandRunner<int> createScriptsCommandRunner() {
   );
 
   return runner
+    ..addCommand(BuildCommand())
     ..addCommand(GenBuildCommand())
     ..addCommand(GenCleanCommand())
     ..addCommand(GenWatchCommand())

@@ -85,7 +85,7 @@
             "",
             "@LazySingleton(as: ${TM_FILENAME_BASE/^(.*?)(?:_impl)?$/${1:/pascalcase}/})",
             "class ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g} implements ${TM_FILENAME_BASE/^(.*?)(?:impl)?$/${1:/pascalcase}/} {",
-            "\t${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}();",
+            "\tconst ${TM_FILENAME_BASE/^(.).*/${1:/upcase}/}${TM_FILENAME_BASE/^.|_(.)/${1:/capitalize}/g}();",
             "",
             "\t$1",
             "}",
