@@ -1,3 +1,4 @@
+import 'package:core_data/src/model/remote/action_model.dart';
 import 'package:core_domain/public.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -31,7 +32,7 @@ class NetworkResponse<T> {
   final String? message;
 
   @JsonKey(name: 'action')
-  final String? action;
+  final ActionModel? action;
 
   @JsonKey(name: 'data')
   final T? data;
@@ -39,7 +40,7 @@ class NetworkResponse<T> {
   @JsonKey(name: 'errors')
   final List<String?> errors;
 
-  Error<Data, Failure> mapToError<Data>({String? action}) {
+  Error<Data, Failure> mapToError<Data>({Action? action}) {
     return Error(
       Failure(
         message: message,

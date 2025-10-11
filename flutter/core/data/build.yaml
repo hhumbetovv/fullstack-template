@@ -29,6 +29,7 @@ targets:
             - core
             - model
             - module
+            - datasource
 
 global_options:
   gen_exporter|exporter:

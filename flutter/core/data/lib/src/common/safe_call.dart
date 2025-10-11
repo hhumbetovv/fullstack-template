@@ -9,8 +9,8 @@ Future<Result<Data, Failure>> safeCall<Data>(
   if (response.isSuccess && response.data != null) {
     final data = response.data as Data;
     await handler?.call(data);
-    return Success(data, action: response.action);
+    return Success(data, action: response.action?.toEntity());
   }
 
-  return response.mapToError(action: response.action);
+  return response.mapToError(action: response.action?.toEntity());
 }

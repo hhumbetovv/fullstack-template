@@ -6,7 +6,7 @@ part of 'result.dart';
 final class Error<S, E> extends Result<S, E> {
   const Error(this._error, {super.action});
 
-  static Error<S, Unit> unit<S>({String? action}) {
+  static Error<S, Unit> unit<S>({Action? action}) {
     return Error<S, Unit>(Unit(), action: action);
   }
 

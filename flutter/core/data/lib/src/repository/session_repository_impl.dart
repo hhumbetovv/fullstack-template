@@ -45,7 +45,7 @@ class SessionRepositoryImpl implements SessionRepository {
           ),
         );
       },
-      handler: (response) async {
+      handler: (response, action) async {
         await _sessionLocalService.saveSession(response);
       },
     );

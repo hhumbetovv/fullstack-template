@@ -3,9 +3,6 @@ import 'dart:io';
 
 import 'package:common_shared/public.dart';
 import 'package:core_data/public.dart';
-import 'package:core_data/src/datasource/local/secure_storage/secure_storage.dart';
-import 'package:core_data/src/datasource/local/secure_storage/secure_storage_extensions.dart';
-import 'package:core_data/src/datasource/local/session_local_service.dart';
 import 'package:core_domain/public.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
@@ -124,8 +121,7 @@ class AuthInterceptor extends Interceptor {
 Future<DioException> getSessionError(RequestOptions options) async {
   final data = NetworkResponse<dynamic>(
     isSuccess: false,
-    // TODO: Extract Actions to common use
-    action: 'LOGOUT',
+    action: ActionModel.logout,
   );
 
   final json = data.toJson((_) => null);

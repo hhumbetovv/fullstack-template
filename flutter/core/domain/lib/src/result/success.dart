@@ -6,7 +6,7 @@ part of 'result.dart';
 final class Success<S, E> extends Result<S, E> {
   const Success(this._success, {super.action});
 
-  static Success<Unit, E> unit<E>({String? action}) {
+  static Success<Unit, E> unit<E>({Action? action}) {
     return Success<Unit, E>(Unit(), action: action);
   }
 

@@ -1,3 +1,4 @@
+export 'src/entity/action.dart';
 export 'src/entity/auth_status.dart';
 export 'src/entity/failure.dart';
 export 'src/entity/identifiable.dart';
