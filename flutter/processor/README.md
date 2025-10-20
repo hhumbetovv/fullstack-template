@@ -1,0 +1,86 @@
+# Processor Module
+
+`processor` is the annotation and configuration hub that powers the custom code generators across the repository. Feature and platform packages import this library to describe view-models, views, palettes, and data contracts; the generators read the metadata and emit the concrete implementations that keep the project DRY.
+
+Think of `processor` as the shared language between handwritten source code and the automation that expands it.
+
+## What lives here?
+
+- **Annotations** (`lib/src/annotations/…`): Lightweight marker classes such as `@data`, `@view`, `@viewModel`, `@provider`, `@palette`, `@rootPalette`, `@intent`, and `@effect`. Teams add these to their classes and methods to opt into generation.
+- **Config models** (`lib/src/configs/…`): `json_serializable` DTOs (`DataConfig`, `ViewConfig`, `ViewModelConfig`, `EffectConfig`, etc.) that capture what the analyzer discovered. Builders in `generator/` consume these configs during code generation and cache them for incremental rebuilds.
+- **Helpers** (`lib/src/helpers/loadable_state.dart`): Interfaces that generated classes implement automatically. Today that’s mainly `LoadableState`, which lets view-models toggle `isLoading` flags safely.
+- **Utilities** (`lib/src/utils/equals.dart`): Shared runtime helpers the generated code references, such as deep equality for data classes.
+- **Public export** (`lib/public.dart`): Convenience export so feature packages can `import 'package:processor/public.dart';` and gain access to the full surface.
+
+## How generators use it
+
+Every builder under `generator/` depends on the contracts defined here:
+
+- `gen_data` (see `generator/builder/data`) looks for classes annotated with `@data`. It serializes them to `DataConfig`/`FieldConfig` and generates value types, copy/apply helpers, and equality overrides that lean on `isEquals` and `LoadableState`.
+- `gen_view_kit` (`generator/builder/view_kit`) reacts to `@view`, `@viewModel`, `@provider`, `@intent`, and `@effect`. It reads `ViewConfig`, `ViewModelConfig`, and `EffectConfig` instances to emit widgets, sealed intent/effect classes, and base view-model glue.
+- `gen_palette` (`generator/builder/palette`) targets `@palette` and `@rootPalette`, reusing `DataConfig` while switching the factory behaviour to produce lerp/copyWith helpers and `ThemeExtension` implementations.
+- The exporter and core generator packages reference the configs to wire caching, validation, and shared behaviors.
+
+Because every generator depends on `processor/public.dart`, any change to annotations or config schemas requires coordinated updates across these builders (see generator/builder/README.md).
+
+## When you add a new annotation
+
+1. **Define the marker** inside `lib/src/annotations/…`. Keep marker classes simple (usually an empty `const` class or one with a handful of arguments).
+2. **Export it** via `lib/public.dart` so feature code can import it.
+3. **Update configs if necessary**. If the new annotation needs extra data, extend the relevant `*Config` class or add a new config model. Regenerate the `*.g.dart` files with `dart run build_runner build` inside `processor`.
+4. **Teach the generators**. Update the relevant resolver/factory in `generator/` so it recognizes the annotation and writes out the new behaviour.
+5. **Document the flow** in the module that will consume it (e.g. feature README or generator README) to help other developers adopt it.
+
+> Tip: Because configs are cached under `.dart_tool/build/cache`, bump their JSON schema carefully. A breaking change should usually include a cache invalidation strategy (e.g. altering the hash calculation or clearing the folder).
+
+## Config layer overview
+
+| Config | Produced by | Consumed by | Purpose |
+| ------ | ----------- | ----------- | ------- |
+| `DataConfig` | `DataResolver` when scanning `@data` classes | `DataFactory`, palette builders | Describes class name, constructor mode, and fields with nullability/default metadata. |
+| `FieldConfig` / `ParamConfig` | Resolvers for constructors/methods | All factories | Standardizes parameter metadata across generators. |
+| `MethodConfig` | View/view-model resolvers | View factories, contract generators | Captures method name and parameter list used to emit intent/effect sealed classes. |
+| `EffectConfig` | View resolver | View + view-model factories | Links view-side effect handlers to their view-model origins, preventing duplicate definitions. |
+| `ViewConfig` | View resolver | View factory & provider factory | Signals whether to generate stateful wrappers, custom factories, and effect listeners. |
+| `ViewModelConfig` | View-model resolver | View-model factory | Bundles state info, intents, and effects so the factory can emit base classes and selectors. |
+| `StateConfig` | View-model resolver | View-model factory | Describes initial state type and whether it’s primitive for selector optimization. |
+
+Config classes are plain Dart objects with `toJson`/`fromJson` pairs generated by `json_serializable`. Builders serialize them to disk so re-running `build_runner` can skip work when nothing changed.
+
+## Runtime helpers
+
+### LoadableState
+Generated data classes automatically implement `LoadableState` when they expose an `isLoading` field. `BaseViewModel.runWithLoading` checks for this interface to flip loading flags without knowing the concrete state type.
+
+### isEquals
+Deep equality utility used by generated `operator ==` methods. It compares lists, sets, and maps recursively and falls back to `==` for other types. When adding new generated structures, extend this helper to keep equality consistent.
+
+## How other modules depend on processor
+
+- **Features**: Annotate their view-models, views, providers, palettes, and DTOs. They rarely interact with configs directly; instead they import `processor/public.dart` for annotations and rely on the generated part files.
+- **Generator packages**: Compile-time clients that parse source code, build config objects, and generate Dart files. They are tightly coupled to `processor`’s types.
+- **Core libraries**: Generated code (e.g. `gen_view_kit` output) lives inside core and feature packages. At runtime these classes call helpers from `processor` (`LoadableState`, `isEquals`) to fulfil contracts.
+
+As a new developer, you can think of the workflow like this:
+
+1. Write or modify a class, annotate it using `processor` markers.
+2. Run `dart run build_runner build` (or the project’s codegen script).
+3. The generator reads your annotated code, creates config objects from `processor`, and emits the concrete implementations.
+4. Your feature code imports the generated `.g.dart` file and works with the new classes/methods/effects without extra boilerplate.
+
+## Extending the module safely
+
+- **Keep annotations minimalistic.** They should not hold heavy dependencies—just enough data for the generators to decide what to emit.
+- **Version control config changes.** Because generators serialize configs, changing field names or types has ripple effects. Unit-test the generator changes and clear `.dart_tool/build/cache` when needed.
+- **Avoid runtime logic here.** Aside from helpers like `LoadableState` and `isEquals`, most code is declarative. Business logic belongs in domain or presentation layers.
+- **Coordinate with generator maintainers.** Any change in `processor` typically requires corresponding updates in `generator/builder/*` packages and possibly downstream modules that consume generated code.
+
+## Getting started checklist
+
+1. Import `package:processor/public.dart` in any package that needs code generation.
+2. Annotate classes/methods as per the generator expectations.
+3. Ensure your constructors and method signatures comply with resolver rules (e.g. `@data` factory params must be required or provide defaults, `@viewModel` intent names should be unique).
+4. Run the workspace build script (`dart run build_runner build -r` from the repo root) to regenerate code.
+5. Review the generated `.g.dart` files to understand how annotations translate into runtime code.
+
+Once comfortable with these conventions, you can introduce new patterns by extending `processor` and the corresponding generators, keeping the rest of the codebase clean and declarative.

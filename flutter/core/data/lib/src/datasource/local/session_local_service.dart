@@ -1,9 +1,5 @@
 import 'package:common_shared/public.dart';
 import 'package:core_data/public.dart';
-import 'package:core_data/src/datasource/local/secure_storage/secure_storage.dart';
-import 'package:core_data/src/datasource/local/secure_storage/secure_storage_extensions.dart';
-import 'package:core_data/src/datasource/local/shared_prefs/shared_prefs.dart';
-import 'package:core_data/src/datasource/local/shared_prefs/shared_prefs_extensions.dart';
 import 'package:core_domain/public.dart';
 import 'package:injectable/injectable.dart';
 
