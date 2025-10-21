@@ -12,6 +12,7 @@ dependencies:
 
   #! Builders Core
   build: ^3.0.0
+  package_config: ^2.1.0
 
   #! Foundation
   collection: ^1.18.0

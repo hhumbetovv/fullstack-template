@@ -18,5 +18,9 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/icons/
     - assets/images/
+
+  fonts:
+    - family: icon_font_generator Icons
+      fonts:
+        - asset: assets/fonts/icons.otf

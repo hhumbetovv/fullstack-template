@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_svg/svg.dart';
 
 final class UiImage extends StatelessWidget {
   const UiImage(
@@ -14,6 +15,14 @@ final class UiImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (path.endsWith('.svg')) {
+      return SvgPicture.asset(
+        path,
+        width: width,
+        height: height,
+        package: 'ui_foundation',
+      );
+    }
     return Image.asset(
       path,
       package: 'ui_foundation',

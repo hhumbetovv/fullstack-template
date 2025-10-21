@@ -10,5 +10,6 @@ pod repo update
 pod install
 cd ../..
 fvm flutter pub get
-dart run scripts smart-build
-dart pub global activate flutterfire_cli
+fvm dart run scripts smart-build
+fvm dart pub global activate flutterfire_cli
+fvm dart pub global activate icon_font_generator

@@ -13,7 +13,7 @@ final class UiListItem extends StatelessWidget {
   });
 
   final String title;
-  final AppIcons icon;
+  final IconData icon;
   final VoidCallback onClick;
   final bool showTrailing;
   final Color? color;

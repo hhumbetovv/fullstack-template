@@ -27,7 +27,7 @@ class _LogSearchBarState extends State<LogSearchBar> {
       padding: const AppPadding.macroH() + const AppPadding.smallB(),
       child: UiTextField(
         prefixIcon: AppIcons.search,
-        suffixIcon: AppIcons.close,
+        suffixIcon: AppIcons.closeMD,
         hint: 'Search logs...',
         controller: controller,
         onChanged: (value) {

@@ -30,10 +30,8 @@ class AssetCollections {
 
 class AssetOutputs {
   const AssetOutputs({
-    required this.iconContent,
     required this.imageContent,
   });
 
-  final String iconContent;
   final String imageContent;
 }

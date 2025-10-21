@@ -1,4 +1,5 @@
 import 'package:app/config/router.dart';
+import 'package:app/root.dart';
 import 'package:common_presentation/public.dart';
 import 'package:flutter/material.dart';
 import 'package:ui_foundation/public.dart';
@@ -26,9 +27,9 @@ final class App extends StatelessWidget {
       scrollBehavior: AppScrollBehavior().copyWith(
         physics: AppDefaults.scrollPhysics,
       ),
-      // builder: (context, child) {
-      //   return RootView(child: child ?? const SizedBox.shrink());
-      // },
+      builder: (context, child) {
+        return RootView(child: child ?? const SizedBox.shrink());
+      },
       themeAnimationCurve: const AppCurves.fastInFastOut(),
       routerConfig: AppRouter.instance.config(
         navigatorObservers: () => [

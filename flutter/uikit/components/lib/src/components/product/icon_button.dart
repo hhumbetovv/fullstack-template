@@ -10,7 +10,6 @@ final class UiIconButton extends StatelessWidget {
     super.key,
     this.color,
     this.label,
-    this.useDefaultColor = false,
     this.labelSpacing = AppDimens.micro,
     this.wrapperSize = AppDefaults.iconButtonSize,
     this.labelStyle = Styles.iconButton,
@@ -18,11 +17,10 @@ final class UiIconButton extends StatelessWidget {
     this.labelColor,
   });
 
-  final AppIcons icon;
+  final IconData icon;
   final Color? color;
   final VoidCallback? onTap;
   final String? label;
-  final bool useDefaultColor;
   final double labelSpacing;
   final Alignment alignment;
   final double wrapperSize;
@@ -35,7 +33,6 @@ final class UiIconButton extends StatelessWidget {
     final icon = UiIcon(
       this.icon,
       color: color,
-      useDefaultColor: useDefaultColor,
     );
 
     if (label != null) {

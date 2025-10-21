@@ -67,8 +67,8 @@ final class UiTextField extends StatefulWidget {
 
   final EdgeInsets? padding;
   final FocusNode? focusNode;
-  final AppIcons? suffixIcon;
-  final AppIcons? prefixIcon;
+  final IconData? suffixIcon;
+  final IconData? prefixIcon;
   final TextInputAction? textInputAction;
   final Iterable<String>? autofillHints;
   final List<TextInputFormatter>? inputFormatters;

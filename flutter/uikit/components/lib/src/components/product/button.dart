@@ -30,7 +30,7 @@ final class UIButton extends StatefulWidget {
        ),
        assert(
          !(textSpan == null && text == null && content == null),
-         'One of these must be setted: textSpan, text or children',
+         'One of these must be set: textSpan, text or children',
        );
 
   final VoidCallback? onClick;
@@ -43,9 +43,9 @@ final class UIButton extends StatefulWidget {
   final bool isLoading;
   final BorderRadius radius;
   final double height;
-  final AppIcons? suffixIcon;
+  final IconData? suffixIcon;
   final Color? suffixColor;
-  final AppIcons? prefixIcon;
+  final IconData? prefixIcon;
   final Color? prefixColor;
   final bool removeSpacing;
   final Widget? content;
@@ -63,7 +63,7 @@ class _UIButtonState extends State<UIButton> {
     if (widget.isLoading) {
       return Center(
         child: Loader(
-          size: 26,
+          size: AppDefaults.buttonLoaderSize,
           color: widget.palette.content,
         ),
       );

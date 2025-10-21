@@ -1,7 +1,8 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 enum AppImages {
-  fanfinfon('fanfinfon');
+  // ignore: unused_field
+  _placeholder('_placeholder');
 
   const AppImages(this._name);
 
