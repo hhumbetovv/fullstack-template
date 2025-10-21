@@ -32,6 +32,11 @@ Future<List<IconEntry>> _collectIcons(
   final iconBases = <String>{};
 
   await for (final asset in buildStep.findAssets(glob)) {
+    final exists = await buildStep.canRead(asset);
+    if (!exists) {
+      continue;
+    }
+
     final extension = p.posix
         .extension(asset.path)
         .replaceFirst('.', '')
@@ -72,6 +77,11 @@ Future<List<ImageEntry>> _collectImages(
   final images = <String>{};
 
   await for (final asset in buildStep.findAssets(glob)) {
+    final exists = await buildStep.canRead(asset);
+    if (!exists) {
+      continue;
+    }
+
     final extension = p.posix
         .extension(asset.path)
         .replaceFirst('.', '')
