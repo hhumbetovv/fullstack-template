@@ -1,9 +1,11 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
 enum AppIcons {
-  loader('loader'),
-  close('close'),
-  search('search'),
   chevronLeft('chevron-left'),
-  chevronRight('chevron-right');
+  chevronRight('chevron-right'),
+  close('close'),
+  loader('loader'),
+  search('search');
 
   const AppIcons(this._name);
 

@@ -10,6 +10,7 @@ workspace:
   - processor
   #? Generator
   - generator/core
+  - generator/builder/assets
   - generator/builder/data
   - generator/builder/exporter
   - generator/builder/palette

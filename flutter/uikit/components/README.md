@@ -7,7 +7,7 @@ Reusable widget library composed of design-system primitives, product widgets, m
 - `components/product/`: Branded widgets such as `UiScaffold`, `UiAppBar`, `UiButton`, `UiTextField`, and list items. They glue together foundation components with palette tokens to deliver the final product look and feel.
 - `managers/`: Stateful helpers (`SnackBarManager`, `BottomSheetManager`) that centralize overlay presentation logic. They use Flutter’s global keys from `common_presentation` and palette/theme tokens to render consistent surfaces.
 - `palette/`: Generated classes (via `gen_palette`) representing color, typography, and component states. Files ending with `.g.dart` are generated; do not edit them manually. Examples include `ButtonPalette`, `NavigatorPalette`, `TextFieldPalette`, and their accompanying state enums.
-- `theme/`: Theme composition utilities. `BaseTheme` defines the abstract contract, `LightTheme` provides the concrete implementation, `Styles` contains typography/text style references, `FontFamily` lists available fonts, and `ThemeExtensions` bridges palettes into Flutter’s theme system.
+- `theme/`: Theme composition utilities. `BaseTheme` defines the abstract contract, `LightTheme` provides the concrete implementation, `Styles` contains typography/text style references sourced from `ui_foundation`’s `FontFamily` constants, and `ThemeExtensions` bridges palettes into Flutter’s theme system.
 
 ## Foundation vs product components
 - **Foundation** widgets are meant to be reusable across products or features. They provide behaviors such as click handling, collapsible content, hero wrappers, pagination builders, and image utilities. Style them via palettes or by wrapping them inside product components.
@@ -25,7 +25,7 @@ Reusable widget library composed of design-system primitives, product widgets, m
 ## Theme helpers
 - `BaseTheme` and `LightTheme` compose palettes and design tokens into Flutter’s `ThemeData`.
 - `palette/palette.dart` exposes the root theme palette, allowing runtime access via `context.palette` (see `theme/build_context.dart`).
-- `styles.dart` collects reusable `TextStyle` definitions (e.g. `Styles.gothamHeader2Bold`) tied to the chosen font family (`font_family.dart`). Keep typography updates centralized here.
+- `styles.dart` collects reusable `TextStyle` definitions (e.g. `Styles.gothamHeader2Bold`) and pulls font names from `ui_foundation`’s `FontFamily`. Keep typography updates centralized here. When adding fonts, register them in `pubspec.yaml` and update `uikit/foundation/lib/src/constants/font_family.dart` so the constants stay aligned.
 - `theme_extensions.dart` registers palette classes as `ThemeExtension`s, enabling widgets to read palette values from `Theme.of(context)`.
 
 ## Editor snippets

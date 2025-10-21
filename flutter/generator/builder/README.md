@@ -10,6 +10,7 @@ This directory hosts the code generators that expand the annotations defined in 
 | `palette` | `@palette`, `@rootPalette` | Palette value objects, lerp extensions, `ThemeExtension` implementations | UI kit palettes and theme definitions |
 | `view_kit` | `@view`, `@provider`, `@viewModel`, `@intent`, `@effect` | Widget scaffolding, provider wrappers, sealed intent/effect classes, base view-model subclasses | Presentation layer across features |
 | `exporter` | (no annotations) | Aggregated `public.dart` exporting selected folders | Packages that want a single re-export surface |
+| `assets` | (no annotations) | `AppIcons`, `AppImages` enums generated from asset folders | Packages exposing design assets programmatically |
 
 Each builder is wired in its package’s `build.yaml` and usually produces `.g.dart` part files next to the source library (see processor/README.md for the annotations they respond to). Some builders (e.g. exporter) emit additional outputs.
 
@@ -56,6 +57,22 @@ Because the builders depend on `generator/core`, they inherit caching behaviour,
   ```
   If a folder is omitted, its libraries will not be exported.
 - Ignores `part` files and libraries declaring `part of` to avoid duplicate exports.
+
+### Assets builder (`generator/builder/assets`)
+- Walks the configured assets directory (defaults to `assets/`) and emits two files under the configured output directory (defaults to `lib/src/constants/`):
+  - `icons.dart` → `AppIcons` enum mapping each SVG in `assets/icons/` to a strongly-typed accessor with a `path` getter.
+  - `images.dart` → `AppImages` enum covering PNG/JPG/SVG entries in `assets/images/` with convenience getters.
+- Configuration (`build.yaml`):
+  ```yaml
+  targets:
+    $default:
+      builders:
+        gen_assets|assets:
+          options:
+            assets_dir: assets
+            output_dir: lib/src/constants
+  ```
+- Supports nested folders; enum field names are derived from the relative path (converted to lowerCamelCase) and deduplicated when necessary.
 
 ## Working with the builders
 

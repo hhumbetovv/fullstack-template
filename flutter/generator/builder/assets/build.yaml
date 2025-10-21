@@ -1,0 +1,11 @@
+builders:
+  assets:
+    import: "package:gen_assets/builder.dart"
+    builder_factories: ["assetsBuilder"]
+    build_extensions: {"$lib$": [".assets.dart"]}
+    auto_apply: dependents
+    build_to: source
+    defaults:
+      options:
+        assets_dir: assets
+        output_dir: lib/src/constants

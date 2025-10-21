@@ -7,3 +7,13 @@ targets:
         options:
           folders:
             - constants
+      gen_assets|assets:
+        enabled: true
+        options:
+          assets_dir: "assets"
+          output_dir: "lib/src/constants"
+
+global_options:
+  gen_assets|assets:
+    runs_before:
+      - gen_exporter|exporter

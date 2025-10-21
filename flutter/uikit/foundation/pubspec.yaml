@@ -14,7 +14,9 @@ dev_dependencies:
 
   #? Modules
   gen_exporter: any
+  gen_assets: any
 
 flutter:
   assets:
     - assets/icons/
+    - assets/images/
