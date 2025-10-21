@@ -39,7 +39,6 @@ export 'src/palette/text_field_state.dart';
 export 'src/palette/text_field_type.dart';
 export 'src/theme/base_theme.dart';
 export 'src/theme/build_context.dart';
-export 'src/theme/font_family.dart';
 export 'src/theme/light_theme.dart';
 export 'src/theme/palette.dart';
 export 'src/theme/styles.dart';
