@@ -29,8 +29,9 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
       reason: 'Dio Request Failed',
     );
     try {
-      if (dioError.response?.data != null) {
-        final json = dioError.response?.data! as Map<String, dynamic>;
+      final data = dioError.response?.data;
+      if (data != null && data is Map<String, dynamic>) {
+        final json = data;
         return NetworkResponse.fromJson(json, (_) => null);
       } else {
         return NetworkResponse(isSuccess: false, message: dioError.error.toString());
