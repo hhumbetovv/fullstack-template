@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# usage: sh scripts/deeplink.sh "https://domain.com"
+# usage: sh scripts/bash/deeplink.sh "https://domain.com"
 
 adb shell 'am start -a android.intent.action.VIEW \
     -c android.intent.category.BROWSABLE \

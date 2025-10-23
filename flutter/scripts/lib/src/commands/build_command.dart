@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
-
 import 'package:scripts/src/common/console.dart';
 import 'package:scripts/src/core/errors.dart';
 
@@ -23,8 +22,7 @@ class _BuildSpec {
   final BuildMode mode;
   final BuildFlavor flavor;
 
-  String get description =>
-      '${platform.name} ${mode.name} ${flavor.name}'.toUpperCase();
+  String get description => '${platform.name} ${mode.name} ${flavor.name}'.toUpperCase();
 }
 
 enum _AndroidArtifact { appBundle, releaseApk, debugApk }
@@ -100,27 +98,19 @@ class BuildCommand extends Command<int> {
   String get name => 'build';
 
   @override
-  String get description =>
-      'Run bootstrap and produce Android/iOS artifacts across modes and flavors.';
+  String get description => 'Run bootstrap and produce Android/iOS artifacts across modes and flavors.';
 
   @override
   Future<int> run() async {
-    final keepKeyProperties =
-        argResults?['keep-key-properties'] as bool? ?? false;
+    final keepKeyProperties = argResults?['keep-key-properties'] as bool? ?? false;
     final requestAndroidAab = argResults?['android-aab'] as bool? ?? false;
     final requestAndroidApk = argResults?['android-apk'] as bool? ?? false;
     final obfuscateAndroid = argResults?['obfuscate'] as bool? ?? true;
     final splitDebugInfo = argResults?['split-debug-info'] as bool? ?? true;
-    final splitDebugInfoPathRaw =
-        (argResults?['split-debug-info-path'] as String? ??
-                './android/app/release')
-            .trim();
-    final applyTargetPlatform =
-        argResults?['apply-target-platform'] as bool? ?? true;
-    final targetPlatformRaw =
-        (argResults?['target-platform'] as String? ??
-                'android-arm,android-arm64,android-x64')
-            .trim();
+    final splitDebugInfoPathRaw = (argResults?['split-debug-info-path'] as String? ?? './android/app/release').trim();
+    final applyTargetPlatform = argResults?['apply-target-platform'] as bool? ?? true;
+    final targetPlatformRaw = (argResults?['target-platform'] as String? ?? 'android-arm,android-arm64,android-x64')
+        .trim();
 
     final tokens = argResults?.rest ?? <String>[];
 
@@ -178,17 +168,13 @@ class BuildCommand extends Command<int> {
     }
 
     final needsAndroidKeystore = specs.any(
-      (spec) =>
-          spec.platform == BuildPlatform.android &&
-          spec.mode == BuildMode.release,
+      (spec) => spec.platform == BuildPlatform.android && spec.mode == BuildMode.release,
     );
 
     final splitDebugInfoPath = splitDebugInfo && splitDebugInfoPathRaw.isEmpty
         ? './android/app/release'
         : splitDebugInfoPathRaw;
-    final targetPlatform = targetPlatformRaw.isEmpty
-        ? 'android-arm,android-arm64,android-x64'
-        : targetPlatformRaw;
+    final targetPlatform = targetPlatformRaw.isEmpty ? 'android-arm,android-arm64,android-x64' : targetPlatformRaw;
 
     final androidCliOptions = _AndroidCliOptions(
       requestAppBundle: requestAndroidAab,
@@ -239,10 +225,7 @@ class BuildCommand extends Command<int> {
 
     if (needsAndroidKeystore) {
       if (hasAnyKeystoreEnv && !hasAllKeystoreEnv) {
-        final missingKeys = envValues.entries
-            .where((entry) => entry.value == null)
-            .map((entry) => entry.key)
-            .toList();
+        final missingKeys = envValues.entries.where((entry) => entry.value == null).map((entry) => entry.key).toList();
         throw CommandError(
           'Android release builds require environment variables: ${missingKeys.join(', ')}.',
           exitCode: 64,
@@ -280,7 +263,7 @@ class BuildCommand extends Command<int> {
 
     Console.info('Running bootstrap.sh ...');
     await _runProcess(
-      ['bash', 'scripts/bootstrap.sh'],
+      ['bash', 'scripts/bash/bootstrap.sh'],
       workingDirectory: repoRoot.path,
       description: 'bootstrap.sh',
     );
@@ -332,9 +315,7 @@ class BuildCommand extends Command<int> {
         }
       }
     } finally {
-      if (keyPropertiesCreated &&
-          !hadExistingKeyProperties &&
-          !keepKeyProperties) {
+      if (keyPropertiesCreated && !hadExistingKeyProperties && !keepKeyProperties) {
         if (keyPropertiesFile.existsSync()) {
           keyPropertiesFile.deleteSync();
         }
@@ -351,8 +332,7 @@ int _compareSpecs(_BuildSpec a, _BuildSpec b) {
   const modeOrder = [BuildMode.release, BuildMode.debug];
   const flavorOrder = BuildFlavor.values;
 
-  final platformComparison =
-      platformOrder.indexOf(a.platform) - platformOrder.indexOf(b.platform);
+  final platformComparison = platformOrder.indexOf(a.platform) - platformOrder.indexOf(b.platform);
   if (platformComparison != 0) {
     return platformComparison;
   }
@@ -449,9 +429,7 @@ Future<void> _buildAndroid(
         releaseArgs.add('--obfuscate');
       }
       if (options.splitDebugInfo) {
-        final dir = options.splitDebugInfoPath.isEmpty
-            ? './android/app/release'
-            : options.splitDebugInfoPath;
+        final dir = options.splitDebugInfoPath.isEmpty ? './android/app/release' : options.splitDebugInfoPath;
         releaseArgs.add('--split-debug-info=$dir');
       }
       additionalArgs.addAll(releaseArgs);
@@ -477,8 +455,7 @@ Future<void> _buildAndroid(
     await _runProcess(
       buildArgs,
       workingDirectory: appDir.path,
-      description:
-          'flutter ${commandTarget.toUpperCase()} (${spec.description} $artifactLabel)',
+      description: 'flutter ${commandTarget.toUpperCase()} (${spec.description} $artifactLabel)',
     );
 
     final outputPath = switch (artifact) {
@@ -694,8 +671,7 @@ File _storeFileArtifact(
   )..createSync(recursive: true);
 
   final extension = p.extension(source.path);
-  final destName =
-      '${spec.platform.name}-${spec.mode.name}-${spec.flavor.name}-v$version$extension';
+  final destName = '${spec.platform.name}-${spec.mode.name}-${spec.flavor.name}-v$version$extension';
   final destination = File(p.join(destinationDir.path, destName));
   if (destination.existsSync()) {
     destination.deleteSync();
@@ -721,12 +697,8 @@ Directory _storeDirectoryArtifact(
 
   final originalName = preferredName ?? p.basename(source.path);
   final extension = p.extension(originalName);
-  final nameWithoutExtension = extension.isEmpty
-      ? originalName
-      : p.basenameWithoutExtension(originalName);
-  final destName = extension.isEmpty
-      ? '$nameWithoutExtension-v$version'
-      : '$nameWithoutExtension-v$version$extension';
+  final nameWithoutExtension = extension.isEmpty ? originalName : p.basenameWithoutExtension(originalName);
+  final destName = extension.isEmpty ? '$nameWithoutExtension-v$version' : '$nameWithoutExtension-v$version$extension';
   final destination = Directory(p.join(destinationDir.path, destName));
   if (destination.existsSync()) {
     destination.deleteSync(recursive: true);
@@ -820,9 +792,7 @@ String _relativePath(String absolutePath) {
   final root = Directory.current.absolute.path;
   if (absolutePath.startsWith(root)) {
     final offset = absolutePath.substring(root.length);
-    return offset.startsWith(Platform.pathSeparator)
-        ? offset.substring(1)
-        : offset;
+    return offset.startsWith(Platform.pathSeparator) ? offset.substring(1) : offset;
   }
   return absolutePath;
 }

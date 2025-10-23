@@ -86,5 +86,5 @@ dart run scripts build
 - `--no-apply-target-platform` skips adding `--target-platform`; use `--target-platform <value>` to override the default `android-arm,android-arm64,android-x64`.
 
 When the Android signing environment variables are present the command uses them; otherwise Gradle falls back to the debug signing config. The command invokes
-`scripts/bootstrap.sh`, creates a temporary `android/key.properties` file when needed, and calls Flutter with both `--flavor <name>` and
+`scripts/bash/bootstrap.sh`, creates a temporary `android/key.properties` file when needed, and calls Flutter with both `--flavor <name>` and
 `--dart-define=FLAVOR=<name>` for each build.
