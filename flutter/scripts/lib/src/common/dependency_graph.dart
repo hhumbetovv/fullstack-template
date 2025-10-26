@@ -72,9 +72,7 @@ Future<void> buildDependencyGraph() async {
     state.allModuleDependencies[moduleName] = fullDependencies;
 
     if (state.modulePaths.containsKey(moduleName)) {
-      final buildDependencies = fullDependencies
-          .where(state.modulePaths.containsKey)
-          .toSet();
+      final buildDependencies = fullDependencies.where(state.modulePaths.containsKey).toSet();
       state.moduleDependencies[moduleName] = buildDependencies;
 
       if (buildDependencies.isNotEmpty) {
@@ -489,8 +487,7 @@ Future<void> generateMermaidGraph() async {
       )
       ..writeln('');
 
-    final sortedEntries = state.moduleUnusedDependencies.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
+    final sortedEntries = state.moduleUnusedDependencies.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
 
     for (final entry in sortedEntries) {
       final unused = entry.value.toList()..sort();
