@@ -1,94 +1,23 @@
-import 'dart:convert';
 import 'dart:io';
+
+import 'package:yaml/yaml.dart';
 
 import 'logging.dart';
 
-class YamlParser {
-  static Map<String, dynamic> parse(String content) {
-    final trimmedInput = content.trim();
-
-    if (trimmedInput.startsWith('{') && trimmedInput.endsWith('}')) {
-      final correctedJson = trimmedInput
-          .replaceAllMapped(
-            RegExp(r'(\w+):'),
-            (match) => '"${match.group(1)}":',
-          )
-          .replaceAll(' ', '')
-          .replaceAll('"', ' ')
-          .replaceAll('{ ', '{')
-          .replaceAll(' }', '}')
-          .replaceAll(',', ', ');
-
-      try {
-        final decoded = json.decode(correctedJson.replaceAll("'", ' '));
-        if (decoded is Map<String, dynamic>) return decoded;
-        return {};
-      } on Exception catch (_) {}
-    }
-
-    final lines = content.split('\n');
-    final result = <String, dynamic>{};
-    final indentationMap = <int, dynamic>{-2: result};
-    var lastIndentation = -2;
-
-    for (final line in lines) {
-      final trimmedLine = line.trim();
-
-      if (trimmedLine.isEmpty ||
-          trimmedLine.startsWith('#') ||
-          trimmedLine.startsWith('!')) {
-        continue;
-      }
-
-      final currentIndentation = line.indexOf(trimmedLine);
-
-      dynamic parent = indentationMap[lastIndentation];
-      while (lastIndentation >= currentIndentation) {
-        lastIndentation -= 2;
-        parent = indentationMap[lastIndentation];
-        if (parent != null) {
-          break;
-        }
-      }
-
-      if (trimmedLine.startsWith('-')) {
-        if (parent is List) {
-          final value = trimmedLine.substring(1).trim();
-          parent.add(value);
-        } else if (parent is Map &&
-            parent.isNotEmpty &&
-            parent.values.last is List) {
-          final list = parent.values.last as List;
-          final value = trimmedLine.substring(1).trim();
-          list.add(value);
-        }
-      } else {
-        final parts = trimmedLine.split(':');
-        final key = parts[0].trim();
-        final valuePart = parts.length > 1
-            ? parts.sublist(1).join(':').trim()
-            : '';
-
-        if (valuePart.isEmpty) {
-          final isListKey = key == 'workspace' || key == 'assets';
-          final newObject = isListKey ? <dynamic>[] : <String, dynamic>{};
-
-          if (parent is Map<String, dynamic>) {
-            parent[key] = newObject;
-          }
-
-          indentationMap[currentIndentation] = newObject;
-          lastIndentation = currentIndentation;
-        } else {
-          if (parent is Map<String, dynamic>) {
-            parent[key] = valuePart;
-          }
-        }
-      }
-    }
-
-    return result;
+dynamic _convertYamlValue(dynamic value) {
+  if (value is YamlMap) {
+    return Map<String, dynamic>.fromEntries(
+      value.entries.map(
+        (entry) => MapEntry(entry.key.toString(), _convertYamlValue(entry.value)),
+      ),
+    );
   }
+
+  if (value is YamlList) {
+    return value.map(_convertYamlValue).toList();
+  }
+
+  return value;
 }
 
 Future<Map<String, dynamic>?> readPubspec(String filePath) async {
@@ -97,7 +26,15 @@ Future<Map<String, dynamic>?> readPubspec(String filePath) async {
     if (!file.existsSync()) return null;
 
     final content = await file.readAsString();
-    return YamlParser.parse(content);
+    final parsed = loadYaml(content);
+    final converted = _convertYamlValue(parsed);
+
+    if (converted is Map<String, dynamic>) {
+      return converted;
+    }
+
+    Logger.debug('Parsed pubspec did not produce a map: $filePath');
+    return null;
   } on Exception catch (e) {
     Logger.debug('Error reading $filePath: $e');
     return null;

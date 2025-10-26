@@ -7,21 +7,27 @@ graph LR
     common_shared["common_shared
 🌊 Wave 0"]
     common_shared:::common
-    core_navigation["core_navigation
+    core_domain["core_domain
 🌊 Wave 0"]
-    core_navigation:::core
-    demo_domain["demo_domain
-🌊 Wave 0"]
-    demo_domain:::domain
-    class demo_domain unused;
+    core_domain:::core
     processor["processor
 🌊 Wave 0"]
+    ui_foundation["ui_foundation
+🌊 Wave 0"]
+    ui_foundation:::ui
     common_presentation["common_presentation
 🌊 Wave 1"]
     common_presentation:::common
     core_data["core_data
 🌊 Wave 1"]
     core_data:::core
+    core_navigation["core_navigation
+🌊 Wave 1"]
+    core_navigation:::core
+    demo_domain["demo_domain
+🌊 Wave 1"]
+    demo_domain:::domain
+    class demo_domain unused;
     demo_data["demo_data
 🌊 Wave 2"]
     demo_data:::data
@@ -37,17 +43,11 @@ graph LR
     demo_presentation:::presentation
     app["app
 🌊 Wave 4"]
-    core_domain["core_domain
-🚫 No build"]
-    core_domain:::core
     core_presentation["core_presentation
 🚫 No build"]
     core_presentation:::core
     scripts["scripts
 🚫 No build"]
-    ui_foundation["ui_foundation
-🚫 No build"]
-    ui_foundation:::ui
 
     %% Edge colours follow the target module category
     linkStyle default stroke:#b0bec5,stroke-width:1,opacity:0.35
@@ -137,11 +137,12 @@ graph LR
 ## Build Statistics
 
 - **Total Modules**: 15
-- **Modules With build_runner**: 11
-- **Modules Without build_runner**: 4
+- **Modules With build_runner**: 13
+- **Modules Without build_runner**: 2
 - **Total Dependencies**: 36
 - **Average Dependencies**: 2.40
-- **Max Parallel Builds**: 4
+- **Peak Concurrent Modules**: 4
+- **Configured Parallel Limit**: 4
 
 ## Build Waves
 
@@ -152,27 +153,29 @@ The modules requiring build_runner will be built in the following waves:
 
 - **processor** → no dependencies
 - **common_shared** → no dependencies
-- **core_navigation** → no dependencies
-- **demo_domain** → no dependencies
+- **core_domain** → no dependencies
+- **ui_foundation** → no dependencies
 
 ### Wave 1
 
 - **common_presentation** → depends on: common_shared
-- **core_data** → depends on: common_shared
+- **core_navigation** → depends on: ui_foundation
+- **core_data** → depends on: common_shared, core_domain
+- **demo_domain** → depends on: core_domain
 
 ### Wave 2
 
-- **ui_components** → depends on: processor, common_presentation, common_shared
+- **ui_components** → depends on: processor, common_presentation, common_shared, ui_foundation
 - **demo_data** → depends on: core_data, demo_domain
 
 ### Wave 3
 
-- **console_presentation** → depends on: processor, core_navigation, common_shared, common_presentation, ui_components
+- **console_presentation** → depends on: processor, core_navigation, common_shared, common_presentation, ui_foundation, ui_components
 - **demo_presentation** → depends on: processor, core_navigation, demo_domain, demo_data
 
 ### Wave 4
 
-- **app** → depends on: common_shared, common_presentation, core_data, core_navigation, ui_components, console_presentation, demo_presentation
+- **app** → depends on: common_shared, common_presentation, core_data, core_navigation, ui_foundation, ui_components, console_presentation, demo_presentation
 
 ## Unused Module Dependencies
 

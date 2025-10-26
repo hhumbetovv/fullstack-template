@@ -416,6 +416,18 @@ Future<void> generateMermaidGraph() async {
     totalDependencies += deps.length;
   }
 
+  final waveCounts = <int, int>{};
+  for (final entry in state.moduleBuildLevel.entries) {
+    if (!state.modulePaths.containsKey(entry.key)) continue;
+    waveCounts[entry.value] = (waveCounts[entry.value] ?? 0) + 1;
+  }
+  var peakConcurrent = 0;
+  for (final count in waveCounts.values) {
+    if (count > peakConcurrent) {
+      peakConcurrent = count;
+    }
+  }
+
   content
     ..writeln('- **Total Modules**: $totalModules')
     ..writeln('- **Modules With build_runner**: ${state.modulePaths.length}')
@@ -426,7 +438,8 @@ Future<void> generateMermaidGraph() async {
     ..writeln(
       '- **Average Dependencies**: ${totalModules > 0 ? (totalDependencies / totalModules).toStringAsFixed(2) : '0'}',
     )
-    ..writeln('- **Max Parallel Builds**: ${state.maxParallelBuilds}')
+    ..writeln('- **Peak Concurrent Modules**: $peakConcurrent')
+    ..writeln('- **Configured Parallel Limit**: ${state.maxParallelBuilds}')
     ..writeln('')
     ..writeln('## Build Waves')
     ..writeln('')
