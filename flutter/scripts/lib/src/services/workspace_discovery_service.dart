@@ -1,9 +1,7 @@
 import 'package:common_tooling/tooling.dart';
 
-import 'context.dart';
-import 'logging.dart';
-import 'options.dart';
-import 'yaml_utils.dart';
+import '../core/core.dart';
+import 'yaml_service.dart';
 
 Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
   final workspacePaths = workspace.whereType<String>();

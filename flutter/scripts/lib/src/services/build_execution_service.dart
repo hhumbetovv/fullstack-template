@@ -3,8 +3,7 @@ import 'dart:io';
 
 import 'package:common_tooling/tooling.dart';
 
-import 'context.dart';
-import 'logging.dart';
+import '../core/core.dart';
 
 Future<void> setupBuildLogs() async {
   final logsDir = Directory(state.buildLogsDir);

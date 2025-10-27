@@ -32,6 +32,16 @@ scripts:module_graph`.
 | `yaml-links` | Runs `pubspec-links` and `build-links` back to back, cleaning previous output first. |
 | `locale [--input dir] [--output file]` | Produce `LocaleKeys` constants from translation JSON files. |
 
+## Command architecture
+- `ScriptsCommand` (see `lib/src/core/base_command.dart`) wraps `Command<int>` with shared error handling, console output, and metadata wiring. New commands extend this base instead of touching boilerplate.
+- `command_registry.dart` owns the list of command factories and registers them with the runner. Adding a new script only requires appending to this list—`lib/src/core/runner.dart` stays unchanged.
+- Shared infrastructure lives under `lib/src/core/` (state, logging, registry, runner) and `lib/src/services/` (workspace discovery, build runner, environment, YAML). Feature-specific flows remain in `lib/src/feature/`.
+- Directory layout:
+  - `lib/src/core/` → base command + registry + runner + console/logging/errors.
+  - `lib/src/services/` → reusable operations (toolchain, workspace, YAML, build runner).
+  - `lib/src/feature/<name>/` → each feature exposes its own `command.dart`, `options.dart`, and workflow files.
+- Commands act as thin entrypoints: parsing flags and delegating to `run*Feature` functions. When you add a capability, implement it under `lib/src/feature/...` and keep the command class focused on wiring.
+
 The CLI prefers `fvm` and falls back to the system `dart`/`flutter` binaries
 when `fvm` is not installed.
 
@@ -139,31 +149,29 @@ The command attempts to use `fvm flutter` and falls back to the system
 
 ## Adding a new command
 
-1. Implement a command under `lib/src/commands/` that extends `Command<int>`.
-2. Share reusable logic via `lib/src/<feature>/` so other commands can import
-   it.
-3. Register the command in `lib/src/runner.dart`.
-4. Run `fvms --help` (and the command’s own `--help`) to verify the
-   wiring.
+1. Implement a command under `lib/src/feature/<name>/command.dart` that extends
+   `ScriptsCommand` and override `Future<int> runCommand()`.
+2. Put the actual workflow in a feature module (`lib/src/feature/<name>/`) or a
+   service so that the command stays a small entrypoint.
+3. Register the command by adding its factory to `command_registry.dart`.
+4. Run `fvms --help` (and the command’s own `--help`) to verify the wiring.
 
 ### Example skeleton
 
 ```dart
-class ExampleCommand extends Command<int> {
-  ExampleCommand() {
+class ExampleCommand extends ScriptsCommand {
+  ExampleCommand()
+      : super(
+          commandName: 'example',
+          commandDescription: 'Describe what the command does.',
+        ) {
     argParser
       ..addFlag('dry-run', negatable: false)
       ..addOption('target');
   }
 
   @override
-  String get name => 'example';
-
-  @override
-  String get description => 'Describe what the command does.';
-
-  @override
-  Future<int> run() async {
+  Future<int> runCommand() async {
     // TODO: implement command
     return 0;
   }

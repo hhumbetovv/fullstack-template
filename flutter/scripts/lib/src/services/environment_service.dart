@@ -2,9 +2,7 @@ import 'dart:io';
 
 import 'package:common_tooling/tooling.dart';
 
-import 'context.dart';
-import 'logging.dart';
-import 'options.dart';
+import '../core/core.dart';
 
 Future<void> validateEnvironment() async {
   Logger.debug('Validating environment...');

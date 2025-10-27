@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'context.dart';
-import 'logging.dart';
-import 'options.dart';
-import 'yaml_utils.dart';
+import '../../core/build_state.dart';
+import '../../core/errors.dart';
+import '../../core/logging.dart';
+import '../../services/yaml_service.dart';
 
 class GraphConfig {
   GraphConfig({
@@ -163,7 +163,8 @@ Future<bool> writeGraphFile(
 
   if (edgeColorMap.isNotEmpty) {
     content.writeln('');
-    final styleEntries = edgeColorMap.entries.toList()..sort((a, b) => a.value.first.compareTo(b.value.first));
+    final styleEntries = edgeColorMap.entries.toList()
+      ..sort((a, b) => a.value.first.compareTo(b.value.first));
     for (final entry in styleEntries) {
       final indices = entry.value..sort();
       content.writeln(
@@ -184,13 +185,20 @@ Future<bool> writeGraphFile(
     'unused',
   ];
   const classStyles = <String, String>{
-    'presentation': '    classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000',
-    'domain': '    classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000',
-    'data': '    classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000',
-    'ui': '    classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000',
-    'common': '    classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000',
-    'core': '    classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000',
-    'unused': '    classDef unused fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000',
+    'presentation':
+        '    classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000',
+    'domain':
+        '    classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000',
+    'data':
+        '    classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000',
+    'ui':
+        '    classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000',
+    'common':
+        '    classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000',
+    'core':
+        '    classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000',
+    'unused':
+        '    classDef unused fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000',
   };
 
   for (final className in classOrder) {
@@ -280,7 +288,9 @@ Future<void> buildDependencyGraph() async {
     state.allModuleDependencies[moduleName] = fullDependencies;
 
     if (state.modulePaths.containsKey(moduleName)) {
-      final buildDependencies = fullDependencies.where(state.modulePaths.containsKey).toSet();
+      final buildDependencies = fullDependencies
+          .where(state.modulePaths.containsKey)
+          .toSet();
       state.moduleDependencies[moduleName] = buildDependencies;
 
       if (buildDependencies.isNotEmpty) {
@@ -511,7 +521,8 @@ Future<void> generateMermaidGraph() async {
         title: 'Wave $wave Dependency Graph',
         primaryModules: waveModules,
         section: 'waves',
-        description: 'Modules scheduled in wave $wave with their workspace dependencies.',
+        description:
+            'Modules scheduled in wave $wave with their workspace dependencies.',
       ),
     );
   }
@@ -526,7 +537,9 @@ Future<void> generateMermaidGraph() async {
   };
 
   categoryLabels.forEach((category, label) {
-    final modules = allModules.where((module) => classifyModule(module) == category).toSet();
+    final modules = allModules
+        .where((module) => classifyModule(module) == category)
+        .toSet();
     if (modules.isEmpty) return;
     graphs.add(
       GraphConfig(
@@ -544,7 +557,10 @@ Future<void> generateMermaidGraph() async {
     'session': (name) => name.startsWith('session_'),
     'campaign': (name) => name.startsWith('campaign_'),
     'qr_scan': (name) => name.startsWith('qr_scan_'),
-    'main': (name) => name.startsWith('main_') || name.startsWith('home_') || name.startsWith('profile_'),
+    'main': (name) =>
+        name.startsWith('main_') ||
+        name.startsWith('home_') ||
+        name.startsWith('profile_'),
     'global': (name) => name.contains('console') || name.contains('info'),
     'splash': (name) => name.startsWith('splash_'),
   };
@@ -558,7 +574,8 @@ Future<void> generateMermaidGraph() async {
         title: '${key.replaceAll('_', ' ').toUpperCase()} Feature Graph',
         primaryModules: modules,
         section: 'features',
-        description: '${key.replaceAll('_', ' ').toUpperCase()} feature modules with their dependencies.',
+        description:
+            '${key.replaceAll('_', ' ').toUpperCase()} feature modules with their dependencies.',
       ),
     );
   });
@@ -621,8 +638,9 @@ Future<void> generateMermaidGraph() async {
     };
 
     for (final section in ['overview', 'waves', 'layers', 'features']) {
-      final items = generatedGraphs.where((graph) => graph.section == section).toList()
-        ..sort((a, b) => a.title.compareTo(b.title));
+      final items =
+          generatedGraphs.where((graph) => graph.section == section).toList()
+            ..sort((a, b) => a.title.compareTo(b.title));
       if (items.isEmpty) continue;
 
       summary
@@ -630,7 +648,8 @@ Future<void> generateMermaidGraph() async {
         ..writeln('');
 
       for (final graph in items) {
-        final description = (graph.description != null && graph.description!.isNotEmpty)
+        final description =
+            (graph.description != null && graph.description!.isNotEmpty)
             ? ' — ${graph.description}'
             : '';
         summary.writeln('- [${graph.title}](${graph.path})$description');
@@ -653,7 +672,10 @@ Future<void> generateMermaidGraph() async {
   } else {
     for (var level = 0; level <= maxWave; level++) {
       final waveModules =
-          state.moduleBuildLevel.entries.where((entry) => entry.value == level).map((entry) => entry.key).toList()
+          state.moduleBuildLevel.entries
+              .where((entry) => entry.value == level)
+              .map((entry) => entry.key)
+              .toList()
             ..sort();
 
       summary
@@ -690,7 +712,8 @@ Future<void> generateMermaidGraph() async {
       )
       ..writeln('');
 
-    final sortedEntries = state.moduleUnusedDependencies.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+    final sortedEntries = state.moduleUnusedDependencies.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
 
     for (final entry in sortedEntries) {
       final unused = entry.value.toList()..sort();
@@ -700,7 +723,9 @@ Future<void> generateMermaidGraph() async {
 
   summary
     ..writeln('')
-    ..writeln('_Detailed graphs are available under the `build_info/` directory._')
+    ..writeln(
+      '_Detailed graphs are available under the `build_info/` directory._',
+    )
     ..writeln('');
 
   await File('build_graph.md').writeAsString(summary.toString());
@@ -782,7 +807,7 @@ void topologicalSort() {
       }
     }
 
-    throw SmartBuildException('', exitCode: 1);
+    throw const SmartBuildException('', exitCode: 1);
   }
 
   Logger.success('Build order determined: ${state.buildOrder.length} modules');

@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:common_tooling/tooling.dart';
 import 'package:path/path.dart' as p;
 
-import 'console.dart';
+import '../core/core.dart';
 
 Future<ProcessResult> runBuildRunnerCommand(
   Directory directory,

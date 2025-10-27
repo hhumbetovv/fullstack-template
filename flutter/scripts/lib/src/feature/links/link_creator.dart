@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:common_tooling/tooling.dart';
 import 'package:path/path.dart' as p;
 
-import '../../common/console.dart';
+import '../../core/core.dart';
 
 class LinkSummary {
   const LinkSummary({

@@ -2,13 +2,14 @@ import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
-import 'logging.dart';
+import '../core/core.dart';
 
 dynamic _convertYamlValue(dynamic value) {
   if (value is YamlMap) {
     return Map<String, dynamic>.fromEntries(
       value.entries.map(
-        (entry) => MapEntry(entry.key.toString(), _convertYamlValue(entry.value)),
+        (entry) =>
+            MapEntry(entry.key.toString(), _convertYamlValue(entry.value)),
       ),
     );
   }

@@ -1,10 +1,15 @@
-import 'package:args/command_runner.dart';
-import 'package:scripts/src/common/options.dart';
-import 'package:scripts/src/core/errors.dart';
-import 'package:scripts/src/feature/smart_build/runner.dart';
+import 'package:scripts/src/core/core.dart';
 
-class SmartBuildCommand extends Command<int> {
-  SmartBuildCommand() {
+import 'options.dart';
+import 'runner.dart';
+
+class SmartBuildCommand extends ScriptsCommand {
+  SmartBuildCommand()
+    : super(
+        commandName: 'smart-build',
+        commandDescription:
+            'Build module graph intelligently using build_runner.',
+      ) {
     argParser
       ..addFlag(
         'verbose',
@@ -27,14 +32,7 @@ class SmartBuildCommand extends Command<int> {
   }
 
   @override
-  String get name => 'smart-build';
-
-  @override
-  String get description =>
-      'Build module graph intelligently using build_runner.';
-
-  @override
-  Future<int> run() async {
+  Future<int> runCommand() async {
     final rest = argResults?.rest ?? <String>[];
     if (rest.length > 1) {
       throw const CommandError(
@@ -61,4 +59,7 @@ class SmartBuildCommand extends Command<int> {
 
     return runSmartBuild(options);
   }
+
+  @override
+  bool get showStackTrace => argResults?['verbose'] as bool? ?? false;
 }

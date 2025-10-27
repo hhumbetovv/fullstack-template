@@ -1,11 +1,14 @@
-import 'package:args/command_runner.dart';
+import 'package:scripts/src/core/core.dart';
 
-import 'package:scripts/src/common/options.dart';
-import 'package:scripts/src/core/errors.dart';
-import 'package:scripts/src/feature/module_graph/runner.dart';
+import 'options.dart';
+import 'runner.dart';
 
-class ModuleGraphCommand extends Command<int> {
-  ModuleGraphCommand() {
+class ModuleGraphCommand extends ScriptsCommand {
+  ModuleGraphCommand()
+    : super(
+        commandName: 'module-graph',
+        commandDescription: 'Generate the workspace dependency graph markdown.',
+      ) {
     argParser
       ..addFlag(
         'verbose',
@@ -23,13 +26,7 @@ class ModuleGraphCommand extends Command<int> {
   }
 
   @override
-  String get name => 'module-graph';
-
-  @override
-  String get description => 'Generate the workspace dependency graph markdown.';
-
-  @override
-  Future<int> run() async {
+  Future<int> runCommand() async {
     final parallelRaw = argResults?['parallel'] as String? ?? '4';
     final parallel = int.tryParse(parallelRaw);
     if (parallel == null || parallel <= 0) {
@@ -46,4 +43,7 @@ class ModuleGraphCommand extends Command<int> {
 
     return generateModuleGraph(options);
   }
+
+  @override
+  bool get showStackTrace => argResults?['verbose'] as bool? ?? false;
 }

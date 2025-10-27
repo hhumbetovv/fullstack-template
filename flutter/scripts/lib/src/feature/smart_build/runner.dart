@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../../common/build_execution.dart';
-import '../../common/context.dart';
-import '../../common/dependency_graph.dart';
-import '../../common/discovery.dart';
-import '../../common/environment.dart';
-import '../../common/logging.dart';
-import '../../common/options.dart';
+import '../../core/core.dart';
+import '../../services/build_execution_service.dart';
+import '../../services/environment_service.dart';
+import '../../services/workspace_discovery_service.dart';
+
+import '../module_graph/dependency_graph.dart';
+import 'options.dart';
 
 Future<int> runSmartBuild(SmartBuildOptions options) async {
   configureState(
