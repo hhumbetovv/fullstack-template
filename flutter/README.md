@@ -13,6 +13,7 @@ Welcome to the Flutter workspace. This README points you to the most important m
 | Processor | Annotation and config hub for code generation |
 | Generator | Base generator infrastructure & concrete builders |
 | Common | Shared utilities & presentation helpers |
+| Tooling | Shared dev-time helpers (toolchain, cache, discovery) |
 | Core | Data, domain, navigation, presentation foundations |
 | UI Kit | Design tokens and reusable widgets |
 | Feature | Example-driven feature layering guide |

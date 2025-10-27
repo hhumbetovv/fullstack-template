@@ -23,7 +23,7 @@ scripts:module_graph`.
 | ------ | ------- |
 | `build` | Run the Flutter build matrix after bootstrapping the project. |
 | `gen-build [modules…]` | Run `build_runner build -d` for every module that depends on build_runner or a provided subset. |
-| `gen-clean` | Call `build_runner clean` for all build_runner modules and delete generated artifacts (`.g.dart`, `.freezed.dart`, etc.). |
+| `gen-clean [--workers <n>]` | Call `build_runner clean` for all build_runner modules (in parallel by default) and delete generated artifacts (`.g.dart`, `.freezed.dart`, etc.). |
 | `gen-watch [modules…] [--pre-build]` | Launch `build_runner watch -d` for selected modules, optionally running `smart-build` first. |
 | `smart-build [module] [--dry-run] [--parallel <n>] [--verbose]` | Dependency-aware incremental build orchestration. |
 | `module-graph [--parallel <n>] [--verbose]` | Generate `build_graph.md` and dependency stats without executing builds. |
@@ -48,6 +48,8 @@ when `fvm` is not installed.
 
 ### `gen-clean`
 - Runs `build_runner clean` in all modules with a `build_runner` dependency.
+- Executes clean jobs concurrently. Concurrency defaults to half the CPU count,
+  but can be overridden with `--workers <n>` (or `--workers auto` for defaults).
 - Removes common generated artifacts (`*.g.dart`, `*.freezed.dart`,
   `*.module.dart`, etc.) across the repository and deletes `.dart_tool/build`.
 
