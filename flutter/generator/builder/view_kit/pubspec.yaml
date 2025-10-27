@@ -8,6 +8,7 @@ dependencies:
   #! Modules
   processor: any
   gen_core: any
+  common_tooling: any
 
   #! Analyzer
   analyzer: ^7.4.5

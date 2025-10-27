@@ -18,6 +18,7 @@ workspace:
   #? Common
   - common/shared
   - common/presentation
+  - common/tooling
   #? Core
   - core/presentation
   - core/navigation

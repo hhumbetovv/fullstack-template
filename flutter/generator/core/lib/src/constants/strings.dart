@@ -1,6 +1,4 @@
 sealed class Strings {
-  static const effectsPath = '.dart_tool/build/cache/effects_cache.json';
-
   // ! Types
   static const contextType = 'BuildContext';
   static const widgetType = 'Widget';

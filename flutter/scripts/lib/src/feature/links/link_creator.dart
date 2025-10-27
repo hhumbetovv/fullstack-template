@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:common_tooling/tooling.dart';
 import 'package:path/path.dart' as p;
 
 import '../../common/console.dart';
@@ -55,45 +56,12 @@ Future<LinkSummary> createSymlinks({
 }
 
 Iterable<File> _findFiles(Directory root, String fileName) {
-  final excludedSegments = {
-    '.git',
-    '.dart_tool',
-    '.fvm',
-    'build',
-    'node_modules',
-    '.gradle',
-    'Flutter',
-  };
-
-  final queue = <Directory>[root];
-  final visited = <String>{};
-  final results = <File>[];
-
-  while (queue.isNotEmpty) {
-    final dir = queue.removeLast();
-    final normalized = p.normalize(dir.absolute.path);
-    if (!visited.add(normalized)) continue;
-
-    final segments = p.split(normalized);
-    if (segments.any(excludedSegments.contains) && dir.path != root.path) {
-      continue;
-    }
-
-    try {
-      final entries = dir.listSync(followLinks: false);
-      for (final entry in entries) {
-        if (entry is Directory) {
-          queue.add(entry);
-        } else if (entry is File && p.basename(entry.path) == fileName) {
-          results.add(entry);
-        }
-      }
-    } on Exception catch (error) {
-      Console.warning('Skipping ${dir.path}: $error');
-    }
+  final walker = DirectoryWalker(root: root);
+  final files = <File>[];
+  for (final file in walker.findFilesNamed(fileName)) {
+    files.add(file);
   }
-
-  return results;
+  return files;
 }
 
 void _cleanDirectory(Directory directory) {

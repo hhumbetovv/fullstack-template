@@ -57,11 +57,11 @@ class GenBuildCommand extends Command<int> {
 
     for (final module in targets) {
       Console.write('\n🔨 Building ${module.name} (${module.path})');
-      final exitCode = await runBuildRunnerCommand(
+      final result = await runBuildRunnerCommand(
         module.directory,
         ['build', '-d'],
       );
-      if (exitCode == 0) {
+      if (result.exitCode == 0) {
         Console.success('✅ Build complete for ${module.name}');
       } else {
         hasFailures = true;

@@ -1,3 +1,5 @@
+import 'package:common_tooling/tooling.dart';
+
 import 'context.dart';
 import 'logging.dart';
 import 'options.dart';
@@ -17,10 +19,7 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
   for (final workspacePath in workspacePaths) {
     Logger.debug('Analyzing workspace path: $workspacePath');
 
-    var cleanPath = workspacePath;
-    if (!cleanPath.startsWith('./') && !cleanPath.startsWith('/')) {
-      cleanPath = './$cleanPath';
-    }
+    final cleanPath = ensureDotRelative(workspacePath);
 
     final pubspecPath = '$cleanPath/pubspec.yaml';
     Logger.debug('   Checking: $pubspecPath');
@@ -119,10 +118,7 @@ Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
       continue;
     }
 
-    var cleanPath = depPath;
-    if (!cleanPath.startsWith('./') && !cleanPath.startsWith('/')) {
-      cleanPath = './$cleanPath';
-    }
+    final cleanPath = ensureDotRelative(depPath);
 
     final pubspecPath = '$cleanPath/pubspec.yaml';
     Logger.debug('   Checking: $pubspecPath');

@@ -1,11 +1,8 @@
-name: scripts
+name: common_tooling
 
 environment:
   sdk: ^3.9.0
 resolution: workspace
 
 dependencies:
-  args: ^2.5.0
   path: ^1.9.0
-  yaml: ^3.1.2
-  common_tooling: any

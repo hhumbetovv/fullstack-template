@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:build/build.dart';
+import 'package:common_tooling/tooling.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:gen_core/src/utils/throw.dart';
 import 'package:source_gen/source_gen.dart';
@@ -26,12 +27,15 @@ abstract class BaseBuilder<Config, Target> extends Builder {
     this.allowSyntaxErrors = false,
     this.options,
   }) : generatedExtension = '.g.dart',
-       buildExtensions = validatedBuildExtensionsFrom(options != null ? Map.of(options.config) : null, {
-         '.dart': [
-           '.g.dart',
-           ...additionalOutputExtensions,
-         ],
-       }) {
+       buildExtensions = validatedBuildExtensionsFrom(
+         options != null ? Map.of(options.config) : null,
+         {
+           '.dart': [
+             '.g.dart',
+             ...additionalOutputExtensions,
+           ],
+         },
+       ) {
     if (generatedExtension.isEmpty || !generatedExtension.startsWith('.')) {
       throw ArgumentError.value(
         generatedExtension,
@@ -64,10 +68,14 @@ abstract class BaseBuilder<Config, Target> extends Builder {
 
   String _defaultFormatOutput(String code) {
     code = '$dartFormatWidth\n$code';
-    return DartFormatter(languageVersion: DartFormatter.latestLanguageVersion).format(code);
+    return DartFormatter(
+      languageVersion: DartFormatter.latestLanguageVersion,
+    ).format(code);
   }
 
-  Set<String> get ignoreForFile => (options?.config['ignore_for_file'] as List?)?.cast<String>().toSet() ?? {};
+  Set<String> get ignoreForFile =>
+      (options?.config['ignore_for_file'] as List?)?.cast<String>().toSet() ??
+      {};
 
   @override
   final Map<String, List<String>> buildExtensions;
@@ -91,7 +99,11 @@ abstract class BaseBuilder<Config, Target> extends Builder {
       }
     }
 
-    if (!(await hasAnyTopLevelAnnotations(buildStep.inputId, buildStep, unit))) {
+    if (!(await hasAnyTopLevelAnnotations(
+      buildStep.inputId,
+      buildStep,
+      unit,
+    ))) {
       return;
     }
 
@@ -108,7 +120,9 @@ abstract class BaseBuilder<Config, Target> extends Builder {
   Map<String, dynamic>? toJson(Config? config);
   Config fromJson(Map<String, dynamic> json);
 
-  File _cacheFile(int id) => File('.dart_tool/build/cache/${name}_$id.json');
+  File _cacheFile(int id) => File(
+    buildCacheFilePath(name: name, id: id),
+  );
 
   Config? loadFromCache(BuildStep buildStep, int stepHash) {
     final file = _cacheFile(buildStep.inputId.path.hashCode);
@@ -139,7 +153,11 @@ abstract class BaseBuilder<Config, Target> extends Builder {
     return buildFactory.stringify(item);
   }
 
-  Future<Config?> onResolve(LibraryReader library, BuildStep buildStep, int stepHash) async {
+  Future<Config?> onResolve(
+    LibraryReader library,
+    BuildStep buildStep,
+    int stepHash,
+  ) async {
     final elements = library.annotatedWith(_typeChecker);
 
     if (elements.isEmpty) return null;
@@ -207,7 +225,11 @@ $output
   @override
   String toString() => 'Generating $generatedExtension: $runtimeType';
 
-  Future<bool> hasAnyTopLevelAnnotations(AssetId input, BuildStep buildStep, [CompilationUnit? unit]) async {
+  Future<bool> hasAnyTopLevelAnnotations(
+    AssetId input,
+    BuildStep buildStep, [
+    CompilationUnit? unit,
+  ]) async {
     if (!await buildStep.canRead(input)) return false;
     final lib = await buildStep.resolver.libraryFor(input);
     final reader = LibraryReader(lib);

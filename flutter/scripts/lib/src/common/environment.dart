@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:common_tooling/tooling.dart';
+
 import 'context.dart';
 import 'logging.dart';
 import 'options.dart';
@@ -8,22 +10,9 @@ Future<void> validateEnvironment() async {
   Logger.debug('Validating environment...');
 
   try {
-    await Process.run('which', ['dart']);
-  } on Exception catch (_) {
-    try {
-      await Process.run('which', ['fvm']);
-    } on Exception catch (_) {
-      throw SmartBuildException(
-        "Neither 'dart' nor 'fvm' command found. Please ensure Flutter is installed.",
-      );
-    }
-  }
-
-  final rootPubspec = File('pubspec.yaml');
-  if (!rootPubspec.existsSync()) {
-    throw SmartBuildException(
-      'No pubspec.yaml found in current directory. Please run from Flutter project root.',
-    );
+    await ensureDartOrFvm(requirePubspec: true);
+  } on ToolchainException catch (error) {
+    throw SmartBuildException(error.message);
   }
 
   Logger.debug('Environment validation passed');

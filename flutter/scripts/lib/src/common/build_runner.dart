@@ -1,61 +1,44 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
+import 'package:common_tooling/tooling.dart';
 import 'package:path/path.dart' as p;
 
 import 'console.dart';
 
-Future<int> runBuildRunnerCommand(
+Future<ProcessResult> runBuildRunnerCommand(
   Directory directory,
-  List<String> args,
-) async {
+  List<String> args, {
+  bool forwardOutput = true,
+}) async {
   final commandArgs = ['run', 'build_runner', ...args];
-  try {
-    final process = await Process.start(
-      'fvm',
-      ['dart', ...commandArgs],
-      workingDirectory: directory.path,
-      mode: ProcessStartMode.inheritStdio,
-    );
-    return process.exitCode;
-  } on ProcessException {
-    final process = await Process.start(
-      'dart',
+  if (forwardOutput) {
+    final process = await startDartCommand(
       commandArgs,
       workingDirectory: directory.path,
       mode: ProcessStartMode.inheritStdio,
     );
-    return process.exitCode;
+    final exitCode = await process.exitCode;
+    return ProcessResult(process.pid, exitCode, '', '');
   }
+
+  return runDartCommand(
+    commandArgs,
+    workingDirectory: directory.path,
+  );
 }
 
 Future<Process> startBuildRunnerWatch(
   Directory directory,
   List<String> extraArgs,
 ) async {
-  final args = ['dart', 'run', 'build_runner', 'watch', ...extraArgs];
-  try {
-    return await Process.start(
-      'fvm',
-      args,
-      workingDirectory: directory.path,
-      mode: ProcessStartMode.inheritStdio,
-    );
-  } on ProcessException {
-    final process = await Process.start(
-      'dart',
-      ['run', 'build_runner', 'watch', ...extraArgs],
-      workingDirectory: directory.path,
-    );
-    process.stdout
-        .transform(const Utf8Decoder())
-        .listen((event) => stdout.write(event));
-    process.stderr
-        .transform(const Utf8Decoder())
-        .listen((event) => stdout.write(event));
-    return process;
-  }
+  final args = ['run', 'build_runner', 'watch', ...extraArgs];
+  final process = await startDartCommand(
+    args,
+    workingDirectory: directory.path,
+    mode: ProcessStartMode.inheritStdio,
+  );
+  return process;
 }
 
 Future<void> cancelProcesses(List<Process> processes) async {

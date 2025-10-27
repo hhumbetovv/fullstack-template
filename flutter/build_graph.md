@@ -2,11 +2,11 @@
 
 ## Quick Stats
 
-- **Total Modules**: 15
+- **Total Modules**: 16
 - **Modules With build_runner**: 13
-- **Modules Without build_runner**: 2
-- **Total Dependencies**: 36
-- **Average Dependencies**: 2.40
+- **Modules Without build_runner**: 3
+- **Total Dependencies**: 37
+- **Average Dependencies**: 2.31
 - **Peak Concurrent Modules**: 4
 - **Configured Parallel Limit**: 4
 

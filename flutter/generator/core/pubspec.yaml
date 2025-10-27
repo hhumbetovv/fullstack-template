@@ -7,6 +7,7 @@ resolution: workspace
 dependencies:
   #! Directory and Folders
   dart_style: ^3.1.0
+  common_tooling: any
 
   #! Analyzer
   analyzer: ^7.4.5

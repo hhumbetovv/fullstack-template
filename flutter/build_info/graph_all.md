@@ -30,6 +30,8 @@ graph LR
     demo_presentation["demo_presentation\n🌊 Wave 3"]
     demo_presentation:::presentation
     app["app\n🌊 Wave 4"]
+    common_tooling["common_tooling\n🚫 No build"]
+    common_tooling:::common
     core_presentation["core_presentation\n🚫 No build"]
     core_presentation:::core
     scripts["scripts\n🚫 No build"]
@@ -68,16 +70,17 @@ graph LR
     demo_data --> demo_presentation
     demo_domain --> demo_presentation
     processor --> demo_presentation
+    common_tooling --> scripts
     common_presentation --> ui_components
     common_shared --> ui_components
     processor --> ui_components
     ui_foundation --> ui_components
 
-    linkStyle 0,1,9,10,11,17,20,21,32,33 stroke:#c2185b,stroke-width:1.9,opacity:0.9
+    linkStyle 0,1,9,10,11,17,20,21,32,33,34 stroke:#c2185b,stroke-width:1.9,opacity:0.9
     linkStyle 2,6 stroke:#0277bd,stroke-width:1.9,opacity:0.9
     linkStyle 3,4,5,12,13,18,22,24,26,27,28 stroke:#00695c,stroke-width:1.9,opacity:0.9
-    linkStyle 7,8,15,16,19,35 stroke:#f57c00,stroke-width:1.9,opacity:0.9
-    linkStyle 14,23,31,34 stroke:#546e7a,stroke-width:1.9,opacity:0.9
+    linkStyle 7,8,15,16,19,36 stroke:#f57c00,stroke-width:1.9,opacity:0.9
+    linkStyle 14,23,31,35 stroke:#546e7a,stroke-width:1.9,opacity:0.9
     linkStyle 25,30 stroke:#7b1fa2,stroke-width:1.9,opacity:0.9
     linkStyle 29 stroke:#2e7d32,stroke-width:1.9,opacity:0.9
 

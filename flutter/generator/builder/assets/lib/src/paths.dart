@@ -1,4 +1,5 @@
 import 'package:build/build.dart';
+import 'package:common_tooling/tooling.dart';
 import 'package:path/path.dart' as p;
 
 class AssetPaths {
@@ -13,13 +14,13 @@ class AssetPaths {
   });
 
   factory AssetPaths.fromOptions(BuilderOptions options) {
-    final assetsDir = _normalizePath(
+    final assetsDir = normalizePosix(
       (options.config['assets_dir'] as String?) ?? 'assets',
     );
-    final inputDir = _normalizePath(
+    final inputDir = normalizePosix(
       (options.config['input'] as String?) ?? assetsDir,
     );
-    final rawOutput = _normalizePath(
+    final rawOutput = normalizePosix(
       (options.config['output_dir'] as String?) ?? 'lib/src/constants',
     );
 
@@ -30,10 +31,11 @@ class AssetPaths {
       outputRelative = '';
     }
 
-    final fontOutputName = (options.config['font_output'] as String?) ??
+    final fontOutputName =
+        (options.config['font_output'] as String?) ??
         (options.config['output'] as String?) ??
         'icons';
-    final iconClassFileName = _normalizePath(
+    final iconClassFileName = normalizePosix(
       (options.config['icon_class_file'] as String?) ?? 'icons.dart',
     );
     final iconClassName =
@@ -67,22 +69,16 @@ class AssetPaths {
   String get iconsInputDir => p.posix.join(inputDir, 'icons');
   String get fontsDir => p.posix.join(inputDir, 'fonts');
 
-  String get imagesOutputAbsolute => p.posix.join(_outputAbsolute, 'images.dart');
+  String get imagesOutputAbsolute =>
+      p.posix.join(_outputAbsolute, 'images.dart');
   String get iconFontClassOutputAbsolute =>
       p.posix.join(_outputAbsolute, iconClassFileName);
 
-  String get imagesOutputRelative => p.posix.join(outputRelative, 'images.dart');
+  String get imagesOutputRelative =>
+      p.posix.join(outputRelative, 'images.dart');
   String get iconFontClassOutputRelative =>
       p.posix.join(outputRelative, iconClassFileName);
 
   String get fontOutputRelative =>
       p.posix.join(fontsDir, '$fontOutputName.otf');
-}
-
-String _normalizePath(String value) {
-  var normalized = value.replaceAll(r'\', '/');
-  normalized = normalized.replaceAll(RegExp('/+'), '/');
-  normalized = normalized.replaceAll(RegExp('^/'), '');
-  normalized = normalized.replaceAll(RegExp(r'/$'), '');
-  return normalized;
 }

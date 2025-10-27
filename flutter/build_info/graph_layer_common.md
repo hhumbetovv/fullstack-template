@@ -10,6 +10,9 @@ graph LR
     common_presentation["common_presentation\n🌊 Wave 1"]
     common_presentation:::common
     class common_presentation focus;
+    common_tooling["common_tooling\n🚫 No build"]
+    common_tooling:::common
+    class common_tooling focus;
 
     %% Edge styling
     linkStyle default stroke:#b0bec5,stroke-width:1,opacity:0.35

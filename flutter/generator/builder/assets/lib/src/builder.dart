@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:build/build.dart';
+import 'package:common_tooling/tooling.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:package_config/package_config.dart';
 import 'package:path/path.dart' as p;
@@ -14,11 +15,11 @@ import 'paths.dart';
 class AssetsBuilder implements Builder {
   AssetsBuilder({
     required BuilderOptions options,
-  })  : paths = AssetPaths.fromOptions(options),
-        formatter = DartFormatter(
-          languageVersion: DartFormatter.latestLanguageVersion,
-        ),
-        _packageConfigFuture = _loadPackageConfig();
+  }) : paths = AssetPaths.fromOptions(options),
+       formatter = DartFormatter(
+         languageVersion: DartFormatter.latestLanguageVersion,
+       ),
+       _packageConfigFuture = _loadPackageConfig();
 
   final AssetPaths paths;
   final DartFormatter formatter;
@@ -26,11 +27,11 @@ class AssetsBuilder implements Builder {
 
   @override
   Map<String, List<String>> get buildExtensions => {
-        r'$lib$': [
-          paths.iconFontClassOutputRelative,
-          paths.imagesOutputRelative,
-        ],
-      };
+    r'$lib$': [
+      paths.iconFontClassOutputRelative,
+      paths.imagesOutputRelative,
+    ],
+  };
 
   @override
   Future<void> build(BuildStep buildStep) async {
@@ -43,7 +44,9 @@ class AssetsBuilder implements Builder {
       ),
     );
 
-    final packageRootPath = package.root.toFilePath(windows: Platform.isWindows);
+    final packageRootPath = normalizeSystemPath(
+      package.root.toFilePath(windows: Platform.isWindows),
+    );
 
     final iconsDirAbsolute = _resolveSystemPath(
       packageRootPath,
@@ -57,12 +60,15 @@ class AssetsBuilder implements Builder {
     );
     await Directory(p.dirname(fontOutputAbsolute)).create(recursive: true);
 
-    final tempDir = await Directory.systemTemp.createTemp('gen_assets_icon_font_');
+    final tempDir = await Directory.systemTemp.createTemp(
+      'gen_assets_icon_font_',
+    );
     try {
       final tempClassOutput = p.join(tempDir.path, paths.iconClassFileName);
       await Directory(p.dirname(tempClassOutput)).create(recursive: true);
 
       await _runIconFontGenerator(
+        packageRootPath: packageRootPath,
         iconsDirAbsolute: iconsDirAbsolute,
         fontOutputPath: fontOutputAbsolute,
         classOutputPath: tempClassOutput,
@@ -98,7 +104,9 @@ class AssetsBuilder implements Builder {
   static Future<PackageConfig> _loadPackageConfig() async {
     final packageConfig = await findPackageConfig(Directory.current);
     if (packageConfig == null) {
-      throw StateError('Unable to locate package_config.json for asset builder.');
+      throw StateError(
+        'Unable to locate package_config.json for asset builder.',
+      );
     }
 
     return packageConfig;
@@ -123,7 +131,10 @@ class AssetsBuilder implements Builder {
     final files = <File>[];
     final directories = <Directory>[];
 
-    await for (final entity in iconsDir.list(recursive: true, followLinks: false)) {
+    await for (final entity in iconsDir.list(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (entity is File) {
         files.add(entity);
       } else if (entity is Directory) {
@@ -191,6 +202,7 @@ class AssetsBuilder implements Builder {
   }
 
   static Future<void> _runIconFontGenerator({
+    required String packageRootPath,
     required String iconsDirAbsolute,
     required String fontOutputPath,
     required String classOutputPath,
@@ -198,10 +210,8 @@ class AssetsBuilder implements Builder {
     required String packageName,
     required bool normalize,
   }) async {
-    final result = await Process.run(
-      'fvm',
+    final result = await runDartCommand(
       [
-        'dart',
         'pub',
         'global',
         'run',
@@ -214,6 +224,7 @@ class AssetsBuilder implements Builder {
         if (normalize) '--normalize' else '--no-normalize',
         '--recursive',
       ],
+      workingDirectory: packageRootPath,
     );
 
     if (result.exitCode != 0) {

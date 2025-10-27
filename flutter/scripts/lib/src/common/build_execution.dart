@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:common_tooling/tooling.dart';
+
 import 'context.dart';
 import 'logging.dart';
 
@@ -65,15 +67,8 @@ Future<Map<String, dynamic>> buildModule(String moduleName) async {
     ..writeln('Command: dart run build_runner build -d')
     ..writeln('===================================\n');
 
-  final usesFvm = File('$modulePath/.fvm').existsSync();
-  final command = usesFvm ? 'fvm' : 'dart';
-  final args = usesFvm
-      ? ['dart', 'run', 'build_runner', 'build', '-d']
-      : ['run', 'build_runner', 'build', '-d'];
-
-  final buildProcess = await Process.start(
-    command,
-    args,
+  final buildProcess = await startDartCommand(
+    ['run', 'build_runner', 'build', '-d'],
     workingDirectory: modulePath,
   );
 
