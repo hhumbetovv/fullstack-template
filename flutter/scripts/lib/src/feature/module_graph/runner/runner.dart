@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../../core/core.dart';
-import '../../services/environment_service.dart';
-import '../../services/workspace_discovery_service.dart';
+import 'package:scripts/src/core/core.dart';
+import 'package:scripts/src/services/environment_service.dart';
+import 'package:scripts/src/services/workspace_discovery_service.dart';
 
-import 'dependency_graph.dart';
-import 'options.dart';
+import '../command/options.dart';
+import '../feature.dart';
 
 Future<int> generateModuleGraph(ModuleGraphOptions options) async {
   configureState(
@@ -39,7 +39,7 @@ Future<int> generateModuleGraph(ModuleGraphOptions options) async {
     await discoverModulesFromRoot();
 
     if (state.allModulePaths.isEmpty) {
-      throw SmartBuildException(
+      throw const SmartBuildException(
         'No workspace modules discovered for graph generation.',
       );
     }

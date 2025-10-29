@@ -1,6 +1,6 @@
 import 'package:scripts/src/core/core.dart';
 
-import 'links_feature.dart';
+import '../feature.dart';
 
 class YamlLinksCommand extends ScriptsCommand {
   YamlLinksCommand()

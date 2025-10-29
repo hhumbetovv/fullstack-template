@@ -1,6 +1,6 @@
 import 'package:scripts/src/core/core.dart';
 
-import 'gen_build_feature.dart';
+import '../feature.dart';
 
 class GenBuildCommand extends ScriptsCommand {
   GenBuildCommand()

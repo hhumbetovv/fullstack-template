@@ -12,7 +12,7 @@
     "**/*.g.dart": true,
     "**/*.gr.dart": true,
     "**/*.config.dart": true,
-    "**/build/": true,
+    "**/build/": false,
     "**/*.module.dart": true,
     "**/.dart_tool": true
   },

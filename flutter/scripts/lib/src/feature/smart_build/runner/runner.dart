@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../../core/core.dart';
-import '../../services/build_execution_service.dart';
-import '../../services/environment_service.dart';
-import '../../services/workspace_discovery_service.dart';
+import 'package:scripts/src/core/core.dart';
+import 'package:scripts/src/feature/module_graph/feature.dart';
+import 'package:scripts/src/services/build_execution_service.dart';
+import 'package:scripts/src/services/environment_service.dart';
+import 'package:scripts/src/services/workspace_discovery_service.dart';
 
-import '../module_graph/dependency_graph.dart';
-import 'options.dart';
+import '../command/options.dart';
 
 Future<int> runSmartBuild(SmartBuildOptions options) async {
   configureState(
@@ -116,7 +116,7 @@ Future<int> runSmartBuild(SmartBuildOptions options) async {
       await discoverModulesFromRoot();
 
       if (state.modulePaths.isEmpty) {
-        throw SmartBuildException('No modules with build_runner found!');
+        throw const SmartBuildException('No modules with build_runner found!');
       }
 
       await buildDependencyGraph();

@@ -39,8 +39,8 @@ scripts:module_graph`.
 - Directory layout:
   - `lib/src/core/` → base command + registry + runner + console/logging/errors.
   - `lib/src/services/` → reusable operations (toolchain, workspace, YAML, build runner).
-  - `lib/src/feature/<name>/` → each feature exposes its own `command.dart`, `options.dart`, and workflow files.
-- Commands act as thin entrypoints: parsing flags and delegating to `run*Feature` functions. When you add a capability, implement it under `lib/src/feature/...` and keep the command class focused on wiring.
+  - `lib/src/feature/<name>/` → `feature.dart` re-exports the public API, `command/` holds CLI wiring (`command.dart`, `options.dart`), and `runner/`, `services/`, `models/` folders organise the implementation.
+- Commands stay thin: parse flags in `command/command.dart` and delegate to helpers exposed via `<feature>/feature.dart`.
 
 The CLI prefers `fvm` and falls back to the system `dart`/`flutter` binaries
 when `fvm` is not installed.
@@ -149,10 +149,9 @@ The command attempts to use `fvm flutter` and falls back to the system
 
 ## Adding a new command
 
-1. Implement a command under `lib/src/feature/<name>/command.dart` that extends
+1. Implement a command under `lib/src/feature/<name>/command/command.dart` that extends
    `ScriptsCommand` and override `Future<int> runCommand()`.
-2. Put the actual workflow in a feature module (`lib/src/feature/<name>/`) or a
-   service so that the command stays a small entrypoint.
+2. Put the actual workflow in `<feature>/feature.dart` and supporting `runner/` / `services/` files so that the command stays a small entrypoint.
 3. Register the command by adding its factory to `command_registry.dart`.
 4. Run `fvms --help` (and the command’s own `--help`) to verify the wiring.
 

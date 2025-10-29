@@ -1,5 +1,5 @@
 import '../../core/core.dart';
-import 'link_creator.dart';
+import 'services/link_creator.dart';
 
 Future<int> runBuildLinksFeature() async {
   Console.write('=====================================');

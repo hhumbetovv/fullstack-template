@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../../core/core.dart';
-import '../../feature/smart_build/options.dart';
-import '../../feature/smart_build/runner.dart';
-import '../../services/build_runner_service.dart';
-import '../../services/workspace_service.dart';
+import 'package:scripts/src/core/core.dart';
+import 'package:scripts/src/feature/smart_build/feature.dart';
+import 'package:scripts/src/services/build_runner_service.dart';
+import 'package:scripts/src/services/workspace_service.dart';
 
 Future<int> runGenWatchFeature({
   required bool preBuild,

@@ -1,6 +1,6 @@
 import 'package:scripts/src/core/core.dart';
 
-import 'gen_watch_feature.dart';
+import '../feature.dart';
 
 class GenWatchCommand extends ScriptsCommand {
   GenWatchCommand()
