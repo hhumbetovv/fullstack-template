@@ -1,13 +1,13 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
-
-import '../../core/core.dart';
-import 'command/options.dart';
-import 'models/build_spec.dart';
-import 'services/android_builder.dart';
-import 'services/ios_builder.dart';
-import 'services/keystore_manager.dart';
+import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/logging/console.dart';
+import 'package:scripts/src/feature/build/command/options.dart';
+import 'package:scripts/src/feature/build/models/build_spec.dart';
+import 'package:scripts/src/feature/build/services/android_builder.dart';
+import 'package:scripts/src/feature/build/services/ios_builder.dart';
+import 'package:scripts/src/feature/build/services/keystore_manager.dart';
 
 Future<int> runBuildFeature(ArgResults? argResults) async {
   final options = parseBuildCommandArgs(argResults);

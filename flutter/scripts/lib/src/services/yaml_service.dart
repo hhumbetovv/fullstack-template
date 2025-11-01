@@ -1,8 +1,7 @@
 import 'dart:io';
 
+import 'package:scripts/src/core/logging/logging.dart';
 import 'package:yaml/yaml.dart';
-
-import '../core/core.dart';
 
 dynamic _convertYamlValue(dynamic value) {
   if (value is YamlMap) {

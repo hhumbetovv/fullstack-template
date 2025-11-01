@@ -1,6 +1,6 @@
-import 'package:scripts/src/core/build_state.dart';
-import 'package:scripts/src/core/errors.dart';
-import 'package:scripts/src/core/logging.dart';
+import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/logging/logging.dart';
+import 'package:scripts/src/core/state/build_state.dart';
 
 void calculateBuildLevels() {
   Logger.info('🌊 Calculating build waves...');

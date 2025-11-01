@@ -1,4 +1,4 @@
-import 'build_state.dart';
+import 'package:scripts/src/core/state/build_state.dart';
 
 class Colors {
   static const String red = '\x1b[0;31m';

@@ -1,6 +1,5 @@
-import 'package:scripts/src/core/core.dart';
-
-import '../feature.dart';
+import 'package:scripts/src/core/command/base_command.dart';
+import 'package:scripts/src/feature/locale/feature.dart';
 
 class LocaleCommand extends ScriptsCommand {
   LocaleCommand()

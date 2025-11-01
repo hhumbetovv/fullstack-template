@@ -2,9 +2,9 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:math' as math;
 
-import '../../core/core.dart';
-import '../../services/build_runner_service.dart';
-import '../../services/workspace_service.dart';
+import 'package:scripts/src/core/logging/console.dart';
+import 'package:scripts/src/services/build_runner_service.dart';
+import 'package:scripts/src/services/workspace_service.dart';
 
 Future<int> runGenCleanFeature(String workerOption) async {
   final modules = await discoverModules(includeNonBuildRunner: false);

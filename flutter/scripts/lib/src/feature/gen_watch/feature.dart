@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:scripts/src/core/core.dart';
-import 'package:scripts/src/feature/smart_build/feature.dart';
+import 'package:scripts/src/core/logging/console.dart';
+import 'package:scripts/src/feature/smart_build/command/options.dart';
+import 'package:scripts/src/feature/smart_build/runner/runner.dart';
 import 'package:scripts/src/services/build_runner_service.dart';
 import 'package:scripts/src/services/workspace_service.dart';
 

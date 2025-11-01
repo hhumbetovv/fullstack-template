@@ -1,11 +1,10 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:scripts/src/core/core.dart';
-
-import '../models/build_spec.dart';
-import 'artifact_store.dart';
-import 'process_runner.dart';
+import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/feature/build/models/build_spec.dart';
+import 'package:scripts/src/feature/build/services/artifact_store.dart';
+import 'package:scripts/src/feature/build/services/process_runner.dart';
 
 class AndroidCliOptions {
   const AndroidCliOptions({

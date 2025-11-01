@@ -20,7 +20,32 @@ class BuildState {
   String? targetModule;
 }
 
-BuildState state = BuildState();
+class BuildStateStore {
+  BuildStateStore();
+
+  BuildState _state = BuildState();
+
+  BuildState get state => _state;
+
+  BuildState configure({
+    bool verbose = false,
+    bool dryRun = false,
+    int maxParallelBuilds = 4,
+    String? targetModule,
+  }) => _state = BuildState()
+    ..verbose = verbose
+    ..dryRun = dryRun
+    ..maxParallelBuilds = maxParallelBuilds
+    ..targetModule = targetModule;
+
+  void reset() {
+    _state = BuildState();
+  }
+}
+
+final BuildStateStore buildStateStore = BuildStateStore();
+
+BuildState get state => buildStateStore.state;
 
 BuildState configureState({
   bool verbose = false,
@@ -28,28 +53,14 @@ BuildState configureState({
   int maxParallelBuilds = 4,
   String? targetModule,
 }) {
-  return state = BuildState()
-    ..verbose = verbose
-    ..dryRun = dryRun
-    ..maxParallelBuilds = maxParallelBuilds
-    ..targetModule = targetModule;
+  return buildStateStore.configure(
+    verbose: verbose,
+    dryRun: dryRun,
+    maxParallelBuilds: maxParallelBuilds,
+    targetModule: targetModule,
+  );
 }
 
 void resetState() {
-  state
-    ..modulePaths = {}
-    ..allModulePaths = {}
-    ..moduleDependencies = {}
-    ..allModuleDependencies = {}
-    ..moduleUnusedDependencies = {}
-    ..moduleBuildStatus = {}
-    ..modulePids = {}
-    ..moduleBuildLevel = {}
-    ..buildOrder = []
-    ..currentlyBuilding = <String>{}
-    ..maxParallelBuilds = 8
-    ..verbose = false
-    ..dryRun = false
-    ..buildLogsDir = 'build_logs'
-    ..targetModule = null;
+  buildStateStore.reset();
 }

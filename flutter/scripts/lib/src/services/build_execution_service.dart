@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:common_tooling/tooling.dart';
-
-import '../core/core.dart';
+import 'package:scripts/src/core/logging/logging.dart';
+import 'package:scripts/src/core/state/build_state.dart';
 
 part 'build_execution/log_manager.dart';
 part 'build_execution/module_builder.dart';

@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:scripts/src/core/build_state.dart';
-import 'package:scripts/src/core/logging.dart';
+import 'package:scripts/src/core/logging/logging.dart';
+import 'package:scripts/src/core/state/build_state.dart';
 import 'package:scripts/src/services/yaml_service.dart';
 
 Future<Set<String>> parseDependencies(

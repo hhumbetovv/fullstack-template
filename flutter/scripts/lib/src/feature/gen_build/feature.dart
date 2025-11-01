@@ -1,6 +1,6 @@
-import '../../core/core.dart';
-import '../../services/build_runner_service.dart';
-import '../../services/workspace_service.dart';
+import 'package:scripts/src/core/logging/console.dart';
+import 'package:scripts/src/services/build_runner_service.dart';
+import 'package:scripts/src/services/workspace_service.dart';
 
 Future<int> runGenBuildFeature(Iterable<String> moduleFilters) async {
   final modules = await discoverModules(includeNonBuildRunner: true);

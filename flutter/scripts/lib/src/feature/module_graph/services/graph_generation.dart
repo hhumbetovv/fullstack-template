@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:scripts/src/core/build_state.dart';
-import 'package:scripts/src/core/logging.dart';
+import 'package:scripts/src/core/logging/logging.dart';
+import 'package:scripts/src/core/state/build_state.dart';
 
-import 'graph_config.dart';
+import 'package:scripts/src/feature/module_graph/services/graph_config.dart';
 
 Future<bool> writeGraphFile(
   GraphConfig config,
@@ -221,11 +221,15 @@ Future<void> generateMermaidGraph() async {
     'presentation': 'Presentation Layer',
   };
 
-  categoryLabels.forEach((category, label) {
+  for (final entry in categoryLabels.entries) {
+    final category = entry.key;
+    final label = entry.value;
     final modules = allModules
         .where((module) => classifyModule(module) == category)
         .toSet();
-    if (modules.isEmpty) return;
+    if (modules.isEmpty) {
+      continue;
+    }
     graphs.add(
       GraphConfig(
         path: 'build_info/graph_layer_$category.md',
@@ -235,7 +239,7 @@ Future<void> generateMermaidGraph() async {
         description: '$label modules with their workspace dependencies.',
       ),
     );
-  });
+  }
 
   final featureGroups = <String, bool Function(String)>{
     'auth': (name) => name.startsWith('auth_'),
@@ -250,20 +254,24 @@ Future<void> generateMermaidGraph() async {
     'splash': (name) => name.startsWith('splash_'),
   };
 
-  featureGroups.forEach((key, matcher) {
+  for (final entry in featureGroups.entries) {
+    final key = entry.key;
+    final matcher = entry.value;
     final modules = allModules.where(matcher).toSet();
-    if (modules.isEmpty) return;
+    if (modules.isEmpty) {
+      continue;
+    }
+    final prettyKey = key.replaceAll('_', ' ').toUpperCase();
     graphs.add(
       GraphConfig(
         path: 'build_info/graph_feature_$key.md',
-        title: '${key.replaceAll('_', ' ').toUpperCase()} Feature Graph',
+        title: '$prettyKey Feature Graph',
         primaryModules: modules,
         section: 'features',
-        description:
-            '${key.replaceAll('_', ' ').toUpperCase()} feature modules with their dependencies.',
+        description: '$prettyKey feature modules with their dependencies.',
       ),
     );
-  });
+  }
 
   final generatedGraphs = <GraphConfig>[];
   for (final graph in graphs) {

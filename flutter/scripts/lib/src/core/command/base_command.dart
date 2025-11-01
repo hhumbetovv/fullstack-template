@@ -1,9 +1,8 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
-
-import 'console.dart';
-import 'errors.dart';
+import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/logging/console.dart';
 
 /// Base class for scripts commands that provides consistent error handling
 /// and metadata wiring. Extend this instead of [Command] directly so new

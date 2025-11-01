@@ -2,8 +2,7 @@ import 'dart:io';
 
 import 'package:common_tooling/tooling.dart';
 import 'package:path/path.dart' as p;
-
-import 'package:scripts/src/core/core.dart';
+import 'package:scripts/src/core/logging/console.dart';
 
 class LinkSummary {
   const LinkSummary({

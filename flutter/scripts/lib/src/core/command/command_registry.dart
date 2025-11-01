@@ -1,5 +1,4 @@
 import 'package:args/command_runner.dart';
-
 import 'package:scripts/src/feature/build/command/command.dart';
 import 'package:scripts/src/feature/gen_build/command/command.dart';
 import 'package:scripts/src/feature/gen_clean/command/command.dart';

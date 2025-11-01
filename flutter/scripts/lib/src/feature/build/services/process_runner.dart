@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:scripts/src/core/core.dart';
+import 'package:scripts/src/core/command/errors.dart';
 
 Future<void> runProcess(List<String> args) async {
   final process = await Process.start(

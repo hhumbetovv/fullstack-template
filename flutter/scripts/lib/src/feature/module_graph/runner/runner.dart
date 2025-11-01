@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:scripts/src/core/core.dart';
+import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/logging/logging.dart';
+import 'package:scripts/src/core/state/build_state.dart';
+import 'package:scripts/src/feature/module_graph/command/options.dart';
+import 'package:scripts/src/feature/module_graph/services/build_planning.dart';
+import 'package:scripts/src/feature/module_graph/services/dependency_analysis.dart';
+import 'package:scripts/src/feature/module_graph/services/graph_generation.dart';
 import 'package:scripts/src/services/environment_service.dart';
 import 'package:scripts/src/services/workspace_discovery_service.dart';
-
-import '../command/options.dart';
-import '../feature.dart';
 
 Future<int> generateModuleGraph(ModuleGraphOptions options) async {
   configureState(

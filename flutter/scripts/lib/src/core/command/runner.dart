@@ -1,6 +1,6 @@
 import 'package:args/command_runner.dart';
 
-import 'package:scripts/src/core/command_registry.dart';
+import 'package:scripts/src/core/command/command_registry.dart';
 
 CommandRunner<int> createScriptsCommandRunner() {
   final runner = CommandRunner<int>(

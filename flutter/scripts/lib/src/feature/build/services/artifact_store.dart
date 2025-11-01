@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-import '../models/build_spec.dart';
+import 'package:scripts/src/feature/build/models/build_spec.dart';
 
 void storeFileArtifact(
   File source,

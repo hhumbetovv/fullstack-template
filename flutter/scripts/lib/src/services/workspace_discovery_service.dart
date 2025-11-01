@@ -1,7 +1,9 @@
 import 'package:common_tooling/tooling.dart';
+import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/logging/logging.dart';
+import 'package:scripts/src/core/state/build_state.dart';
 
-import '../core/core.dart';
-import 'yaml_service.dart';
+import 'package:scripts/src/services/yaml_service.dart';
 
 part 'workspace_discovery/module_registry.dart';
 part 'workspace_discovery/path_dependency_scanner.dart';

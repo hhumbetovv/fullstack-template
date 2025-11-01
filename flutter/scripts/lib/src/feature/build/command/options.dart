@@ -1,7 +1,6 @@
 import 'package:args/args.dart';
-import 'package:scripts/src/core/core.dart';
-
-import '../models/build_spec.dart';
+import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/feature/build/models/build_spec.dart';
 
 class BuildCommandOptions {
   const BuildCommandOptions({

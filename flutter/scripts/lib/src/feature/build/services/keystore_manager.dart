@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:scripts/src/core/core.dart';
+import 'package:scripts/src/core/command/errors.dart';
 
 class AndroidKeystoreState {
   AndroidKeystoreState({

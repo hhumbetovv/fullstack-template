@@ -1,7 +1,7 @@
-import 'package:scripts/src/core/core.dart';
-
-import '../runner/runner.dart';
-import 'options.dart';
+import 'package:scripts/src/core/command/base_command.dart';
+import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/feature/module_graph/command/options.dart';
+import 'package:scripts/src/feature/module_graph/runner/runner.dart';
 
 class ModuleGraphCommand extends ScriptsCommand {
   ModuleGraphCommand()

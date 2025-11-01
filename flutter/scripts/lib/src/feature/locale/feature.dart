@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-
-import '../../core/core.dart';
+import 'package:scripts/src/core/logging/console.dart';
 
 Future<int> runLocaleFeature({
   required String inputPath,

@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
-import 'package:scripts/scripts.dart';
+import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/command/runner.dart';
 
 Future<void> main(List<String> args) async {
   final runner = createScriptsCommandRunner();
