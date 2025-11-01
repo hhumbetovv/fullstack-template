@@ -1,8 +1,8 @@
 import 'package:args/command_runner.dart';
 import 'package:scripts/src/feature/build/command/command.dart';
-import 'package:scripts/src/feature/gen_build/command/command.dart';
-import 'package:scripts/src/feature/gen_clean/command/command.dart';
-import 'package:scripts/src/feature/gen_watch/command/command.dart';
+import 'package:scripts/src/feature/gen/command/build_command.dart';
+import 'package:scripts/src/feature/gen/command/clean_command.dart';
+import 'package:scripts/src/feature/gen/command/watch_command.dart';
 import 'package:scripts/src/feature/links/command/build_links_command.dart';
 import 'package:scripts/src/feature/links/command/pubspec_links_command.dart';
 import 'package:scripts/src/feature/links/command/yaml_links_command.dart';
