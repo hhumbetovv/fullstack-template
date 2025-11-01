@@ -17,6 +17,15 @@ Future<bool> executeSmartBuildInternal(BuildState state) async {
   Logger.info('Total modules to build: $totalModules');
   Logger.info('Max parallel builds: ${state.maxParallelBuilds}');
 
+  if (state.verbose) {
+    Logger.debug('Build order (${state.buildOrder.length} modules):');
+    for (final module in state.buildOrder) {
+      Logger.debug(
+        '   • $module (wave ${state.moduleBuildLevel[module] ?? '?'} )',
+      );
+    }
+  }
+
   while (completed < totalModules) {
     var minWave = 999;
     var allModulesBuilt = true;

@@ -17,6 +17,13 @@ class BuildPlanBuilder {
     final inDegree = <String, int>{};
     final tempInDegree = <String, int>{};
 
+    if (state.verbose) {
+      Logger.debug('Module dependencies (build_runner scope):');
+      for (final entry in state.moduleDependencies.entries) {
+        Logger.debug('   ${entry.key} -> ${entry.value.join(', ')}');
+      }
+    }
+
     for (final moduleName in state.modulePaths.keys) {
       inDegree[moduleName] = 0;
     }
@@ -78,7 +85,6 @@ class BuildPlanBuilder {
       for (final dep in dependencies) {
         if (state.modulePaths.containsKey(dep)) {
           adjList[dep]!.add(moduleName);
-          inDegreeTopo[moduleName] = (inDegreeTopo[moduleName] ?? 0) + 1;
         }
       }
     }
@@ -87,6 +93,17 @@ class BuildPlanBuilder {
     for (final entry in inDegreeTopo.entries) {
       if (entry.value == 0) {
         queueTopo.add(entry.key);
+      }
+    }
+
+    if (state.verbose) {
+      Logger.debug('Topological in-degrees:');
+      for (final entry in inDegreeTopo.entries) {
+        Logger.debug('   ${entry.key}: ${entry.value}');
+      }
+      Logger.debug('Adjacency list:');
+      for (final entry in adjList.entries) {
+        Logger.debug('   ${entry.key} -> ${entry.value.join(', ')}');
       }
     }
 

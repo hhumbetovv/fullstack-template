@@ -36,23 +36,27 @@ class EffectCache {
   List<CachedEffect> readForViewModel(String viewModelClass) {
     final effects = readAll();
     final matching = <CachedEffect>[];
-    final seenByMethod = <String, CachedEffect>{};
+    final seenBySignature = <String, CachedEffect>{};
 
     for (final effect in effects) {
-      if (effect.viewModel != viewModelClass) continue;
-
-      final normalizedMethod = effect.method.name.replaceAll('_', '');
-      final previous = seenByMethod[normalizedMethod];
-      if (previous != null &&
-          (previous.view != effect.view ||
-              previous.viewModel != effect.viewModel)) {
-        throw StateError(
-          'There is an element with the same name but different configurations:\n\n'
-          '${effect.method.name} in ${effect.view} and ${previous.view}\n',
-        );
+      if (effect.viewModel != viewModelClass) {
+        continue;
       }
 
-      seenByMethod[normalizedMethod] = effect;
+      final signature = _methodSignature(effect.method);
+      final previous = seenBySignature[signature];
+
+      if (previous != null) {
+        if (!_hasSameSignature(previous, effect)) {
+          throw StateError(
+            'There is an element with the same name but different configurations:\n\n'
+            '${effect.method.name} in ${effect.view} and ${previous.view}\n',
+          );
+        }
+        continue;
+      }
+
+      seenBySignature[signature] = effect;
       matching.add(effect);
     }
 
@@ -97,6 +101,55 @@ class EffectCache {
       _file.createSync(recursive: true);
     }
   }
+}
+
+String _methodSignature(CachedEffectMethod method) {
+  final normalizedName = method.name.replaceAll('_', '');
+  final buffer = StringBuffer(normalizedName);
+  buffer.write('(');
+  final params = method.params.where((param) => param.type != 'BuildContext');
+  for (final param in params) {
+    buffer
+      ..write(param.type)
+      ..write(':')
+      ..write(param.name)
+      ..write(';');
+  }
+  buffer.write(')');
+  return buffer.toString();
+}
+
+bool _hasSameSignature(CachedEffect a, CachedEffect b) {
+  if (a.viewModel != b.viewModel) {
+    return false;
+  }
+
+  final aName = a.method.name.replaceAll('_', '');
+  final bName = b.method.name.replaceAll('_', '');
+  if (aName != bName) {
+    return false;
+  }
+
+  final aParams = a.method.params
+      .where((param) => param.type != 'BuildContext')
+      .toList();
+  final bParams = b.method.params
+      .where((param) => param.type != 'BuildContext')
+      .toList();
+
+  if (aParams.length != bParams.length) {
+    return false;
+  }
+
+  for (var index = 0; index < aParams.length; index += 1) {
+    final aParam = aParams[index];
+    final bParam = bParams[index];
+    if (aParam.name != bParam.name || aParam.type != bParam.type) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /// Builds a deterministic path to an effect cache file inside the build cache.
