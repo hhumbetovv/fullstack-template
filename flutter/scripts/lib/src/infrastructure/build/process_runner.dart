@@ -2,11 +2,15 @@ import 'dart:io';
 
 import 'package:scripts/src/core/command/errors.dart';
 
-Future<void> runProcess(List<String> args) async {
+Future<void> runProcess(
+  List<String> args, {
+  String? workingDirectory,
+}) async {
   final process = await Process.start(
     args.first,
     args.sublist(1),
     mode: ProcessStartMode.inheritStdio,
+    workingDirectory: workingDirectory,
   );
   final exitCode = await process.exitCode;
   if (exitCode != 0) {

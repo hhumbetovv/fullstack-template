@@ -2,14 +2,15 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/domain/models/build_spec.dart';
 import 'package:scripts/src/infrastructure/build/artifact_store.dart';
 import 'package:scripts/src/infrastructure/build/process_runner.dart';
 
 class AndroidCliOptions {
   const AndroidCliOptions({
-    required this.requestAppBundle,
-    required this.requestApk,
+    required this.buildAppBundle,
+    required this.buildApk,
     required this.obfuscate,
     required this.splitDebugInfo,
     required this.splitDebugInfoPath,
@@ -17,13 +18,23 @@ class AndroidCliOptions {
     required this.targetPlatform,
   });
 
-  final bool requestAppBundle;
-  final bool requestApk;
+  final bool buildAppBundle;
+  final bool buildApk;
   final bool obfuscate;
   final bool splitDebugInfo;
   final String splitDebugInfoPath;
   final bool applyTargetPlatform;
   final String targetPlatform;
+
+  bool shouldBuildFor(BuildSpec spec) {
+    if (!buildApk && !buildAppBundle) {
+      return false;
+    }
+    if (spec.mode == BuildMode.debug) {
+      return buildApk;
+    }
+    return buildApk || buildAppBundle;
+  }
 }
 
 class AndroidBuildService {
@@ -35,61 +46,183 @@ class AndroidBuildService {
     AndroidCliOptions options,
     Directory artifactsRoot,
   ) async {
-    final buildArgs = <String>[
+    if (!options.shouldBuildFor(spec)) {
+      return;
+    }
+
+    String? version;
+    String ensureVersion() => version ??= readAppVersion(appDir);
+
+    if (options.buildApk) {
+      await _runFlutterBuild(
+        appDir,
+        spec,
+        options,
+        command: 'apk',
+      );
+      _copyApkArtifacts(
+        appDir,
+        spec,
+        artifactsRoot,
+        ensureVersion(),
+      );
+    }
+
+    if (options.buildAppBundle) {
+      if (spec.mode != BuildMode.release) {
+        Console.warning(
+          'Skipping Android App Bundle for ${spec.description} (only release builds supported).',
+        );
+      } else {
+        await _runFlutterBuild(
+          appDir,
+          spec,
+          options,
+          command: 'appbundle',
+        );
+        _copyAppBundleArtifacts(
+          appDir,
+          spec,
+          artifactsRoot,
+          ensureVersion(),
+        );
+      }
+    }
+  }
+
+  Future<void> _runFlutterBuild(
+    Directory appDir,
+    BuildSpec spec,
+    AndroidCliOptions options, {
+    required String command,
+  }) async {
+    final args = <String>[
       'fvm',
       'flutter',
       'build',
-      'apk',
+      command,
       '--flavor',
       spec.flavor.name,
       if (spec.mode == BuildMode.release) '--release' else '--debug',
     ];
 
-    if (options.applyTargetPlatform) {
-      buildArgs
+    if (command == 'apk' && options.applyTargetPlatform) {
+      args
         ..add('--target-platform')
         ..add(options.targetPlatform);
     }
 
     if (spec.mode == BuildMode.release) {
       if (options.obfuscate) {
-        buildArgs.add('--obfuscate');
+        args.add('--obfuscate');
       }
       if (options.splitDebugInfo) {
-        buildArgs
+        args
           ..add('--split-debug-info')
           ..add(options.splitDebugInfoPath);
       }
     }
 
-    await runProcess(buildArgs);
-
-    final version = readAppVersion(appDir);
-    final buildOutputDir = Directory(
-      '${appDir.path}/build/app/outputs/flutter-apk',
+    await runProcess(
+      args,
+      workingDirectory: appDir.path,
     );
+  }
 
-    if (!buildOutputDir.existsSync()) {
+  void _copyApkArtifacts(
+    Directory appDir,
+    BuildSpec spec,
+    Directory artifactsRoot,
+    String version,
+  ) {
+    final outputDir = Directory('${appDir.path}/build/app/outputs/flutter-apk');
+    if (!outputDir.existsSync()) {
       throw CommandError(
-        'Android build output not found at ${buildOutputDir.path}',
+        'Android APK output not found at ${outputDir.path}',
         exitCode: 1,
       );
     }
 
-    final artifacts = buildOutputDir.listSync().whereType<File>().where((file) {
-      final lower = p.basename(file.path).toLowerCase();
-      if (spec.mode == BuildMode.debug) {
-        return lower.endsWith('-${spec.flavor.name}-debug.apk');
-      }
-      if (options.requestAppBundle) {
-        return lower.endsWith('.aab') ||
-            lower.endsWith('-${spec.flavor.name}-release.apk');
-      }
-      return lower.endsWith('-${spec.flavor.name}-release.apk');
-    });
+    final artifacts = outputDir
+        .listSync()
+        .whereType<File>()
+        .where((file) => _matchesAndroidArtifact(file.path, spec, '.apk'))
+        .toList();
+
+    if (artifacts.isEmpty) {
+      throw CommandError(
+        'No APK artifacts produced for ${spec.description}.',
+        exitCode: 1,
+      );
+    }
 
     for (final artifact in artifacts) {
       storeFileArtifact(artifact, artifactsRoot, spec, version);
     }
+  }
+
+  void _copyAppBundleArtifacts(
+    Directory appDir,
+    BuildSpec spec,
+    Directory artifactsRoot,
+    String version,
+  ) {
+    final modeLabel = spec.mode == BuildMode.release ? 'Release' : 'Debug';
+    final bundleDir = Directory(
+      '${appDir.path}/build/app/outputs/bundle/${spec.flavor.name}$modeLabel',
+    );
+
+    if (!bundleDir.existsSync()) {
+      throw CommandError(
+        'Android App Bundle output not found at ${bundleDir.path}',
+        exitCode: 1,
+      );
+    }
+
+    final artifacts = bundleDir
+        .listSync()
+        .whereType<File>()
+        .where((file) => _matchesAndroidArtifact(file.path, spec, '.aab'))
+        .toList();
+
+    if (artifacts.isEmpty) {
+      throw CommandError(
+        'No App Bundle artifacts produced for ${spec.description}.',
+        exitCode: 1,
+      );
+    }
+
+    for (final artifact in artifacts) {
+      storeFileArtifact(artifact, artifactsRoot, spec, version);
+    }
+  }
+
+  bool _matchesAndroidArtifact(
+    String path,
+    BuildSpec spec,
+    String extension,
+  ) {
+    final lower = p.basename(path).toLowerCase();
+    if (!lower.endsWith(extension)) {
+      return false;
+    }
+
+    final flavorToken = '-${spec.flavor.name.toLowerCase()}-';
+    final modeToken = '-${spec.mode.name.toLowerCase()}';
+
+    if (lower.contains(flavorToken)) {
+      return lower.contains(modeToken);
+    }
+
+    final knownFlavorTokens = BuildFlavor.values
+        .map((flavor) => '-${flavor.name.toLowerCase()}-')
+        .where(lower.contains)
+        .toList();
+
+    if (knownFlavorTokens.isEmpty && lower.contains(modeToken)) {
+      return true;
+    }
+
+    return false;
   }
 }

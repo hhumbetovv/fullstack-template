@@ -7,6 +7,8 @@ class BuildCommandOptions {
     required this.keepKeyProperties,
     required this.requestAndroidAab,
     required this.requestAndroidApk,
+    required this.requestIosIpa,
+    required this.requestIosApp,
     required this.obfuscateAndroid,
     required this.splitDebugInfo,
     required this.splitDebugInfoPath,
@@ -20,6 +22,8 @@ class BuildCommandOptions {
   final bool keepKeyProperties;
   final bool requestAndroidAab;
   final bool requestAndroidApk;
+  final bool requestIosIpa;
+  final bool requestIosApp;
   final bool obfuscateAndroid;
   final bool splitDebugInfo;
   final String splitDebugInfoPath;
@@ -35,6 +39,8 @@ BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
       argResults?['keep-key-properties'] as bool? ?? false;
   final requestAndroidAab = argResults?['android-aab'] as bool? ?? false;
   final requestAndroidApk = argResults?['android-apk'] as bool? ?? false;
+  final requestIosIpa = argResults?['ios-ipa'] as bool? ?? false;
+  final requestIosApp = argResults?['ios-app'] as bool? ?? false;
   final obfuscateAndroid = argResults?['obfuscate'] as bool? ?? true;
   final splitDebugInfo = argResults?['split-debug-info'] as bool? ?? true;
   final splitDebugInfoPathRaw =
@@ -77,11 +83,30 @@ BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
     );
   }
 
+  final hasArtifactFilter =
+      requestAndroidAab || requestAndroidApk || requestIosIpa || requestIosApp;
+
   if (platformSelections.isEmpty) {
-    platformSelections.addAll(BuildPlatform.values);
+    final requestedPlatforms = <BuildPlatform>{};
+    if (requestAndroidAab || requestAndroidApk) {
+      requestedPlatforms.add(BuildPlatform.android);
+    }
+    if (requestIosIpa || requestIosApp) {
+      requestedPlatforms.add(BuildPlatform.ios);
+    }
+
+    if (requestedPlatforms.isNotEmpty) {
+      platformSelections.addAll(requestedPlatforms);
+    } else {
+      platformSelections.addAll(BuildPlatform.values);
+    }
   }
   if (modeSelections.isEmpty) {
-    modeSelections.addAll(BuildMode.values);
+    if (hasArtifactFilter) {
+      modeSelections.add(BuildMode.debug);
+    } else {
+      modeSelections.addAll(BuildMode.values);
+    }
   }
   if (flavorSelections.isEmpty) {
     flavorSelections.addAll(BuildFlavor.values);
@@ -98,6 +123,8 @@ BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
     keepKeyProperties: keepKeyProperties,
     requestAndroidAab: requestAndroidAab,
     requestAndroidApk: requestAndroidApk,
+    requestIosIpa: requestIosIpa,
+    requestIosApp: requestIosApp,
     obfuscateAndroid: obfuscateAndroid,
     splitDebugInfo: splitDebugInfo,
     splitDebugInfoPath: splitDebugInfoPath,

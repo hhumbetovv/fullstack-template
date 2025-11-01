@@ -19,11 +19,25 @@ class BuildCommand extends ScriptsCommand {
         'android-aab',
         help: 'Only build the Android App Bundle release artifact.',
         negatable: false,
+        aliases: ['aab'],
       )
       ..addFlag(
         'android-apk',
         help: 'Only build the Android APK release artifact.',
         negatable: false,
+        aliases: ['apk'],
+      )
+      ..addFlag(
+        'ios-ipa',
+        help: 'Only copy the iOS IPA archive when running release builds.',
+        negatable: false,
+        aliases: ['ipa'],
+      )
+      ..addFlag(
+        'ios-app',
+        help: 'Only copy the iOS .app bundle artifacts.',
+        negatable: false,
+        aliases: ['app'],
       )
       ..addFlag(
         'obfuscate',

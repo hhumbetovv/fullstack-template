@@ -42,7 +42,7 @@ scripts/lib/src/
 
 | Command                                                          | Description                                                                                             |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `build`                                                          | Execute the mobile build matrix (Android/iOS × mode × flavour). Artifacts land in `ignores/artifacts/`. |
+| `build`                                                          | Execute the mobile build matrix (Android/iOS × mode × flavour). Artifacts land in `.misc/artifacts/`. |
 | `gen-build [modules…]`                                           | Run `build_runner build -d` for all build_runner packages or a filtered set.                            |
 | `gen-clean [--workers <n>]`                                      | Clean generated files and run `build_runner clean` across modules.                                      |
 | `gen-watch [modules…] [--pre-build]`                             | Launch `build_runner watch -d`, optionally running `smart-build` first.                                 |

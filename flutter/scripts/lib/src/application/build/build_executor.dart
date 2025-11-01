@@ -50,19 +50,28 @@ class BuildExecutor {
       );
     }
 
-    final artifactsRoot = Directory('ignores/artifacts');
+    final artifactsRoot = Directory('.misc/artifacts');
     if (!artifactsRoot.existsSync()) {
       artifactsRoot.createSync(recursive: true);
     }
 
     final androidCliOptions = AndroidCliOptions(
-      requestAppBundle: options.requestAndroidAab,
-      requestApk: options.requestAndroidApk,
+      buildAppBundle: options.requestAndroidAab,
+      buildApk: options.requestAndroidApk || !options.requestAndroidAab,
       obfuscate: options.obfuscateAndroid,
       splitDebugInfo: options.splitDebugInfo,
       splitDebugInfoPath: options.splitDebugInfoPath,
       applyTargetPlatform: options.applyTargetPlatform,
       targetPlatform: options.targetPlatform,
+    );
+
+    final iosCliOptions = IosBuildOptions(
+      copyIpa:
+          options.requestIosIpa ||
+          (!options.requestIosIpa && !options.requestIosApp),
+      copyAppBundle:
+          options.requestIosApp ||
+          (!options.requestIosIpa && !options.requestIosApp),
     );
 
     final keystoreState = _keystoreManager.prepare(
@@ -84,7 +93,12 @@ class BuildExecutor {
               artifactsRoot,
             );
           } else {
-            await _iosBuildService.build(appDir, spec, artifactsRoot);
+            await _iosBuildService.build(
+              appDir,
+              spec,
+              artifactsRoot,
+              iosCliOptions,
+            );
           }
         } on CommandError catch (error) {
           failures.add(spec.description);

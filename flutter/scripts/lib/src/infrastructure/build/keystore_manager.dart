@@ -1,15 +1,19 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/logging/console.dart';
 
 class AndroidKeystoreState {
   AndroidKeystoreState({
     required this.file,
     required this.hadExistingFile,
+    required this.usingFallback,
   });
 
   final File file;
   final bool hadExistingFile;
+  final bool usingFallback;
 }
 
 class AndroidKeystoreCredentials {
@@ -40,10 +44,25 @@ class AndroidKeystoreManager {
       return AndroidKeystoreState(
         file: keyPropertiesFile,
         hadExistingFile: hadExistingKeyProperties,
+        usingFallback: false,
       );
     }
 
-    final credentials = _loadAndroidCredentials();
+    final loadResult = _loadAndroidCredentials();
+    final credentials = loadResult.credentials;
+    if (credentials == null) {
+      throw const CommandError(
+        'Android release builds require ANDROID_KEYSTORE_PATH, '
+        'ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.',
+        exitCode: 64,
+      );
+    }
+
+    if (loadResult.usingFallback) {
+      Console.warning(
+        'Android release keystore variables not found. Using debug keystore as fallback.',
+      );
+    }
 
     _writeKeyProperties(
       keyPropertiesFile,
@@ -56,6 +75,7 @@ class AndroidKeystoreManager {
     return AndroidKeystoreState(
       file: keyPropertiesFile,
       hadExistingFile: hadExistingKeyProperties,
+      usingFallback: loadResult.usingFallback,
     );
   }
 
@@ -68,7 +88,27 @@ class AndroidKeystoreManager {
     }
   }
 
-  AndroidKeystoreCredentials _loadAndroidCredentials() {
+  _LoadResult _loadAndroidCredentials() {
+    final envCredentials = _loadEnvCredentials();
+    if (envCredentials != null) {
+      return _LoadResult(
+        credentials: envCredentials,
+        usingFallback: false,
+      );
+    }
+
+    final debugCredentials = _loadDebugCredentials();
+    if (debugCredentials != null) {
+      return _LoadResult(
+        credentials: debugCredentials,
+        usingFallback: true,
+      );
+    }
+
+    return const _LoadResult(credentials: null, usingFallback: false);
+  }
+
+  AndroidKeystoreCredentials? _loadEnvCredentials() {
     final keystorePath = _resolveKeystorePath();
     final keystorePassword = _normalizedEnv('ANDROID_KEYSTORE_PASSWORD');
     final keyAlias = _normalizedEnv('ANDROID_KEY_ALIAS');
@@ -80,11 +120,7 @@ class AndroidKeystoreManager {
       keyAlias,
       keyPassword,
     ].any((value) => value == null)) {
-      throw const CommandError(
-        'Android release builds require ANDROID_KEYSTORE_PATH, '
-        'ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.',
-        exitCode: 64,
-      );
+      return null;
     }
 
     return AndroidKeystoreCredentials(
@@ -92,6 +128,24 @@ class AndroidKeystoreManager {
       storePassword: keystorePassword!,
       keyAlias: keyAlias!,
       keyPassword: keyPassword!,
+    );
+  }
+
+  AndroidKeystoreCredentials? _loadDebugCredentials() {
+    final homeDir =
+        Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+    if (homeDir == null || homeDir.trim().isEmpty) {
+      return null;
+    }
+    final debugKeystore = File(p.join(homeDir, '.android', 'debug.keystore'));
+    if (!debugKeystore.existsSync()) {
+      return null;
+    }
+    return AndroidKeystoreCredentials(
+      storeFilePath: debugKeystore.path,
+      storePassword: 'android',
+      keyAlias: 'androiddebugkey',
+      keyPassword: 'android',
     );
   }
 
@@ -145,4 +199,14 @@ class AndroidKeystoreManager {
         .replaceAll(':', r'\\:')
         .replaceAll(' ', r'\\ ');
   }
+}
+
+class _LoadResult {
+  const _LoadResult({
+    required this.credentials,
+    required this.usingFallback,
+  });
+
+  final AndroidKeystoreCredentials? credentials;
+  final bool usingFallback;
 }

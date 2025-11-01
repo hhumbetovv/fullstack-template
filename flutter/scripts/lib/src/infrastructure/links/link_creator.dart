@@ -36,6 +36,9 @@ class LinkCreator {
 
     for (final file in _findFiles(root, fileName)) {
       final relativePath = p.relative(file.path, from: root.path);
+      if (relativePath == fileName) {
+        continue;
+      }
       final sanitized = _sanitizePath(relativePath);
       final symlinkPath = _uniquePath(output, sanitized);
       final link = Link(symlinkPath);

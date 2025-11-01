@@ -35,7 +35,7 @@ Automation lives in the Dart CLI under `scripts/` (see scripts/README.md). Commo
 - `fvms module-graph` – refresh `build_graph.md` with dependency stats.
 - `sh scripts/bash/bootstrap.sh` – runs the bootstrap workflow (FVM setup, Flutter clean/pub get, pod install, smart-build, flutterfire CLI activation).
 
-Artifacts produced by the build command land in `ignores/artifacts/`. Build logs persist under `build_logs/` for troubleshooting. Use `scripts/bash/deeplink.sh <url>` to trigger Android deep-link tests via ADB.
+Artifacts produced by the build command land in `.misc/artifacts/`. Build logs persist under `build_logs/` for troubleshooting. Use `scripts/bash/deeplink.sh <url>` to trigger Android deep-link tests via ADB.
 
 ## Repository conventions
 - **Branching**: use `feature/*`, `bugfix/*`, `merge/*`, `release/*` for topic branches. Code flows `feature → test → dev → main`.
