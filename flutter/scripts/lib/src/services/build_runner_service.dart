@@ -5,95 +5,98 @@ import 'package:common_tooling/tooling.dart';
 import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/logging/console.dart';
 
-Future<ProcessResult> runBuildRunnerCommand(
-  Directory directory,
-  List<String> args, {
-  bool forwardOutput = true,
-}) async {
-  final commandArgs = ['run', 'build_runner', ...args];
-  if (forwardOutput) {
-    final process = await startDartCommand(
+class BuildRunnerService {
+  const BuildRunnerService();
+
+  Future<ProcessResult> runCommand(
+    Directory directory,
+    List<String> args, {
+    bool forwardOutput = true,
+  }) async {
+    final commandArgs = ['run', 'build_runner', ...args];
+    if (forwardOutput) {
+      final process = await startDartCommand(
+        commandArgs,
+        workingDirectory: directory.path,
+        mode: ProcessStartMode.inheritStdio,
+      );
+      final exitCode = await process.exitCode;
+      return ProcessResult(process.pid, exitCode, '', '');
+    }
+
+    return runDartCommand(
       commandArgs,
+      workingDirectory: directory.path,
+    );
+  }
+
+  Future<Process> startWatch(
+    Directory directory,
+    List<String> extraArgs,
+  ) async {
+    final args = ['run', 'build_runner', 'watch', ...extraArgs];
+    return startDartCommand(
+      args,
       workingDirectory: directory.path,
       mode: ProcessStartMode.inheritStdio,
     );
-    final exitCode = await process.exitCode;
-    return ProcessResult(process.pid, exitCode, '', '');
   }
 
-  return runDartCommand(
-    commandArgs,
-    workingDirectory: directory.path,
-  );
-}
-
-Future<Process> startBuildRunnerWatch(
-  Directory directory,
-  List<String> extraArgs,
-) async {
-  final args = ['run', 'build_runner', 'watch', ...extraArgs];
-  final process = await startDartCommand(
-    args,
-    workingDirectory: directory.path,
-    mode: ProcessStartMode.inheritStdio,
-  );
-  return process;
-}
-
-Future<void> cancelProcesses(List<Process> processes) async {
-  for (final process in processes) {
-    final killed = process.kill(ProcessSignal.sigint);
-    if (!killed) {
-      process
-        ..kill(ProcessSignal.sigterm)
-        ..kill();
+  Future<void> cancelProcesses(List<Process> processes) async {
+    for (final process in processes) {
+      final killed = process.kill(ProcessSignal.sigint);
+      if (!killed) {
+        process
+          ..kill(ProcessSignal.sigterm)
+          ..kill();
+      }
     }
   }
-}
 
-void deleteGeneratedArtifacts() {
-  final patterns = <String>[
-    '.g.dart',
-    '.freezed.dart',
-    '.gr.dart',
-    '.module.dart',
-    '.config.dart',
-    'public.dart',
-  ];
+  void deleteGeneratedArtifacts() {
+    final patterns = <String>[
+      '.g.dart',
+      '.freezed.dart',
+      '.gr.dart',
+      '.module.dart',
+      '.config.dart',
+      'public.dart',
+    ];
 
-  final root = Directory.current;
-  _deleteMatchingFiles(root, patterns);
+    final root = Directory.current;
+    _deleteMatchingFiles(root, patterns);
 
-  final buildDir = Directory(p.join(root.path, '.dart_tool', 'build'));
-  if (buildDir.existsSync()) {
+    final buildDir = Directory(p.join(root.path, '.dart_tool', 'build'));
+    if (buildDir.existsSync()) {
+      try {
+        buildDir.deleteSync(recursive: true);
+      } on Exception catch (error) {
+        Console.warning('Failed to remove ${buildDir.path}: $error');
+        return;
+      }
+      Console.info('Removed ${buildDir.path}');
+    }
+  }
+
+  void _deleteMatchingFiles(Directory directory, List<String> patterns) {
     try {
-      buildDir.deleteSync(recursive: true);
-    } on Exception catch (error) {
-      Console.warning('Failed to remove ${buildDir.path}: $error');
-      return;
-    }
-    Console.info('Removed ${buildDir.path}');
-  }
-}
-
-void _deleteMatchingFiles(Directory directory, List<String> patterns) {
-  try {
-    for (final entity in directory.listSync(
-      recursive: true,
-      followLinks: false,
-    )) {
-      if (entity is File) {
-        final name = p.basename(entity.path);
-        if (patterns.any(name.endsWith)) {
-          try {
-            entity.deleteSync();
-          } on Exception catch (error) {
-            Console.warning('Failed to delete ${entity.path}: $error');
+      for (final entity in directory.listSync(
+        recursive: true,
+        followLinks: false,
+      )) {
+        if (entity is File) {
+          final name = p.basename(entity.path);
+          if (patterns.any(name.endsWith)) {
+            try {
+              entity.deleteSync();
+            } on Exception catch (error) {
+              Console.warning('Failed to delete ${entity.path}: $error');
+            }
           }
         }
       }
+    } on Exception catch (error) {
+      Console.warning('Failed to scan ${directory.path}: $error');
     }
-  } on Exception catch (error) {
-    Console.warning('Failed to scan ${directory.path}: $error');
   }
 }

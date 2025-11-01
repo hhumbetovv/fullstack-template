@@ -13,12 +13,16 @@ import 'package:scripts/src/services/environment_service.dart';
 import 'package:scripts/src/services/workspace_discovery_service.dart';
 
 Future<int> runSmartBuild(SmartBuildOptions options) async {
-  configureState(
+  final store = BuildStateStore();
+  final state = store.configure(
     verbose: options.verbose,
     dryRun: options.dryRun,
     maxParallelBuilds: options.maxParallelBuilds,
     targetModule: options.targetModule,
   );
+  Logger.configure(LoggerConfig(verbose: options.verbose));
+  const environmentService = EnvironmentService();
+  final buildExecutionService = BuildExecutionService(state);
 
   final subscriptions = <StreamSubscription<ProcessSignal>>[];
 
@@ -38,20 +42,28 @@ Future<int> runSmartBuild(SmartBuildOptions options) async {
       log('');
     }
 
-    await validateEnvironment();
+    await environmentService.validate();
 
     subscriptions
-      ..add(ProcessSignal.sigint.watch().listen((_) => cleanup()))
-      ..add(ProcessSignal.sigterm.watch().listen((_) => cleanup()));
+      ..add(
+        ProcessSignal.sigint.watch().listen(
+          (_) => environmentService.cleanup(state),
+        ),
+      )
+      ..add(
+        ProcessSignal.sigterm.watch().listen(
+          (_) => environmentService.cleanup(state),
+        ),
+      );
 
     if (state.targetModule != null) {
       Logger.info('🎯 Building specific module: ${state.targetModule}');
 
-      await discoverModulesFromRoot();
+      await discoverModulesFromRoot(state);
 
       if (state.modulePaths.containsKey(state.targetModule)) {
-        await buildDependencyGraph();
-        await analyzeUnusedModuleDependencies();
+        await buildDependencyGraph(state);
+        await analyzeUnusedModuleDependencies(state);
 
         final requiredModules = <String>{state.targetModule!};
         var changed = true;
@@ -100,15 +112,15 @@ Future<int> runSmartBuild(SmartBuildOptions options) async {
           'Building ${state.targetModule} with ${requiredModules.length} total modules (including dependencies)',
         );
 
-        calculateBuildLevels();
-        topologicalSort();
+        calculateBuildLevels(state);
+        topologicalSort(state);
 
         if (state.verbose || state.dryRun) {
-          showBuildPlan();
+          showBuildPlan(state);
         }
 
         if (!state.dryRun) {
-          await executeSmartBuild();
+          await buildExecutionService.execute();
         }
       } else {
         throw SmartBuildException(
@@ -116,24 +128,24 @@ Future<int> runSmartBuild(SmartBuildOptions options) async {
         );
       }
     } else {
-      await discoverModulesFromRoot();
+      await discoverModulesFromRoot(state);
 
       if (state.modulePaths.isEmpty) {
         throw const SmartBuildException('No modules with build_runner found!');
       }
 
-      await buildDependencyGraph();
-      await analyzeUnusedModuleDependencies();
-      calculateBuildLevels();
-      await generateMermaidGraph();
-      topologicalSort();
+      await buildDependencyGraph(state);
+      await analyzeUnusedModuleDependencies(state);
+      calculateBuildLevels(state);
+      await generateMermaidGraph(state);
+      topologicalSort(state);
 
       if (state.verbose || state.dryRun) {
-        showBuildPlan();
+        showBuildPlan(state);
       }
 
       if (!state.dryRun) {
-        await executeSmartBuild();
+        await buildExecutionService.execute();
       }
     }
 

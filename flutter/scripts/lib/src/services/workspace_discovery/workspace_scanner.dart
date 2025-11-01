@@ -1,6 +1,9 @@
 part of 'package:scripts/src/services/workspace_discovery_service.dart';
 
-Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
+Future<void> _discoverWorkspaceModules(
+  BuildState state,
+  List<dynamic> workspace,
+) async {
   final workspacePaths = workspace.whereType<String>();
 
   if (workspacePaths.isEmpty) {
@@ -42,6 +45,7 @@ Future<void> _discoverWorkspaceModules(List<dynamic> workspace) async {
     final usesBuildRunner = hasBuildRunner(modulePubspec);
 
     _registerModule(
+      state,
       actualModuleName,
       cleanPath,
       usesBuildRunner,

@@ -2,7 +2,7 @@ import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/core/state/build_state.dart';
 
-void calculateBuildLevels() {
+void calculateBuildLevels(BuildState state) {
   Logger.info('🌊 Calculating build waves...');
 
   final inDegree = <String, int>{};
@@ -65,7 +65,7 @@ void calculateBuildLevels() {
   Logger.success('Build waves calculated: $level waves total');
 }
 
-void topologicalSort() {
+void topologicalSort(BuildState state) {
   Logger.info('🔄 Calculating optimal build order...');
 
   final inDegree = <String, int>{};
@@ -151,7 +151,7 @@ void topologicalSort() {
   }
 }
 
-void showBuildPlan() {
+void showBuildPlan(BuildState state) {
   Logger.info('📋 Build Plan');
   Logger.info('═════════════');
 

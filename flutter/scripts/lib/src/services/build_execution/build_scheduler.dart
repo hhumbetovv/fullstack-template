@@ -1,13 +1,13 @@
 part of 'package:scripts/src/services/build_execution_service.dart';
 
-Future<bool> executeSmartBuild() async {
+Future<bool> executeSmartBuildInternal(BuildState state) async {
   Logger.info('🚀 Starting smart build process...');
 
   if (state.dryRun) {
     Logger.warning('DRY RUN MODE - No actual builds will be performed');
   }
 
-  await setupBuildLogs();
+  await setupBuildLogsInternal(state);
 
   final totalModules = state.buildOrder.length;
   var completed = 0;
@@ -37,7 +37,7 @@ Future<bool> executeSmartBuild() async {
           (moduleName) =>
               state.moduleBuildStatus[moduleName] == BuildStatus.pending &&
               (state.moduleBuildLevel[moduleName] ?? 0) == minWave &&
-              canBuildModule(moduleName),
+              canBuildModuleInternal(state, moduleName),
         )
         .toList();
 
@@ -72,7 +72,7 @@ Future<bool> executeSmartBuild() async {
 
     final buildFutures = <Future<Map<String, dynamic>>>[];
     for (final moduleName in buildsInWave) {
-      buildFutures.add(buildModule(moduleName));
+      buildFutures.add(buildModuleInternal(state, moduleName));
     }
 
     await Future.wait(buildFutures);

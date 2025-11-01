@@ -42,25 +42,3 @@ class BuildStateStore {
     _state = BuildState();
   }
 }
-
-final BuildStateStore buildStateStore = BuildStateStore();
-
-BuildState get state => buildStateStore.state;
-
-BuildState configureState({
-  bool verbose = false,
-  bool dryRun = false,
-  int maxParallelBuilds = 4,
-  String? targetModule,
-}) {
-  return buildStateStore.configure(
-    verbose: verbose,
-    dryRun: dryRun,
-    maxParallelBuilds: maxParallelBuilds,
-    targetModule: targetModule,
-  );
-}
-
-void resetState() {
-  buildStateStore.reset();
-}

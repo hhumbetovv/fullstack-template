@@ -1,6 +1,7 @@
 part of 'package:scripts/src/services/workspace_discovery_service.dart';
 
 void _registerModule(
+  BuildState state,
   String moduleName,
   String cleanPath,
   bool usesBuildRunner,

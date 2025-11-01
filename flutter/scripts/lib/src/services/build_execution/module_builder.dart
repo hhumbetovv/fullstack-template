@@ -1,6 +1,6 @@
 part of 'package:scripts/src/services/build_execution_service.dart';
 
-bool canBuildModule(String moduleName) {
+bool canBuildModuleInternal(BuildState state, String moduleName) {
   Logger.debug('Checking if $moduleName can be built...');
 
   final dependencies = state.moduleDependencies[moduleName] ?? <String>{};
@@ -23,7 +23,10 @@ bool canBuildModule(String moduleName) {
   return true;
 }
 
-Future<Map<String, dynamic>> buildModule(String moduleName) async {
+Future<Map<String, dynamic>> buildModuleInternal(
+  BuildState state,
+  String moduleName,
+) async {
   final modulePath = state.modulePaths[moduleName]!;
   final logFile = '${state.buildLogsDir}/build_$moduleName.log';
 

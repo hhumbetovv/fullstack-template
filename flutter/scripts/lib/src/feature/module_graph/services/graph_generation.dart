@@ -6,6 +6,7 @@ import 'package:scripts/src/core/state/build_state.dart';
 import 'package:scripts/src/feature/module_graph/services/graph_config.dart';
 
 Future<bool> writeGraphFile(
+  BuildState state,
   GraphConfig config,
   Set<String> modulesWithUnusedDeps,
 ) async {
@@ -159,7 +160,7 @@ Future<bool> writeGraphFile(
   return true;
 }
 
-Future<void> generateMermaidGraph() async {
+Future<void> generateMermaidGraph(BuildState state) async {
   Logger.info('📊 Generating dependency graph (build_graph.md)...');
 
   final modulesWithUnusedDeps = state.moduleUnusedDependencies.keys.toSet();
@@ -275,7 +276,7 @@ Future<void> generateMermaidGraph() async {
 
   final generatedGraphs = <GraphConfig>[];
   for (final graph in graphs) {
-    final wrote = await writeGraphFile(graph, modulesWithUnusedDeps);
+    final wrote = await writeGraphFile(state, graph, modulesWithUnusedDeps);
     if (wrote) {
       generatedGraphs.add(graph);
     }

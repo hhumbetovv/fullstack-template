@@ -12,10 +12,13 @@ import 'package:scripts/src/services/environment_service.dart';
 import 'package:scripts/src/services/workspace_discovery_service.dart';
 
 Future<int> generateModuleGraph(ModuleGraphOptions options) async {
-  configureState(
+  final store = BuildStateStore();
+  final state = store.configure(
     verbose: options.verbose,
     maxParallelBuilds: options.maxParallelBuilds,
   );
+  Logger.configure(LoggerConfig(verbose: options.verbose));
+  const environmentService = EnvironmentService();
 
   final subscriptions = <StreamSubscription<ProcessSignal>>[];
 
@@ -33,13 +36,21 @@ Future<int> generateModuleGraph(ModuleGraphOptions options) async {
       log('');
     }
 
-    await validateEnvironment();
+    await environmentService.validate();
 
     subscriptions
-      ..add(ProcessSignal.sigint.watch().listen((_) => cleanup()))
-      ..add(ProcessSignal.sigterm.watch().listen((_) => cleanup()));
+      ..add(
+        ProcessSignal.sigint.watch().listen(
+          (_) => environmentService.cleanup(state),
+        ),
+      )
+      ..add(
+        ProcessSignal.sigterm.watch().listen(
+          (_) => environmentService.cleanup(state),
+        ),
+      );
 
-    await discoverModulesFromRoot();
+    await discoverModulesFromRoot(state);
 
     if (state.allModulePaths.isEmpty) {
       throw const SmartBuildException(
@@ -47,10 +58,10 @@ Future<int> generateModuleGraph(ModuleGraphOptions options) async {
       );
     }
 
-    await buildDependencyGraph();
-    await analyzeUnusedModuleDependencies();
-    calculateBuildLevels();
-    await generateMermaidGraph();
+    await buildDependencyGraph(state);
+    await analyzeUnusedModuleDependencies(state);
+    calculateBuildLevels(state);
+    await generateMermaidGraph(state);
 
     log('');
     Logger.success('✅ Dependency graph generated → build_graph.md');

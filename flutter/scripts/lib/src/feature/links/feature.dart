@@ -1,71 +1,80 @@
 import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/feature/links/services/link_creator.dart';
 
-Future<int> runBuildLinksFeature() async {
-  Console.write('=====================================');
-  Console.write('    Build Symlinks Creator');
-  Console.write('=====================================');
+class LinksOrchestrator {
+  LinksOrchestrator({required LinkCreator linkCreator})
+    : _linkCreator = linkCreator;
 
-  final summary = await createSymlinks(
-    fileName: 'build.yaml',
-    outputDir: 'yaml/builds',
-  );
+  final LinkCreator _linkCreator;
 
-  _reportSummary(summary);
-  return summary.failed > 0 ? 1 : 0;
-}
+  Future<int> runBuildLinks() async {
+    _printHeader('Build Symlinks Creator');
 
-Future<int> runPubspecLinksFeature() async {
-  Console.write('=====================================');
-  Console.write('    Pubspec Symlinks Creator');
-  Console.write('=====================================');
+    final summary = await _linkCreator.create(
+      fileName: 'build.yaml',
+      outputDir: 'yaml/builds',
+    );
 
-  final summary = await createSymlinks(
-    fileName: 'pubspec.yaml',
-    outputDir: 'yaml/pubspecs',
-  );
-
-  _reportSummary(summary);
-  return summary.failed > 0 ? 1 : 0;
-}
-
-Future<int> runYamlLinksFeature() async {
-  Console.write('=== Pubspec Symlinks ===');
-  final pubspecSummary = await createSymlinks(
-    fileName: 'pubspec.yaml',
-    outputDir: 'yaml/pubspecs',
-  );
-
-  Console.write('\n=== Build Symlinks ===');
-  final buildSummary = await createSymlinks(
-    fileName: 'build.yaml',
-    outputDir: 'yaml/builds',
-  );
-
-  Console.write('\n=====================================');
-  Console.success(
-    '✓ Pubspec symlinks: ${pubspecSummary.created}, build symlinks: ${buildSummary.created}',
-  );
-  final failures = pubspecSummary.failed + buildSummary.failed;
-  if (failures > 0) {
-    Console.error('✗ Failures encountered: $failures');
+    _reportSummary(summary);
+    return summary.failed > 0 ? 1 : 0;
   }
-  Console.write('=====================================');
 
-  return failures > 0 ? 1 : 0;
-}
+  Future<int> runPubspecLinks() async {
+    _printHeader('Pubspec Symlinks Creator');
 
-void _reportSummary(LinkSummary summary) {
-  Console.write('\n=====================================');
-  Console.success('✓ Total symlinks created: ${summary.created}');
-  if (summary.failed > 0) {
-    Console.error('✗ Failed: ${summary.failed}');
+    final summary = await _linkCreator.create(
+      fileName: 'pubspec.yaml',
+      outputDir: 'yaml/pubspecs',
+    );
+
+    _reportSummary(summary);
+    return summary.failed > 0 ? 1 : 0;
   }
-  Console.write('=====================================');
 
-  if (summary.failed > 0) {
-    Console.error('Some symlinks failed to create.');
-  } else {
-    Console.success('Script completed successfully!');
+  Future<int> runYamlLinks() async {
+    Console.write('=== Pubspec Symlinks ===');
+    final pubspecSummary = await _linkCreator.create(
+      fileName: 'pubspec.yaml',
+      outputDir: 'yaml/pubspecs',
+    );
+
+    Console.write('\n=== Build Symlinks ===');
+    final buildSummary = await _linkCreator.create(
+      fileName: 'build.yaml',
+      outputDir: 'yaml/builds',
+    );
+
+    Console.write('\n=====================================');
+    Console.success(
+      '✓ Pubspec symlinks: ${pubspecSummary.created}, build symlinks: ${buildSummary.created}',
+    );
+    final failures = pubspecSummary.failed + buildSummary.failed;
+    if (failures > 0) {
+      Console.error('✗ Failures encountered: $failures');
+    }
+    Console.write('=====================================');
+
+    return failures > 0 ? 1 : 0;
+  }
+
+  void _printHeader(String title) {
+    Console.write('=====================================');
+    Console.write('    $title');
+    Console.write('=====================================');
+  }
+
+  void _reportSummary(LinkSummary summary) {
+    Console.write('\n=====================================');
+    Console.success('✓ Total symlinks created: ${summary.created}');
+    if (summary.failed > 0) {
+      Console.error('✗ Failed: ${summary.failed}');
+    }
+    Console.write('=====================================');
+
+    if (summary.failed > 0) {
+      Console.error('Some symlinks failed to create.');
+    } else {
+      Console.success('Script completed successfully!');
+    }
   }
 }

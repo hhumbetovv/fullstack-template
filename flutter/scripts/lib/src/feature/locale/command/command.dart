@@ -3,7 +3,8 @@ import 'package:scripts/src/feature/locale/feature.dart';
 
 class LocaleCommand extends ScriptsCommand {
   LocaleCommand()
-    : super(
+    : _orchestrator = const LocaleOrchestrator(),
+      super(
         commandName: 'locale',
         commandDescription:
             'Generate locale key constants from translation JSON files.',
@@ -21,6 +22,8 @@ class LocaleCommand extends ScriptsCommand {
       );
   }
 
+  final LocaleOrchestrator _orchestrator;
+
   @override
   Future<int> runCommand() async {
     final inputPath =
@@ -28,7 +31,7 @@ class LocaleCommand extends ScriptsCommand {
     final outputPath =
         argResults?['output'] as String? ??
         'common/lib/src/constants/locale_keys.dart';
-    return runLocaleFeature(
+    return _orchestrator.run(
       inputPath: inputPath,
       outputPath: outputPath,
     );

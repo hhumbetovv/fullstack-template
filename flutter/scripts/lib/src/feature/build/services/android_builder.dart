@@ -26,66 +26,70 @@ class AndroidCliOptions {
   final String targetPlatform;
 }
 
-Future<void> buildAndroidTarget(
-  Directory appDir,
-  BuildSpec spec,
-  AndroidCliOptions options,
-  Directory artifactsRoot,
-) async {
-  final buildArgs = <String>[
-    'fvm',
-    'flutter',
-    'build',
-    'apk',
-    '--flavor',
-    spec.flavor.name,
-    if (spec.mode == BuildMode.release) '--release' else '--debug',
-  ];
+class AndroidBuildService {
+  const AndroidBuildService();
 
-  if (options.applyTargetPlatform) {
-    buildArgs
-      ..add('--target-platform')
-      ..add(options.targetPlatform);
-  }
+  Future<void> build(
+    Directory appDir,
+    BuildSpec spec,
+    AndroidCliOptions options,
+    Directory artifactsRoot,
+  ) async {
+    final buildArgs = <String>[
+      'fvm',
+      'flutter',
+      'build',
+      'apk',
+      '--flavor',
+      spec.flavor.name,
+      if (spec.mode == BuildMode.release) '--release' else '--debug',
+    ];
 
-  if (spec.mode == BuildMode.release) {
-    if (options.obfuscate) {
-      buildArgs.add('--obfuscate');
-    }
-    if (options.splitDebugInfo) {
+    if (options.applyTargetPlatform) {
       buildArgs
-        ..add('--split-debug-info')
-        ..add(options.splitDebugInfoPath);
+        ..add('--target-platform')
+        ..add(options.targetPlatform);
     }
-  }
 
-  await runProcess(buildArgs);
+    if (spec.mode == BuildMode.release) {
+      if (options.obfuscate) {
+        buildArgs.add('--obfuscate');
+      }
+      if (options.splitDebugInfo) {
+        buildArgs
+          ..add('--split-debug-info')
+          ..add(options.splitDebugInfoPath);
+      }
+    }
 
-  final version = readAppVersion(appDir);
-  final buildOutputDir = Directory(
-    '${appDir.path}/build/app/outputs/flutter-apk',
-  );
+    await runProcess(buildArgs);
 
-  if (!buildOutputDir.existsSync()) {
-    throw CommandError(
-      'Android build output not found at ${buildOutputDir.path}',
-      exitCode: 1,
+    final version = readAppVersion(appDir);
+    final buildOutputDir = Directory(
+      '${appDir.path}/build/app/outputs/flutter-apk',
     );
-  }
 
-  final artifacts = buildOutputDir.listSync().whereType<File>().where((file) {
-    final lower = p.basename(file.path).toLowerCase();
-    if (spec.mode == BuildMode.debug) {
-      return lower.endsWith('-${spec.flavor.name}-debug.apk');
+    if (!buildOutputDir.existsSync()) {
+      throw CommandError(
+        'Android build output not found at ${buildOutputDir.path}',
+        exitCode: 1,
+      );
     }
-    if (options.requestAppBundle) {
-      return lower.endsWith('.aab') ||
-          lower.endsWith('-${spec.flavor.name}-release.apk');
-    }
-    return lower.endsWith('-${spec.flavor.name}-release.apk');
-  });
 
-  for (final artifact in artifacts) {
-    storeFileArtifact(artifact, artifactsRoot, spec, version);
+    final artifacts = buildOutputDir.listSync().whereType<File>().where((file) {
+      final lower = p.basename(file.path).toLowerCase();
+      if (spec.mode == BuildMode.debug) {
+        return lower.endsWith('-${spec.flavor.name}-debug.apk');
+      }
+      if (options.requestAppBundle) {
+        return lower.endsWith('.aab') ||
+            lower.endsWith('-${spec.flavor.name}-release.apk');
+      }
+      return lower.endsWith('-${spec.flavor.name}-release.apk');
+    });
+
+    for (final artifact in artifacts) {
+      storeFileArtifact(artifact, artifactsRoot, spec, version);
+    }
   }
 }

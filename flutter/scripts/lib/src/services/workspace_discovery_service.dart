@@ -9,10 +9,10 @@ part 'workspace_discovery/module_registry.dart';
 part 'workspace_discovery/path_dependency_scanner.dart';
 part 'workspace_discovery/workspace_scanner.dart';
 
-Future<void> discoverModulesFromRoot() async {
+Future<void> discoverModulesFromRoot(BuildState state) async {
   Logger.info('🔍 Discovering modules from root pubspec.yaml...');
 
-  _resetDiscoveryState();
+  _resetDiscoveryState(state);
 
   final rootPubspec = await readPubspec('pubspec.yaml');
 
@@ -26,15 +26,15 @@ Future<void> discoverModulesFromRoot() async {
     Logger.info(
       'Found workspace configuration, analyzing workspace modules...',
     );
-    await _discoverWorkspaceModules(workspace);
+    await _discoverWorkspaceModules(state, workspace);
     return;
   }
 
   Logger.info('No workspace found, checking path dependencies...');
-  await _discoverPathDependencies(rootPubspec);
+  await _discoverPathDependencies(state, rootPubspec);
 }
 
-void _resetDiscoveryState() {
+void _resetDiscoveryState(BuildState state) {
   state.modulePaths.clear();
   state.allModulePaths.clear();
   state.moduleDependencies.clear();

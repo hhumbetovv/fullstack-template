@@ -1,6 +1,9 @@
 part of 'package:scripts/src/services/workspace_discovery_service.dart';
 
-Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
+Future<void> _discoverPathDependencies(
+  BuildState state,
+  Map<String, dynamic> rootPubspec,
+) async {
   final dependencies = rootPubspec['dependencies'] as Map<String, dynamic>?;
   final devDependencies =
       rootPubspec['dev_dependencies'] as Map<String, dynamic>?;
@@ -70,6 +73,7 @@ Future<void> _discoverPathDependencies(Map<String, dynamic> rootPubspec) async {
     final usesBuildRunner = hasBuildRunner(modulePubspec);
 
     _registerModule(
+      state,
       actualModuleName,
       cleanPath,
       usesBuildRunner,

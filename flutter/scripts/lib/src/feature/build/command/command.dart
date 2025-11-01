@@ -1,9 +1,17 @@
 import 'package:scripts/src/core/command/base_command.dart';
 import 'package:scripts/src/feature/build/feature.dart';
+import 'package:scripts/src/feature/build/services/android_builder.dart';
+import 'package:scripts/src/feature/build/services/ios_builder.dart';
+import 'package:scripts/src/feature/build/services/keystore_manager.dart';
 
 class BuildCommand extends ScriptsCommand {
   BuildCommand()
-    : super(
+    : _orchestrator = BuildOrchestrator(
+        androidBuildService: const AndroidBuildService(),
+        iosBuildService: const IosBuildService(),
+        keystoreManager: const AndroidKeystoreManager(),
+      ),
+      super(
         commandName: 'build',
         commandDescription:
             'Run bootstrap and produce Android/iOS artifacts across modes and flavors.',
@@ -53,6 +61,8 @@ class BuildCommand extends ScriptsCommand {
       );
   }
 
+  final BuildOrchestrator _orchestrator;
+
   @override
-  Future<int> runCommand() => runBuildFeature(argResults);
+  Future<int> runCommand() => _orchestrator.run(argResults);
 }

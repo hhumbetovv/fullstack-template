@@ -1,6 +1,6 @@
 part of 'package:scripts/src/services/build_execution_service.dart';
 
-Future<void> setupBuildLogs() async {
+Future<void> setupBuildLogsInternal(BuildState state) async {
   final logsDir = Directory(state.buildLogsDir);
   if (!logsDir.existsSync()) {
     await logsDir.create(recursive: true);

@@ -46,7 +46,7 @@ Future<Set<String>> parseDependencies(
   return dependencies;
 }
 
-Future<void> buildDependencyGraph() async {
+Future<void> buildDependencyGraph(BuildState state) async {
   Logger.info('🕸️  Building dependency graph...');
 
   state.moduleDependencies.clear();
@@ -117,7 +117,10 @@ Future<void> buildDependencyGraph() async {
   }
 }
 
-Future<Set<String>> _collectImportedPackages(String moduleName) async {
+Future<Set<String>> _collectImportedPackages(
+  BuildState state,
+  String moduleName,
+) async {
   final modulePath = state.allModulePaths[moduleName];
   if (modulePath == null) {
     return <String>{};
@@ -165,7 +168,7 @@ Future<Set<String>> _collectImportedPackages(String moduleName) async {
   return collected;
 }
 
-Future<void> analyzeUnusedModuleDependencies() async {
+Future<void> analyzeUnusedModuleDependencies(BuildState state) async {
   Logger.info('🧹 Analyzing unused module dependencies...');
 
   state.moduleUnusedDependencies.clear();
@@ -178,7 +181,7 @@ Future<void> analyzeUnusedModuleDependencies() async {
       continue;
     }
 
-    final importedPackages = await _collectImportedPackages(moduleName);
+    final importedPackages = await _collectImportedPackages(state, moduleName);
     final unused = declaredDeps.difference(importedPackages);
 
     if (unused.isNotEmpty) {
