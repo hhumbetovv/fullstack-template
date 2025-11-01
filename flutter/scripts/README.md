@@ -1,193 +1,112 @@
 # Scripts CLI
 
-Automation for this workspace lives in the Dart package under `scripts/`. Run
-`dart pub get` once at the repository root, then execute commands like:
+Automation lives in the `scripts/` Dart package. Install dependencies once:
 
 ```bash
-fvm dart run scripts <command> [arguments]
+cd scripts
+fvm dart pub get
 ```
 
-or
+Run commands via FVM (recommended):
 
 ```bash
-fvms <command> [arguments]
+fvm dart run scripts <command> [flags]
 ```
 
-Every command supports `--help` for its specific flags. Dedicated entry points
-are also exposed, e.g. `fvm dart run scripts:smart_build` and `fvm dart run
-scripts:module_graph`.
+Each command exposes `--help`. Shortcut entrypoints (`scripts:<command>`) are available for frequently used flows.
 
-## Command overview
+---
 
-| Command | Purpose |
-| ------ | ------- |
-| `build` | Run the Flutter build matrix after bootstrapping the project. |
-| `gen-build [modules…]` | Run `build_runner build -d` for every module that depends on build_runner or a provided subset. |
-| `gen-clean [--workers <n>]` | Call `build_runner clean` for all build_runner modules (in parallel by default) and delete generated artifacts (`.g.dart`, `.freezed.dart`, etc.). |
-| `gen-watch [modules…] [--pre-build]` | Launch `build_runner watch -d` for selected modules, optionally running `smart-build` first. |
-| `smart-build [module] [--dry-run] [--parallel <n>] [--verbose]` | Dependency-aware incremental build orchestration. |
-| `module-graph [--parallel <n>] [--verbose]` | Generate `build_graph.md` and dependency stats without executing builds. |
-| `pubspec-links` | Symlink all `pubspec.yaml` files into `yaml/pubspecs/`. |
-| `build-links` | Symlink all `build.yaml` files into `yaml/builds/`. |
-| `yaml-links` | Runs `pubspec-links` and `build-links` back to back, cleaning previous output first. |
-| `locale [--input dir] [--output file]` | Produce `LocaleKeys` constants from translation JSON files. |
+## Directory layout
 
-## Command architecture
-- `ScriptsCommand` (see `lib/src/core/base_command.dart`) wraps `Command<int>` with shared error handling, console output, and metadata wiring. New commands extend this base instead of touching boilerplate.
-- `command_registry.dart` owns the list of command factories and registers them with the runner. Adding a new script only requires appending to this list—`lib/src/core/runner.dart` stays unchanged.
-- Shared infrastructure lives under `lib/src/core/` (state, logging, registry, runner) and `lib/src/services/` (workspace discovery, build runner, environment, YAML). Feature-specific flows remain in `lib/src/feature/`.
-- Directory layout:
-  - `lib/src/core/` → base command + registry + runner + console/logging/errors.
-  - `lib/src/services/` → reusable operations (toolchain, workspace, YAML, build runner).
-  - `lib/src/feature/<name>/` → `feature.dart` re-exports the public API, `command/` holds CLI wiring (`command.dart`, `options.dart`), and `runner/`, `services/`, `models/` folders organise the implementation.
-- Commands stay thin: parse flags in `command/command.dart` and delegate to helpers exposed via `<feature>/feature.dart`.
-
-The CLI prefers `fvm` and falls back to the system `dart`/`flutter` binaries
-when `fvm` is not installed.
-
-## Generation helpers
-
-### `gen-build`
-- Discovers every Dart/Flutter package in the workspace.
-- Filters modules that depend on `build_runner` (skipping the rest) unless a
-  module list is supplied.
-- Executes `fvm dart run build_runner build -d` (or plain `dart` if FVM is
-  unavailable) in each target directory.
-- Continues after failures but reports a non-zero exit code when any module
-  fails to build.
-
-### `gen-clean`
-- Runs `build_runner clean` in all modules with a `build_runner` dependency.
-- Executes clean jobs concurrently. Concurrency defaults to half the CPU count,
-  but can be overridden with `--workers <n>` (or `--workers auto` for defaults).
-- Removes common generated artifacts (`*.g.dart`, `*.freezed.dart`,
-  `*.module.dart`, etc.) across the repository and deletes `.dart_tool/build`.
-
-### `gen-watch`
-- Starts `build_runner watch -d` in parallel for all detected build-runner
-  modules or a subset matched by name/path.
-- Gracefully stops watchers on `SIGINT`/`SIGTERM`.
-- `--pre-build` runs `smart-build` first so dependencies are up to date before
-  watchers attach.
-
-### `smart-build`
-- Builds a dependency graph for the workspace and executes `build_runner` in
-  optimal order.
-- Accepts an optional module name to build only that package plus its upstream
-  dependencies.
-- `--dry-run` prints the execution plan without running builds.
-- `--parallel <n>` controls how many builds execute concurrently (default `4`).
-- Generates `build_graph.md` and stores logs under `build_logs/` on successful
-  runs.
-- Quick entry point: `fvm dart run scripts:smart_build --dry-run`.
-
-### `module-graph`
-- Shares the same discovery and graph analysis pipeline as `smart-build` but
-  skips executing `build_runner`.
-- Writes the Mermaid dependency diagram to `build_graph.md` and reports unused
-  dependencies.
-- Quick entry point: `fvm dart run scripts:module_graph`.
-
-## Workspace utilities
-
-### `pubspec-links`, `build-links`, and `yaml-links`
-- Traverse the repository (excluding tooling directories) and create symlinks
-  under `yaml/pubspecs/` and `yaml/builds/`.
-- Existing output folders are wiped before new links are created.
-- Helpful for browsing all YAML config in one place without leaving an editor
-  workspace.
-
-### `locale`
-- Scans JSON translation files (defaults to `app/assets/translations`).
-- Generates a `sealed class LocaleKeys` with string constants for each key.
-- Default output is `common/lib/src/constants/locale_keys.dart`; override
-  `--output` if your keys live elsewhere (e.g. `common/shared/lib/...`).
-
-## Build orchestration (`build` command)
-
-The `build` command wraps the full mobile build workflow:
-
-```bash
-ANDROID_KEYSTORE_PATH=/path/to/release.jks \
-ANDROID_KEYSTORE_PASSWORD=storePass \
-ANDROID_KEY_ALIAS=release \
-ANDROID_KEY_PASSWORD=keyPass \
-fvm dart run scripts build [tokens] [flags]
+```
+scripts/lib/src/
+├── cli/                # Thin CommandRunner wrappers (build, gen-*, smart_build …)
+├── application/        # Orchestrators & workflows per vertical (build, gen, module_graph, links, locale, smart_build)
+├── domain/             # DTOs and port interfaces shared across features
+├── infrastructure/     # Port implementations (build_runner, workspace discovery, graph generation, build tooling, links)
+└── core/               # Cross-cutting pieces (commands base class, DI setup, logging, state)
 ```
 
-- Always run from the repository root; the command looks for `./app` and
-  `app/pubspec.yaml` to resolve metadata.
-- Automatically runs `scripts/bash/bootstrap.sh` before building.
-- Without positional tokens it builds every combination of platform × mode ×
-  flavor (Android/iOS × debug/release × dev/prod).
-- Limit the matrix by passing any combination of `android` / `ios`,
-  `debug` / `release`, and `dev` / `prod` (order does not matter).
-- Android release builds honour the signing environment variables. Missing or
-  partially-set variables abort the run unless a pre-existing
-  `android/key.properties` file is found. Debug signing is used otherwise.
-- Artifacts are copied into `ignores/artifacts/<platform>/<mode>/<flavor>/`
-  with the app version appended to the filename or directory name.
-- iOS release builds run `flutter build ios --release --no-codesign`; debug
-  builds target the simulator (`--debug --simulator`).
+- **CLI** (`cli/`): parse flags/options, call `configureDependencies()`, then resolve an executor with `getDependency<T>()` and delegate work.
+- **Application**: orchestrators (e.g. `build_executor.dart`, `gen_executor.dart`, `module_graph_executor.dart`) combine workflows/helpers into higher-level operations.
+- **Domain**: simple models (`BuildSpec`, `SmartBuildOptions`, `ModuleGraphOptions`, `ModuleDescriptor`, `BuildPlan`, `DependencyReport`, `GraphReport`) and port abstractions (`BuildRunnerPort`, `ModuleDiscoveryPort`, `ModuleGraphPort`).
+- **Infrastructure**: adapters for file system/process/network concerns (Android/iOS builders, link creator, workspace scanner, build_runner service, module graph generation helpers).
+- **Core**: `CommandError` handling, console logging, BuildState store, and GetIt DI under `core/di`.
 
-Key flags:
-- `--android-aab` / `--android-apk` – limit Android release outputs to app
-  bundles or APKs (default builds both and also produces debug APKs for debug
-  runs).
-- `--keep-key-properties` – keep a generated `android/key.properties` after
-  release builds succeed.
-- `--no-obfuscate` – skip adding `--obfuscate` to release builds (enabled by
-  default).
-- `--no-split-debug-info` / `--split-debug-info-path <dir>` – control
-  `--split-debug-info` usage (default path `./android/app/release`).
-- `--no-apply-target-platform` / `--target-platform <value>` – toggle or
-  customise the `--target-platform` passed to Android builds (default
-  `android-arm,android-arm64,android-x64`).
+## Dependency injection
 
-The command attempts to use `fvm flutter` and falls back to the system
-`flutter` binary if FVM is unavailable.
+`core/di/dependency_setup.dart` registers all executors, ports, and services with GetIt. Each CLI command calls `configureDependencies()` before resolving its orchestrator via `getDependency<T>()`. Use GetIt scopes in tests to override registrations.
 
-## Adding a new command
+## Command summary
 
-1. Implement a command under `lib/src/feature/<name>/command/command.dart` that extends
-   `ScriptsCommand` and override `Future<int> runCommand()`.
-2. Put the actual workflow in `<feature>/feature.dart` and supporting `runner/` / `services/` files so that the command stays a small entrypoint.
-3. Register the command by adding its factory to `command_registry.dart`.
-4. Run `fvms --help` (and the command’s own `--help`) to verify the wiring.
+| Command                                                          | Description                                                                                             |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `build`                                                          | Execute the mobile build matrix (Android/iOS × mode × flavour). Artifacts land in `ignores/artifacts/`. |
+| `gen-build [modules…]`                                           | Run `build_runner build -d` for all build_runner packages or a filtered set.                            |
+| `gen-clean [--workers <n>]`                                      | Clean generated files and run `build_runner clean` across modules.                                      |
+| `gen-watch [modules…] [--pre-build]`                             | Launch `build_runner watch -d`, optionally running `smart-build` first.                                 |
+| `smart-build [module?] [--dry-run] [--parallel <n>] [--verbose]` | Dependency-aware incremental build orchestration with mermaid output.                                   |
+| `module-graph [--parallel <n>] [--verbose]`                      | Generate dependency graphs/stats without executing builds.                                              |
+| `build-links`                                                    | Symlink all `build.yaml` files into `yaml/builds/`.                                                     |
+| `pubspec-links`                                                  | Symlink all `pubspec.yaml` files into `yaml/pubspecs/`.                                                 |
+| `yaml-links`                                                     | Run both linkers sequentially (clears previous output).                                                 |
+| `locale [--input dir] [--output file]`                           | Produce locale key constants from translation JSON.                                                     |
 
-### Example skeleton
+_All commands support `--help` for detailed flags._
+
+## Key workflows
+
+### Build
+
+- Parses matrix tokens (`android`, `ios`, `debug`, `release`, `dev`, `prod`).
+- Uses `BuildExecutor` → Android & iOS builders (`infrastructure/build/*`).
+- Android release builds expect signing env vars (`ANDROID_KEYSTORE_PATH`, etc.) or an existing `android/key.properties`.
+- Flags: `--android-aab`, `--android-apk`, `--keep-key-properties`, `--no-obfuscate`, `--no-split-debug-info`, `--split-debug-info-path`, `--no-apply-target-platform`, `--target-platform`.
+
+### Gen
+
+- `GenExecutor` discovers modules via `ModuleDiscoveryPort` and drives specific workflows: `build_runner` builds, clean queue (multi-worker), or watch processes.
+- `--workers` defaults to half CPU count; `--pre-build` on `gen-watch` triggers smart-build before watchers attach.
+
+### Smart-build & Module-graph
+
+- Shared module discovery and dependency analysis via `ModuleGraphPort` (`ModuleGraphService`).
+- Smart-build executes builds in dependency order; `--dry-run` prints the plan without running.
+- Module-graph generates `build_info/*.md` mermaid diagrams plus summary stats.
+
+### Links & Locale
+
+- `LinksExecutor` creates symlinks in `yaml/` for quick inspection.
+- `LocaleExecutor` scans JSON translations and writes a `LocaleKeys` class.
+
+## Adding a command
+
+1. Create a command in `lib/src/cli/<name>/command.dart` extending `ScriptsCommand`.
+2. Optionally add an options helper in the same folder.
+3. Wire the actual work in `application/<domain>/...` (or reuse existing executors).
+4. Register the command factory in `core/command/command_registry.dart`.
+5. `dart analyze` + `fvm dart run scripts <command> --help` to confirm wiring.
+
+### Command skeleton
 
 ```dart
 class ExampleCommand extends ScriptsCommand {
-  ExampleCommand()
-      : super(
-          commandName: 'example',
-          commandDescription: 'Describe what the command does.',
-        ) {
-    argParser
-      ..addFlag('dry-run', negatable: false)
-      ..addOption('target');
-  }
+  ExampleCommand() : super(commandName: 'example', commandDescription: '...');
 
   @override
-  Future<int> runCommand() async {
-    // TODO: implement command
-    return 0;
+  Future<int> runCommand() {
+    configureDependencies();
+    final executor = getDependency<ExampleExecutor>();
+    return executor.run();
   }
 }
 ```
 
-## Migrating shell scripts
+## Misc
 
-1. Identify the behaviour of the existing shell script and extract reusable
-   helpers into `lib/src/<feature>/`.
-2. Translate sequential shell steps to Dart using `Process.start` /
-   `Process.run`, keeping repeated tasks in utilities.
-3. Surface CLI flags via `argParser` so callers can configure behaviour.
-4. Reuse logging utilities (or add new ones) to keep output consistent across
-   commands.
-5. Update documentation (including this README) and inline code comments to
-   explain the new command and its usage.
+- Bootstrap script: `sh scripts/bash/bootstrap.sh`
+- Logs: `build_logs/`, graphs under `build_info/`
+- Build artifacts are also staged under `.misc/artifacts/` for grab-and-go archives
 
-After porting a script, run `dart format` on the updated files and exercise the
-command locally to confirm it behaves like its shell counterpart.
+Happy automating!

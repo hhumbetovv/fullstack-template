@@ -5,7 +5,15 @@ environment:
 resolution: workspace
 
 dependencies:
+  #! Modules
+  common_tooling: any
+
+  #! cli
   args: ^2.5.0
+
+  #! File and Folders
   path: ^1.9.0
   yaml: ^3.1.2
-  common_tooling: any
+
+  #! Dependency Injection
+  get_it: ^8.0.3
