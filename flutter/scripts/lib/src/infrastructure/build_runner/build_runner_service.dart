@@ -75,7 +75,7 @@ class BuildRunnerService implements BuildRunnerPort {
     if (buildDir.existsSync()) {
       try {
         buildDir.deleteSync(recursive: true);
-      } on Exception catch (error) {
+      } on Object catch (error) {
         Console.warning('Failed to remove ${buildDir.path}: $error');
         return;
       }
@@ -94,13 +94,13 @@ class BuildRunnerService implements BuildRunnerPort {
           if (patterns.any(name.endsWith)) {
             try {
               entity.deleteSync();
-            } on Exception catch (error) {
+            } on Object catch (error) {
               Console.warning('Failed to delete ${entity.path}: $error');
             }
           }
         }
       }
-    } on Exception catch (error) {
+    } on Object catch (error) {
       Console.warning('Failed to scan ${directory.path}: $error');
     }
   }

@@ -97,7 +97,7 @@ Future<bool> _hasCommand(String command) async {
   try {
     final result = await Process.run(probe, [command]);
     return result.exitCode == 0;
-  } on Exception {
+  } on Object {
     return false;
   }
 }

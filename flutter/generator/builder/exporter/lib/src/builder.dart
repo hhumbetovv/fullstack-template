@@ -43,7 +43,7 @@ class ExporterBuilder implements Builder {
               "export '$exportUri';",
             );
           }
-        } on Exception {
+        } on Object {
           continue;
         }
       }

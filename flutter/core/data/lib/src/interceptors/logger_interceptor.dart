@@ -86,7 +86,7 @@ class LoggerInterceptor extends Interceptor {
       final jsonString = encoder.convert(data);
 
       return 'BODY: $jsonString\n';
-    } on Exception catch (e) {
+    } on Object catch (e) {
       return 'BODY FAIL: $e\n';
     }
   }

@@ -73,9 +73,7 @@ abstract class BaseBuilder<Config, Target> extends Builder {
     ).format(code);
   }
 
-  Set<String> get ignoreForFile =>
-      (options?.config['ignore_for_file'] as List?)?.cast<String>().toSet() ??
-      {};
+  Set<String> get ignoreForFile => (options?.config['ignore_for_file'] as List?)?.cast<String>().toSet() ?? {};
 
   @override
   final Map<String, List<String>> buildExtensions;
@@ -177,7 +175,7 @@ abstract class BaseBuilder<Config, Target> extends Builder {
   String validateAndFormatDartCode(BuildStep buildStep, String generated) {
     try {
       return _defaultFormatOutput(generated);
-    } on Exception catch (e, stack) {
+    } on Object catch (e, stack) {
       log.severe(
         '''
 An error `${e.runtimeType}` occurred while formatting the generated source for

@@ -51,7 +51,7 @@ class LinkCreator {
         link.createSync(target, recursive: false);
         Console.success('✓ $relativePath -> ${p.basename(symlinkPath)}');
         created++;
-      } on Exception catch (error) {
+      } on Object catch (error) {
         Console.error('✗ Failed to link $relativePath: $error');
         failed++;
       }

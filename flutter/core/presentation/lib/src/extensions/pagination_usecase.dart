@@ -27,7 +27,7 @@ extension PaginationUseCaseExt<Data, Params> on PaginationUseCase<Params, Data> 
         page: page,
         size: size,
       );
-    } on Exception catch (error, stackTrace) {
+    } on Object catch (error, stackTrace) {
       final errorLog =
           '⚠️ FLOW USECASE EXCEPTION | $runtimeType\n'
           'PARAMETERS: $Params\n'

@@ -12,8 +12,7 @@ import 'package:scripts/src/domain/models/smart_build_options.dart';
 import 'package:scripts/src/domain/ports/module_graph_port.dart';
 import 'package:scripts/src/services/build_execution_service.dart';
 import 'package:scripts/src/services/environment_service.dart';
-import 'package:scripts/src/services/workspace_discovery_service.dart'
-    as workspace_state;
+import 'package:scripts/src/services/workspace_discovery_service.dart' as workspace_state;
 
 class SmartBuildExecutor {
   SmartBuildExecutor({
@@ -121,7 +120,7 @@ class SmartBuildExecutor {
         Logger.error(error.message);
       }
       return error.exitCode;
-    } on Exception catch (e, stackTrace) {
+    } on Object catch (e, stackTrace) {
       Logger.error('Fatal error: $e');
       if (state.verbose) {
         log(stackTrace);

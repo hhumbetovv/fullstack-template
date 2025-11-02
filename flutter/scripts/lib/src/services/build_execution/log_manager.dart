@@ -13,7 +13,7 @@ Future<void> setupBuildLogsInternal(BuildState state) async {
         await file.delete();
       }
     }
-  } on Exception catch (e) {
+  } on Object catch (e) {
     Logger.debug('Error cleaning old logs: $e');
   }
 }

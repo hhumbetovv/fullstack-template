@@ -77,7 +77,7 @@ class WorkspaceDiscoveryService implements ModuleDiscoveryPort {
           }
         }
       }
-    } on Exception catch (error) {
+    } on Object catch (error) {
       Console.warning('Failed to read ${pubspec.path}: $error');
     }
     return null;
@@ -86,7 +86,7 @@ class WorkspaceDiscoveryService implements ModuleDiscoveryPort {
   bool _containsBuildRunner(File pubspec) {
     try {
       return pubspec.readAsStringSync().contains('build_runner');
-    } on Exception {
+    } on Object {
       return false;
     }
   }

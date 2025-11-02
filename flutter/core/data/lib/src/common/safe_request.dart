@@ -36,7 +36,7 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
       } else {
         return NetworkResponse(isSuccess: false, message: dioError.error.toString());
       }
-    } on Exception catch (error) {
+    } on Object catch (error) {
       Console.firebaseRecordError(
         dioError,
         dioError.stackTrace,
@@ -47,7 +47,7 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
         message: error.toString(),
       );
     }
-  } on Exception catch (error) {
+  } on Object catch (error) {
     final errorLog =
         '📶 NETWORK EXCEPTION\n'
         'TYPE: ${error.runtimeType}\n'

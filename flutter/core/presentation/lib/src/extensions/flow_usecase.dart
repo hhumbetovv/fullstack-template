@@ -11,7 +11,7 @@ extension FlowUseCaseExt<Data, Params> on FlowUseCase<Params, Data> {
   ) async {
     try {
       return await execute(params: params);
-    } on Exception catch (error, stackTrace) {
+    } on Object catch (error, stackTrace) {
       final errorLog =
           '⚠️ FLOW USECASE EXCEPTION | $runtimeType\n'
           'PARAMETERS: $Params\n'
@@ -65,7 +65,7 @@ extension FlowUseCaseExt<Data, Params> on FlowUseCase<Params, Data> {
         }
         return result;
       });
-    } on Exception catch (e) {
+    } on Object catch (e) {
       stopwatch.stop();
       final ms = stopwatch.elapsed.inMilliseconds;
       Console.log(

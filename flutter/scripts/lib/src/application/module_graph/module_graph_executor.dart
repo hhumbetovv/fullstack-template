@@ -76,7 +76,7 @@ class ModuleGraphExecutor {
         Logger.error(error.message);
       }
       return error.exitCode;
-    } on Exception catch (e, stackTrace) {
+    } on Object catch (e, stackTrace) {
       Logger.error('Fatal error: $e');
       if (state.verbose) {
         log(stackTrace);

@@ -50,7 +50,7 @@ abstract class ScriptsCommand extends Command<int> {
       Console.error(error.message);
       Console.write(error.usage);
       return 64;
-    } on Exception catch (error, stackTrace) {
+    } on Object catch (error, stackTrace) {
       Console.error('Unexpected error: $error');
       if (showStackTrace) {
         Console.write(stackTrace.toString());

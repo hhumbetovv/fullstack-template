@@ -30,9 +30,7 @@ class DependencyAnalyzer {
       state.allModuleDependencies[moduleName] = fullDependencies;
 
       if (state.modulePaths.containsKey(moduleName)) {
-        final buildDependencies = fullDependencies
-            .where(state.modulePaths.containsKey)
-            .toSet();
+        final buildDependencies = fullDependencies.where(state.modulePaths.containsKey).toSet();
         state.moduleDependencies[moduleName] = buildDependencies;
 
         if (buildDependencies.isNotEmpty) {
@@ -143,7 +141,7 @@ class DependencyAnalyzer {
 
       processDeps(deps);
       processDeps(devDeps);
-    } on Exception catch (e) {
+    } on Object catch (e) {
       Logger.error('Error parsing dependencies from $pubspecPath: $e');
     }
 
@@ -189,11 +187,11 @@ class DependencyAnalyzer {
                 collected.add(packageName);
               }
             }
-          } on Exception catch (e) {
+          } on Object catch (e) {
             Logger.debug('Error reading ${entity.path}: $e');
           }
         }
-      } on Exception catch (e) {
+      } on Object catch (e) {
         Logger.debug('Error scanning $modulePath/$dirName: $e');
       }
     }

@@ -14,7 +14,7 @@ class RootPaletteResolver extends BaseResolver<DataConfig, ClassElement2> {
       constructor = element.constructors2.firstWhere((constructor) {
         return constructor.isFactory;
       });
-    } on Exception catch (_) {
+    } on Object catch (_) {
       throw InvalidGenerationSourceError(
         'Class ${element.displayName} must have factory constructor',
         element: element,

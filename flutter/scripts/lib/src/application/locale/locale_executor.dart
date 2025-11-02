@@ -56,7 +56,7 @@ class LocaleExecutor {
         final content = entity.readAsStringSync();
         final jsonData = jsonDecode(content);
         keys.addAll(_extractKeys(jsonData));
-      } on Exception catch (error) {
+      } on Object catch (error) {
         Console.warning('Failed to parse ${entity.path}: $error');
       }
     }

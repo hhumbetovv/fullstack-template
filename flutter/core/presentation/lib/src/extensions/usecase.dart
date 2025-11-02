@@ -9,7 +9,7 @@ extension UseCaseExt<Data, Params> on UseCase<Params, Data> {
   ) async {
     try {
       return await execute(params: params);
-    } on Exception catch (error, stackTrace) {
+    } on Object catch (error, stackTrace) {
       final errorLog =
           '⚠️ USECASE EXCEPTION | $runtimeType\n'
           'PARAMETERS: $Params\n'

@@ -45,7 +45,7 @@ class DirectoryWalker {
             queue.add(entity);
           }
         }
-      } on Exception {
+      } on Object {
         // Ignore directories that cannot be listed.
         continue;
       }
@@ -60,7 +60,7 @@ class DirectoryWalker {
             yield entity;
           }
         }
-      } on Exception {
+      } on Object {
         continue;
       }
     }

@@ -87,7 +87,7 @@ final class ConsoleViewModel extends _ConsoleViewModel {
       await SharePlus.instance.share(
         ShareParams(files: [XFile(file.path)]),
       );
-    } on Exception catch (e) {
+    } on Object catch (e) {
       postMessage('Failed to share logs: $e');
     }
   }

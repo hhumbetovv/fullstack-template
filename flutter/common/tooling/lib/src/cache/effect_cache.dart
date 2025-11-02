@@ -20,11 +20,8 @@ class EffectCache {
     try {
       final content = _file.readAsStringSync();
       final jsonList = jsonDecode(content) as Iterable<dynamic>;
-      return jsonList
-          .whereType<Map<String, dynamic>>()
-          .map(CachedEffect.fromJson)
-          .toList();
-    } on Exception {
+      return jsonList.whereType<Map<String, dynamic>>().map(CachedEffect.fromJson).toList();
+    } on Object {
       return [];
     }
   }
@@ -70,9 +67,7 @@ class EffectCache {
     required List<CachedEffect> effects,
   }) {
     final all = readAll();
-    final filtered =
-        all.where((effect) => effect.view != viewClassName).toList()
-          ..addAll(effects);
+    final filtered = all.where((effect) => effect.view != viewClassName).toList()..addAll(effects);
 
     _ensureFile();
     final payload = filtered.map((effect) => effect.toJson()).toList();
@@ -82,9 +77,7 @@ class EffectCache {
   /// Removes any cached information for [viewClassName].
   void removeView(String viewClassName) {
     final all = readAll();
-    final filtered = all
-        .where((effect) => effect.view != viewClassName)
-        .toList();
+    final filtered = all.where((effect) => effect.view != viewClassName).toList();
     if (filtered.length == all.length) return;
 
     _ensureFile();
@@ -130,12 +123,8 @@ bool _hasSameSignature(CachedEffect a, CachedEffect b) {
     return false;
   }
 
-  final aParams = a.method.params
-      .where((param) => param.type != 'BuildContext')
-      .toList();
-  final bParams = b.method.params
-      .where((param) => param.type != 'BuildContext')
-      .toList();
+  final aParams = a.method.params.where((param) => param.type != 'BuildContext').toList();
+  final bParams = b.method.params.where((param) => param.type != 'BuildContext').toList();
 
   if (aParams.length != bParams.length) {
     return false;

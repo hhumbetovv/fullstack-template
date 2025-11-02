@@ -7,8 +7,7 @@ dynamic _convertYamlValue(dynamic value) {
   if (value is YamlMap) {
     return Map<String, dynamic>.fromEntries(
       value.entries.map(
-        (entry) =>
-            MapEntry(entry.key.toString(), _convertYamlValue(entry.value)),
+        (entry) => MapEntry(entry.key.toString(), _convertYamlValue(entry.value)),
       ),
     );
   }
@@ -35,14 +34,13 @@ Future<Map<String, dynamic>?> readPubspec(String filePath) async {
 
     Logger.debug('Parsed pubspec did not produce a map: $filePath');
     return null;
-  } on Exception catch (e) {
+  } on Object catch (e) {
     Logger.debug('Error reading $filePath: $e');
     return null;
   }
 }
 
-String? getPackageName(Map<String, dynamic> pubspec) =>
-    pubspec['name']?.toString();
+String? getPackageName(Map<String, dynamic> pubspec) => pubspec['name']?.toString();
 
 bool hasBuildRunner(Map<String, dynamic> pubspec) {
   final dependencies = pubspec['dependencies'] as Map<String, dynamic>?;
@@ -53,7 +51,5 @@ bool hasBuildRunner(Map<String, dynamic> pubspec) {
 }
 
 bool shouldIgnoreModule(String moduleName) {
-  return moduleName.startsWith('gen_') ||
-      moduleName.contains('generator') ||
-      moduleName.contains('_gen');
+  return moduleName.startsWith('gen_') || moduleName.contains('generator') || moduleName.contains('_gen');
 }

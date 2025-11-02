@@ -102,7 +102,7 @@ class AuthInterceptor extends Interceptor {
         return handler.next(err);
       }
       return handler.next(err);
-    } on Exception catch (_) {
+    } on Object catch (_) {
       return handler.next(err);
     }
   }

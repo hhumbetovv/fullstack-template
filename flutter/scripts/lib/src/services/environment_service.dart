@@ -29,7 +29,7 @@ class EnvironmentService {
           'Killing build process for ${entry.key} (PID: ${entry.value.pid})',
         );
         entry.value.kill();
-      } on Exception catch (e) {
+      } on Object catch (e) {
         Logger.debug('Error killing process for ${entry.key}: $e');
       }
     }

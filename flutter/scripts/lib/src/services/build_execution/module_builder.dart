@@ -86,7 +86,7 @@ Future<Map<String, dynamic>> buildModuleInternal(
             Logger.error('   $line');
           }
         }
-      } on Exception catch (e) {
+      } on Object catch (e) {
         Logger.debug('Error reading log file: $e');
       }
     }
