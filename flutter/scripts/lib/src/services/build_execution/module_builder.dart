@@ -39,15 +39,27 @@ Future<Map<String, dynamic>> buildModuleInternal(
     return {'success': true, 'moduleName': moduleName};
   }
 
+  final filters = [
+    '--build-filter=lib/**',
+  ];
+
+  final buildArgs = [
+    'run',
+    'build_runner',
+    'build',
+    '-d',
+    ...filters,
+  ];
+
   final logSink = File(logFile).openWrite()
     ..writeln('=== Build started at ${DateTime.now().toIso8601String()} ===')
     ..writeln('Module: $moduleName')
     ..writeln('Path: $modulePath')
-    ..writeln('Command: dart run build_runner build -d')
+    ..writeln('Command: dart ${buildArgs.join(' ')}')
     ..writeln('===================================\n');
 
   final buildProcess = await startDartCommand(
-    ['run', 'build_runner', 'build', '-d'],
+    buildArgs,
     workingDirectory: modulePath,
   );
 

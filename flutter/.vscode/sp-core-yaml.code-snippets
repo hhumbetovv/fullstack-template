@@ -46,6 +46,7 @@
         "body": [
             "targets:",
             "\t$$default:",
+            "\t\tauto_apply_builders: false",
             "\t\tbuilders:",
             "\t\t\t#! Project Generators",
             "\t\t\tgen_data|data:",
@@ -119,6 +120,7 @@
         "body": [
             "targets:",
             "\t$$default:",
+            "\t\tauto_apply_builders: false",
             "\t\tbuilders:",
             "\t\t\t#! Project Generators",
             "\t\t\tgen_data|data:",
@@ -175,6 +177,7 @@
         "body": [
             "targets:",
             "\t$$default:",
+            "\t\tauto_apply_builders: false",
             "\t\tbuilders:",
             "\t\t\t#! Package Generators",
             "\t\t\tjson_serializable|json_serializable:",
@@ -244,6 +247,7 @@
         "body": [
             "targets:",
             "\t$$default:",
+            "\t\tauto_apply_builders: false",
             "\t\tbuilders:",
             "\t\t\t#! Package Generators",
             "\t\t\tobjectbox_generator|resolver:",
