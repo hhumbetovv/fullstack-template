@@ -7,7 +7,14 @@ cd scripts
 fvm dart pub get
 ```
 
-Run commands via FVM (recommended):
+Run commands via FVM (recommended). After running the bootstrap script a shell alias `fvms`
+is available and maps to `fvm dart run scripts`:
+
+```bash
+fvms <command> [flags]
+```
+
+If the alias is unavailable, fall back to:
 
 ```bash
 fvm dart run scripts <command> [flags]
@@ -42,7 +49,7 @@ scripts/lib/src/
 
 | Command                                                          | Description                                                                                             |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `build`                                                          | Execute the mobile build matrix (Android/iOS × mode × flavour). Artifacts land in `.misc/artifacts/`. |
+| `build`                                                          | Execute the mobile build matrix (Android/iOS × mode × flavour). Use `--flavor`, `--debug`, or `--release` to filter. Artifacts land in `.misc/artifacts/`. |
 | `gen-build [modules…]`                                           | Run `build_runner build -d` for all build_runner packages or a filtered set.                            |
 | `gen-clean [--workers <n>]`                                      | Clean generated files and run `build_runner clean` across modules.                                      |
 | `gen-watch [modules…] [--pre-build]`                             | Launch `build_runner watch -d`, optionally running `smart-build` first.                                 |
@@ -59,10 +66,10 @@ _All commands support `--help` for detailed flags._
 
 ### Build
 
-- Parses matrix tokens (`android`, `ios`, `debug`, `release`, `dev`, `prod`).
+- Automatically discovers available flavours from `.env.*` files under `app/` and expands the build matrix across all platforms/modes unless filters are provided.
 - Uses `BuildExecutor` → Android & iOS builders (`infrastructure/build/*`).
 - Android release builds expect signing env vars (`ANDROID_KEYSTORE_PATH`, etc.) or an existing `android/key.properties`.
-- Flags: `--android-aab`, `--android-apk`, `--keep-key-properties`, `--no-obfuscate`, `--no-split-debug-info`, `--split-debug-info-path`, `--no-apply-target-platform`, `--target-platform`.
+- Flags: `--flavor <name>`, `--debug`, `--release`, `--android-aab`, `--android-apk`, `--keep-key-properties`, `--no-obfuscate`, `--no-split-debug-info`, `--split-debug-info-path`, `--no-apply-target-platform`, `--target-platform`.
 
 ### Gen
 
@@ -86,7 +93,7 @@ _All commands support `--help` for detailed flags._
 2. Optionally add an options helper in the same folder.
 3. Wire the actual work in `application/<domain>/...` (or reuse existing executors).
 4. Register the command factory in `core/command/command_registry.dart`.
-5. `dart analyze` + `fvm dart run scripts <command> --help` to confirm wiring.
+5. `dart analyze` + `fvms <command> --help` (or `fvm dart run scripts <command> --help`) to confirm wiring.
 
 ### Command skeleton
 

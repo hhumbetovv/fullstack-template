@@ -5,7 +5,7 @@ Welcome to the Flutter workspace. This README points you to the most important m
 ## Prerequisites
 - **FVM**: Use Flutter through FVM to ensure everyone builds with the same SDK. Install [fvm.app](https://fvm.app) and run `fvm install` / `fvm use` as needed.
 - **Bootstrap**: After installing FVM, run `sh scripts/bash/bootstrap.sh` once. It performs project-wide cleanup, installs pods, fetches packages, runs smart-build, and activates flutterfire CLI.
-- **Dart CLI**: Scripts are written in Dart; run them with the FVM-managed SDK (`fvm dart ...`).
+- **Dart CLI**: Scripts are written in Dart; run them with the FVM-managed SDK. After bootstrap use the shortcut `fvms <command>` (maps to `fvm dart run scripts <command>`).
 
 ## Module map
 | Layer | Description |
@@ -29,11 +29,15 @@ Welcome to the Flutter workspace. This README points you to the most important m
 
 ## Scripts CLI
 Automation lives in the Dart CLI under `scripts/` (see scripts/README.md). Common commands:
-- `fvms gen-build` – run build_runner across modules.
+- `fvms gen-build` (alias for `fvm dart run scripts gen-build`) – run `build_runner` across modules (filter modules with trailing args).
 - `fvms smart-build` – dependency-aware incremental builds.
-- `fvms build` – produce Android/iOS artifacts (configurable flavours via flags).
+- `fvms build` – produce Android/iOS artifacts; use `--flavor`, `--debug`, and `--release` to narrow the matrix.
 - `fvms module-graph` – refresh `build_graph.md` with dependency stats.
 - `sh scripts/bash/bootstrap.sh` – runs the bootstrap workflow (FVM setup, Flutter clean/pub get, pod install, smart-build, flutterfire CLI activation).
+
+The build command automatically discovers available flavors from `.env.*` files under `app/`. When no filters
+are provided it covers every flavor, platform, and mode. Pass `--flavor myflavor` (repeat as needed) or mix in
+`--debug` / `--release` to target a subset of the matrix.
 
 Artifacts produced by the build command land in `.misc/artifacts/`. Build logs persist under `build_logs/` for troubleshooting. Use `scripts/bash/deeplink.sh <url>` to trigger Android deep-link tests via ADB.
 
