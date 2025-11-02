@@ -46,7 +46,7 @@ class IosBuildService {
       'build',
       'ios',
       '--flavor',
-      spec.flavor.name,
+      spec.flavor,
       if (spec.mode == BuildMode.release) '--release' else '--debug',
     ];
 
@@ -75,7 +75,7 @@ class IosBuildService {
       final bundleRoot = spec.mode == BuildMode.release
           ? Directory('${outputDir.path}/iphoneos')
           : Directory('${outputDir.path}/iphonesimulator');
-      final bundle = _findAppBundle(bundleRoot, spec.flavor.name);
+      final bundle = _findAppBundle(bundleRoot, spec.flavor);
       if (bundle != null) {
         storeDirectoryArtifact(bundle, artifactsRoot, spec, version);
       } else {
@@ -89,7 +89,7 @@ class IosBuildService {
           'Skipping IPA for ${spec.description} (only release builds supported).',
         );
       } else {
-        final archive = File('${outputDir.path}/ipa/${spec.flavor.name}.ipa');
+        final archive = File('${outputDir.path}/ipa/${spec.flavor}.ipa');
         if (archive.existsSync()) {
           storeFileArtifact(archive, artifactsRoot, spec, version);
         } else {
@@ -111,7 +111,7 @@ class IosBuildService {
       if (!name.endsWith('.app')) {
         continue;
       }
-      if (name == 'runner-$flavor.app') {
+      if (name == 'runner-${flavor.toLowerCase()}.app') {
         return entry;
       }
       fallback ??= entry;

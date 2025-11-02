@@ -2,8 +2,6 @@ enum BuildPlatform { android, ios }
 
 enum BuildMode { debug, release }
 
-enum BuildFlavor { dev, prod }
-
 class BuildSpec {
   const BuildSpec({
     required this.platform,
@@ -13,16 +11,16 @@ class BuildSpec {
 
   final BuildPlatform platform;
   final BuildMode mode;
-  final BuildFlavor flavor;
+  final String flavor;
 
   String get description =>
-      '${platform.name} ${mode.name} ${flavor.name}'.toUpperCase();
+      '${platform.name} ${mode.name} $flavor'.toUpperCase();
 }
 
 List<BuildSpec> createBuildSpecs(
   Set<BuildPlatform> platforms,
   Set<BuildMode> modes,
-  Set<BuildFlavor> flavors,
+  Set<String> flavors,
 ) {
   final specs = <BuildSpec>[
     for (final platform in platforms)
@@ -57,20 +55,10 @@ BuildMode? parseMode(String value) {
   return null;
 }
 
-BuildFlavor? parseFlavor(String value) {
-  switch (value) {
-    case 'dev':
-      return BuildFlavor.dev;
-    case 'prod':
-      return BuildFlavor.prod;
-  }
-  return null;
-}
-
 int _compareSpecs(BuildSpec a, BuildSpec b) {
   final platformCompare = a.platform.index.compareTo(b.platform.index);
   if (platformCompare != 0) return platformCompare;
   final modeCompare = a.mode.index.compareTo(b.mode.index);
   if (modeCompare != 0) return modeCompare;
-  return a.flavor.index.compareTo(b.flavor.index);
+  return a.flavor.compareTo(b.flavor);
 }

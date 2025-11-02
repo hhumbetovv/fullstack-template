@@ -1,5 +1,4 @@
 import 'package:args/args.dart';
-import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/domain/models/build_spec.dart';
 
 class BuildCommandOptions {
@@ -16,7 +15,7 @@ class BuildCommandOptions {
     required this.targetPlatform,
     required this.platforms,
     required this.modes,
-    required this.flavors,
+    required this.requestedFlavors,
   });
 
   final bool keepKeyProperties;
@@ -31,7 +30,7 @@ class BuildCommandOptions {
   final String targetPlatform;
   final Set<BuildPlatform> platforms;
   final Set<BuildMode> modes;
-  final Set<BuildFlavor> flavors;
+  final Set<String> requestedFlavors;
 }
 
 BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
@@ -41,6 +40,8 @@ BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
   final requestAndroidApk = argResults?['android-apk'] as bool? ?? false;
   final requestIosIpa = argResults?['ios-ipa'] as bool? ?? false;
   final requestIosApp = argResults?['ios-app'] as bool? ?? false;
+  final includeRelease = argResults?['release'] as bool? ?? false;
+  final includeDebug = argResults?['debug'] as bool? ?? false;
   final obfuscateAndroid = argResults?['obfuscate'] as bool? ?? true;
   final splitDebugInfo = argResults?['split-debug-info'] as bool? ?? true;
   final splitDebugInfoPathRaw =
@@ -53,12 +54,18 @@ BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
       (argResults?['target-platform'] as String? ??
               'android-arm,android-arm64,android-x64')
           .trim();
+  final flavorArgs =
+      argResults?['flavor'] as List<String>? ?? const <String>[];
+  final flavorOptions = <String>{
+    for (final value in flavorArgs)
+      if (value.trim().isNotEmpty) value.trim().toLowerCase(),
+  };
 
   final tokens = argResults?.rest ?? <String>[];
 
   final platformSelections = <BuildPlatform>{};
   final modeSelections = <BuildMode>{};
-  final flavorSelections = <BuildFlavor>{};
+  final flavorSelections = <String>{};
 
   for (final token in tokens) {
     final normalized = token.toLowerCase();
@@ -72,19 +79,15 @@ BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
       modeSelections.add(mode);
       continue;
     }
-    final flavor = parseFlavor(normalized);
-    if (flavor != null) {
-      flavorSelections.add(flavor);
-      continue;
-    }
-    throw CommandError(
-      'Unrecognized argument "$token". Supported values: android, ios, debug, release, dev, prod.',
-      exitCode: 64,
-    );
+    flavorSelections.add(normalized);
   }
 
-  final hasArtifactFilter =
-      requestAndroidAab || requestAndroidApk || requestIosIpa || requestIosApp;
+  if (includeRelease) {
+    modeSelections.add(BuildMode.release);
+  }
+  if (includeDebug) {
+    modeSelections.add(BuildMode.debug);
+  }
 
   if (platformSelections.isEmpty) {
     final requestedPlatforms = <BuildPlatform>{};
@@ -102,14 +105,7 @@ BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
     }
   }
   if (modeSelections.isEmpty) {
-    if (hasArtifactFilter) {
-      modeSelections.add(BuildMode.debug);
-    } else {
-      modeSelections.addAll(BuildMode.values);
-    }
-  }
-  if (flavorSelections.isEmpty) {
-    flavorSelections.addAll(BuildFlavor.values);
+    modeSelections.addAll(BuildMode.values);
   }
 
   final splitDebugInfoPath = splitDebugInfo && splitDebugInfoPathRaw.isEmpty
@@ -132,6 +128,9 @@ BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
     targetPlatform: targetPlatform,
     platforms: platformSelections,
     modes: modeSelections,
-    flavors: flavorSelections,
+    requestedFlavors: {
+      ...flavorSelections,
+      ...flavorOptions,
+    },
   );
 }

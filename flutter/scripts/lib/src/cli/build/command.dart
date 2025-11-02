@@ -39,6 +39,25 @@ class BuildCommand extends ScriptsCommand {
         negatable: false,
         aliases: ['app'],
       )
+      ..addMultiOption(
+        'flavor',
+        help:
+            'Build only the specified flavor(s). Defaults to all flavors discovered from app/*.env*.',
+        valueHelp: 'name',
+        splitCommas: true,
+      )
+      ..addFlag(
+        'release',
+        help:
+            'Include release builds. Enabled by default when no build mode filters are provided.',
+        negatable: false,
+      )
+      ..addFlag(
+        'debug',
+        help:
+            'Include debug builds. Enabled by default when no build mode filters are provided.',
+        negatable: false,
+      )
       ..addFlag(
         'obfuscate',
         help: 'Add --obfuscate to Android release builds.',

@@ -45,6 +45,7 @@ class AndroidBuildService {
     BuildSpec spec,
     AndroidCliOptions options,
     Directory artifactsRoot,
+    Set<String> allFlavors,
   ) async {
     if (!options.shouldBuildFor(spec)) {
       return;
@@ -65,6 +66,7 @@ class AndroidBuildService {
         spec,
         artifactsRoot,
         ensureVersion(),
+        allFlavors,
       );
     }
 
@@ -85,6 +87,7 @@ class AndroidBuildService {
           spec,
           artifactsRoot,
           ensureVersion(),
+          allFlavors,
         );
       }
     }
@@ -102,7 +105,7 @@ class AndroidBuildService {
       'build',
       command,
       '--flavor',
-      spec.flavor.name,
+      spec.flavor,
       if (spec.mode == BuildMode.release) '--release' else '--debug',
     ];
 
@@ -134,6 +137,7 @@ class AndroidBuildService {
     BuildSpec spec,
     Directory artifactsRoot,
     String version,
+    Set<String> allFlavors,
   ) {
     final outputDir = Directory('${appDir.path}/build/app/outputs/flutter-apk');
     if (!outputDir.existsSync()) {
@@ -146,7 +150,10 @@ class AndroidBuildService {
     final artifacts = outputDir
         .listSync()
         .whereType<File>()
-        .where((file) => _matchesAndroidArtifact(file.path, spec, '.apk'))
+        .where(
+          (file) =>
+              _matchesAndroidArtifact(file.path, spec, '.apk', allFlavors),
+        )
         .toList();
 
     if (artifacts.isEmpty) {
@@ -166,10 +173,11 @@ class AndroidBuildService {
     BuildSpec spec,
     Directory artifactsRoot,
     String version,
+    Set<String> allFlavors,
   ) {
     final modeLabel = spec.mode == BuildMode.release ? 'Release' : 'Debug';
     final bundleDir = Directory(
-      '${appDir.path}/build/app/outputs/bundle/${spec.flavor.name}$modeLabel',
+      '${appDir.path}/build/app/outputs/bundle/${spec.flavor}$modeLabel',
     );
 
     if (!bundleDir.existsSync()) {
@@ -182,7 +190,10 @@ class AndroidBuildService {
     final artifacts = bundleDir
         .listSync()
         .whereType<File>()
-        .where((file) => _matchesAndroidArtifact(file.path, spec, '.aab'))
+        .where(
+          (file) =>
+              _matchesAndroidArtifact(file.path, spec, '.aab', allFlavors),
+        )
         .toList();
 
     if (artifacts.isEmpty) {
@@ -201,25 +212,27 @@ class AndroidBuildService {
     String path,
     BuildSpec spec,
     String extension,
+    Set<String> allFlavors,
   ) {
     final lower = p.basename(path).toLowerCase();
     if (!lower.endsWith(extension)) {
       return false;
     }
 
-    final flavorToken = '-${spec.flavor.name.toLowerCase()}-';
+    final flavorToken = '-${spec.flavor.toLowerCase()}-';
     final modeToken = '-${spec.mode.name.toLowerCase()}';
 
     if (lower.contains(flavorToken)) {
       return lower.contains(modeToken);
     }
 
-    final knownFlavorTokens = BuildFlavor.values
-        .map((flavor) => '-${flavor.name.toLowerCase()}-')
+    final conflictingTokens = allFlavors
+        .where((flavor) => flavor.toLowerCase() != spec.flavor.toLowerCase())
+        .map((flavor) => '-${flavor.toLowerCase()}-')
         .where(lower.contains)
         .toList();
 
-    if (knownFlavorTokens.isEmpty && lower.contains(modeToken)) {
+    if (conflictingTokens.isEmpty && lower.contains(modeToken)) {
       return true;
     }
 

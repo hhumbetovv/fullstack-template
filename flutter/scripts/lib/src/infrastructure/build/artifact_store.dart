@@ -15,13 +15,13 @@ void storeFileArtifact(
       artifactsRoot.path,
       spec.platform.name,
       spec.mode.name,
-      spec.flavor.name,
+      spec.flavor,
     ),
   )..createSync(recursive: true);
 
   final extension = p.extension(source.path);
   final destName =
-      '${spec.platform.name}-${spec.mode.name}-${spec.flavor.name}-v$version$extension';
+      '${spec.platform.name}-${spec.mode.name}-${spec.flavor}-v$version$extension';
   final destination = File(p.join(destinationDir.path, destName));
   if (destination.existsSync()) {
     destination.deleteSync();
@@ -40,7 +40,7 @@ Directory storeDirectoryArtifact(
       artifactsRoot.path,
       spec.platform.name,
       spec.mode.name,
-      spec.flavor.name,
+      spec.flavor,
     ),
   )..createSync(recursive: true);
 
