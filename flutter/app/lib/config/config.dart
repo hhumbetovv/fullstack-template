@@ -39,7 +39,7 @@ final class AppConfig {
         );
       },
     );
-    Console.isEnabled = true;
+    Console.isEnabled = Flavor.current == Flavor.dev;
     await Environment.initialize();
     await configureDependencies();
   }
