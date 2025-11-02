@@ -45,7 +45,15 @@ Directory storeDirectoryArtifact(
   )..createSync(recursive: true);
 
   final originalName = p.basename(source.path);
-  final destName = '$originalName-v$version';
+  final extension = p.extension(originalName);
+  final destName =
+      [
+        spec.platform.name,
+        spec.mode.name,
+        spec.flavor,
+        'v$version',
+      ].join('-') +
+      (extension.isEmpty ? '' : extension);
   final destination = Directory(p.join(destinationDir.path, destName));
   if (destination.existsSync()) {
     destination.deleteSync(recursive: true);
