@@ -10,6 +10,9 @@ AsyncResult<Unit> safeUnitCall<Data>(
     if (response.data != null) {
       await handler?.call(response.data as Data, response.action?.toEntity());
     }
+    if (Data is Unit) {
+      await handler?.call(Unit() as Data, response.action?.toEntity());
+    }
     return Success.unit(action: response.action?.toEntity());
   }
   return response.mapToError(action: response.action?.toEntity());

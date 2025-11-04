@@ -41,6 +41,7 @@ Future<Map<String, dynamic>> buildModuleInternal(
 
   final filters = [
     '--build-filter=lib/**',
+    '--build-filter=assets/**',
   ];
 
   final buildArgs = [

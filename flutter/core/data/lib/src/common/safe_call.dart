@@ -1,7 +1,7 @@
 import 'package:core_data/public.dart';
 import 'package:core_domain/public.dart';
 
-Future<Result<Data, Failure>> safeCall<Data>(
+AsyncResult<Data> safeCall<Data>(
   Future<NetworkResponse<Data>> Function() requestCallback, {
   Future<void> Function(Data data)? handler,
 }) async {

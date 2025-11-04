@@ -46,9 +46,7 @@ class SessionLocalService {
 
     if (tokenExpiration == null) return AuthStatus.unauthenticated;
 
-    final expDate = DateTime.fromMicrosecondsSinceEpoch(
-      int.parse(tokenExpiration),
-    );
+    final expDate = int.parse(tokenExpiration).toEntity();
 
     final currentDate = DateTime.now();
 
