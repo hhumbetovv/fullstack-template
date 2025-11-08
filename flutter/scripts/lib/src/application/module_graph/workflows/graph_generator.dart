@@ -1,17 +1,17 @@
+// ignore_for_file: cascade_invocations, avoid_single_cascade_in_expression_statements
+
 import 'dart:io';
 
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/core/state/build_state.dart';
-import 'package:scripts/src/domain/models/graph_config.dart';
+import 'package:scripts/src/domain/models/graph_config.dart' show classifyModule;
 import 'package:scripts/src/domain/models/graph_report.dart';
-import 'package:scripts/src/infrastructure/module_graph/graph_generation.dart'
-    as legacy_graph;
 
 class GraphGenerator {
   const GraphGenerator();
 
   Future<GraphReport> generate(BuildState state) async {
-    Logger.info('📊 Generating dependency graph (build_graph.md)...');
+    Logger.info('📊 Generating dependency graph (graph.md)...');
 
     final modulesWithUnusedDeps = state.moduleUnusedDependencies.keys.toSet();
 
@@ -25,8 +25,6 @@ class GraphGenerator {
       }
     }
 
-    final allModules = state.allModulePaths.keys.toSet();
-
     var maxWave = -1;
     for (final level in state.moduleBuildLevel.values) {
       if (level > maxWave) {
@@ -34,142 +32,546 @@ class GraphGenerator {
       }
     }
 
-    final graphs = <GraphConfig>[
-      GraphConfig(
-        path: 'build_info/graph_all.md',
-        title: 'Full Workspace Module Graph',
-        primaryModules: Set<String>.from(allModules),
-        section: 'overview',
-        description: 'Complete dependency graph sorted by build waves.',
-        highlightPrimary: false,
-      ),
+    final totalDependencies = state.allModuleDependencies.values.fold<int>(
+      0,
+      (sum, deps) => sum + deps.length,
+    );
+
+    final outputs = <GraphFile>[
+      await _writeBaseToFeatureGraph(state, modulesWithUnusedDeps),
+      await _writeFeaturesOnlyGraph(state, modulesWithUnusedDeps),
+      await _writeWaveGroupedGraph(state, maxWave, modulesWithUnusedDeps),
+      await _writeLayerGroupedGraph(state, modulesWithUnusedDeps),
     ];
 
-    for (var wave = 0; wave <= maxWave; wave++) {
-      final waveModules = state.moduleBuildLevel.entries
-          .where((entry) => entry.value == wave)
-          .map((entry) => entry.key)
-          .toSet();
-      if (waveModules.isEmpty) continue;
-      graphs.add(
-        GraphConfig(
-          path: 'build_info/graph_wave_$wave.md',
-          title: 'Wave $wave Dependency Graph',
-          primaryModules: waveModules,
-          section: 'waves',
-          description:
-              'Modules scheduled in wave $wave with their workspace dependencies.',
-        ),
-      );
-    }
+    await _writeBuildGraphOverview(
+      state: state,
+      totalDependencies: totalDependencies,
+      modulesWithUnused: modulesWithUnusedDeps,
+      maxWave: maxWave,
+    );
 
-    final categoryLabels = <String, String>{
-      'common': 'Common Layer',
-      'core': 'Core Layer',
-      'ui': 'UI Layer',
-      'domain': 'Domain Layer',
-      'data': 'Data Layer',
-      'presentation': 'Presentation Layer',
-    };
-
-    for (final entry in categoryLabels.entries) {
-      final category = entry.key;
-      final label = entry.value;
-      final modules = allModules
-          .where((module) => classifyModule(module) == category)
-          .toSet();
-      if (modules.isEmpty) {
-        continue;
-      }
-      graphs.add(
-        GraphConfig(
-          path: 'build_info/graph_layer_$category.md',
-          title: '$label Graph',
-          primaryModules: modules,
-          section: 'layers',
-          description: '$label modules with their workspace dependencies.',
-        ),
-      );
-    }
-
-    final generatedGraphs = <GraphConfig>[];
-    final featureGroups = _groupModulesByFeature(state);
-    for (final entry in featureGroups.entries) {
-      final feature = entry.key;
-      final modules = entry.value;
-      if (modules.isEmpty) continue;
-      graphs.add(
-        GraphConfig(
-          path: 'build_info/graph_feature_${_sanitizeFeatureName(feature)}.md',
-          title: '${_titleCase(feature)} Feature Graph',
-          primaryModules: modules,
-          section: 'features',
-          description:
-              'Modules under feature/$feature with their dependencies.',
-        ),
-      );
-    }
-    for (final graph in graphs) {
-      final wrote = await legacy_graph.writeGraphFile(
-        state,
-        graph,
-        modulesWithUnusedDeps,
-      );
-      if (wrote) {
-        generatedGraphs.add(graph);
-      }
-    }
+    outputs.add(
+      const GraphFile(
+        path: 'graph.md',
+        title: 'Workspace Build Overview',
+      ),
+    );
 
     return GraphReport(
       summary: GraphSummary(
         totalModules: state.allModulePaths.length,
-        totalDependencies: state.allModuleDependencies.values.fold<int>(
-          0,
-          (sum, deps) => sum + deps.length,
-        ),
+        totalDependencies: totalDependencies,
         modulesWithUnused: modulesWithUnusedDeps,
       ),
-      outputs: [
-        for (final graph in generatedGraphs)
-          GraphFile(path: graph.path, title: graph.title),
-      ],
+      outputs: outputs,
     );
   }
 }
 
-Map<String, Set<String>> _groupModulesByFeature(BuildState state) {
-  final groups = <String, Set<String>>{};
-  for (final entry in state.modulePaths.entries) {
-    final moduleName = entry.key;
-    final modulePath = entry.value;
-    final feature = _extractFeatureSegment(modulePath);
-    if (feature == null || feature.isEmpty) {
+Future<GraphFile> _writeBaseToFeatureGraph(
+  BuildState state,
+  Set<String> modulesWithUnused,
+) async {
+  const path = 'build_info/foundation.md';
+  final buffer = StringBuffer()
+    ..writeln('# Foundation Modules')
+    ..writeln('')
+    ..writeln('```mermaid')
+    ..writeln('graph LR');
+
+  final featureModules = _featureModules(state);
+  final modulePaths = state.allModulePaths;
+  final baseModules = modulePaths.keys.where((module) => !featureModules.contains(module)).toList()..sort();
+
+  final styles = _GraphStyleTracker();
+  for (final module in baseModules) {
+    final id = _nodeId(module);
+    buffer..writeln('    $id["$module"]');
+    _applyModuleStyling(
+      buffer,
+      styles,
+      module,
+      modulesWithUnused,
+    );
+  }
+
+  final featuresNodeId = _nodeId('features');
+  final appId = state.allModulePaths.containsKey('app') ? _nodeId('app') : null;
+  if (appId != null) {
+    buffer.writeln('    class $appId feature');
+    styles.markFeatureUsed();
+  }
+
+  final featureDependencySources = <String>{};
+  for (final entry in state.allModuleDependencies.entries) {
+    final source = entry.key;
+    if (featureModules.contains(source)) {
+      for (final target in entry.value) {
+        if (!featureModules.contains(target) && modulePaths.containsKey(target)) {
+          featureDependencySources.add(target);
+        }
+      }
       continue;
     }
-    groups.putIfAbsent(feature, () => <String>{}).add(moduleName);
+    for (final target in entry.value) {
+      if (featureModules.contains(target)) {
+        continue;
+      }
+      if (modulePaths.containsKey(target)) {
+        buffer..writeln('    ${_nodeId(target)} --> ${_nodeId(source)}');
+      }
+    }
+  }
+
+  if (featureDependencySources.isNotEmpty) {
+    buffer.writeln('    $featuresNodeId["Features"]');
+    buffer.writeln('    class $featuresNodeId feature');
+    styles.markFeatureUsed();
+
+    final contributors = featureDependencySources.toList()..sort();
+    for (final contributor in contributors) {
+      buffer.writeln('    ${_nodeId(contributor)} --> $featuresNodeId');
+    }
+
+    if (appId != null) {
+      buffer.writeln('    $featuresNodeId --> $appId');
+    }
+  }
+
+  _writeClassDefinitions(buffer, styles);
+  buffer
+    ..writeln('```')
+    ..writeln('');
+
+  await File(path).writeAsString(buffer.toString());
+  return const GraphFile(
+    path: path,
+    title: 'Foundation View',
+  );
+}
+
+Future<GraphFile> _writeFeaturesOnlyGraph(
+  BuildState state,
+  Set<String> modulesWithUnused,
+) async {
+  const path = 'build_info/features.md';
+  final buffer = StringBuffer()
+    ..writeln('# Feature Modules')
+    ..writeln('')
+    ..writeln('```mermaid')
+    ..writeln('graph LR');
+
+  final featureModules = _featureModules(state);
+  final featureList = featureModules.toList()..sort();
+  final styles = _GraphStyleTracker();
+  for (final module in featureList) {
+    final id = _nodeId(module);
+    buffer.writeln('    $id["$module"]');
+    _applyModuleStyling(
+      buffer,
+      styles,
+      module,
+      modulesWithUnused,
+    );
+  }
+
+  for (final entry in state.allModuleDependencies.entries) {
+    final source = entry.key;
+    if (!featureModules.contains(source)) continue;
+    for (final target in entry.value) {
+      if (!featureModules.contains(target)) continue;
+      buffer..writeln('    ${_nodeId(target)} --> ${_nodeId(source)}');
+    }
+  }
+
+  _writeClassDefinitions(buffer, styles);
+  buffer
+    ..writeln('```')
+    ..writeln('');
+
+  await File(path).writeAsString(buffer.toString());
+  return const GraphFile(path: path, title: 'Feature Modules');
+}
+
+Future<GraphFile> _writeWaveGroupedGraph(
+  BuildState state,
+  int maxWave,
+  Set<String> modulesWithUnused,
+) async {
+  const path = 'build_info/waves.md';
+  final buffer = StringBuffer()
+    ..writeln('# Waves Overview')
+    ..writeln('')
+    ..writeln('```mermaid')
+    ..writeln('graph TB');
+
+  final declared = <String>{};
+  final styles = _GraphStyleTracker();
+  final waveClusters = <String>[];
+  for (var wave = 0; wave <= maxWave; wave++) {
+    final modules =
+        state.moduleBuildLevel.entries.where((entry) => entry.value == wave).map((entry) => entry.key).toList()..sort();
+    if (modules.isEmpty) continue;
+    final clusterId = _nodeId('wave_cluster_$wave');
+    waveClusters.add(clusterId);
+    buffer.writeln('    subgraph $clusterId["Wave $wave"]');
+    buffer.writeln('        direction TB');
+    for (final module in modules) {
+      final id = _nodeId(module);
+      buffer.writeln('        $id["$module"]');
+      declared.add(module);
+      _applyModuleStyling(
+        buffer,
+        styles,
+        module,
+        modulesWithUnused,
+        indent: '        ',
+      );
+    }
+    buffer.writeln('    end');
+  }
+
+  for (var i = 0; i < waveClusters.length - 1; i++) {
+    buffer.writeln('    ${waveClusters[i]} --> ${waveClusters[i + 1]}');
+  }
+
+  _writeClassDefinitions(buffer, styles);
+  buffer
+    ..writeln('```')
+    ..writeln('');
+
+  await File(path).writeAsString(buffer.toString());
+  return const GraphFile(path: path, title: 'Wave Groups');
+}
+
+Future<void> _writeBuildGraphOverview({
+  required BuildState state,
+  required int totalDependencies,
+  required Set<String> modulesWithUnused,
+  required int maxWave,
+}) async {
+  final totalModules = state.allModulePaths.length;
+  final buildRunnerModules = state.modulePaths.length;
+  final withoutBuildRunner = totalModules - buildRunnerModules;
+  final avgDependencies = totalModules == 0 ? '0.00' : (totalDependencies / totalModules).toStringAsFixed(2);
+
+  final waveModules = _collectWaveModules(state, maxWave);
+  final peakConcurrent = waveModules.isEmpty
+      ? 0
+      : waveModules.map((wave) => wave.modules.length).reduce((a, b) => a > b ? a : b);
+
+  final buffer = StringBuffer()
+    ..writeln('# Workspace Build Overview')
+    ..writeln('')
+    ..writeln('## Quick Stats')
+    ..writeln('')
+    ..writeln('- **Total Modules**: $totalModules')
+    ..writeln('- **Modules With build_runner**: $buildRunnerModules')
+    ..writeln('- **Modules Without build_runner**: $withoutBuildRunner')
+    ..writeln('- **Total Dependencies**: $totalDependencies')
+    ..writeln('- **Average Dependencies**: $avgDependencies')
+    ..writeln('- **Peak Concurrent Modules**: $peakConcurrent')
+    ..writeln('- **Configured Parallel Limit**: ${state.maxParallelBuilds}')
+    ..writeln('')
+    ..writeln('## Graph Index')
+    ..writeln('')
+    ..writeln(
+      '- [Foundation](build_info/foundation.md) '
+      '— Highlights how shared modules feed feature delivery.',
+    )
+    ..writeln(
+      '- [Features](build_info/features.md) '
+      '— Focuses purely on feature-layer dependencies.',
+    )
+    ..writeln(
+      '- [Waves](build_info/waves.md) '
+      '— Visualizes build waves from top to bottom.',
+    )
+    ..writeln(
+      '- [Module Groups](build_info/module_groups.md) '
+      '— Clusters modules by architectural layer.',
+    )
+    ..writeln('')
+    ..writeln('## Build Waves')
+    ..writeln('')
+    ..write(_waveNarrative(state, waveModules))
+    ..writeln('')
+    ..writeln('## Unused Module Dependencies')
+    ..writeln('')
+    ..write(_unusedDependenciesSection(state, modulesWithUnused))
+    ..writeln('')
+    ..writeln('_Detailed graphs are available under the `build_info/` directory._')
+    ..writeln('');
+
+  await File('graph.md').writeAsString(buffer.toString());
+}
+
+String _waveNarrative(BuildState state, List<_WaveDetail> waves) {
+  if (waves.isEmpty) {
+    return 'No build_runner modules discovered.';
+  }
+  final buffer = StringBuffer();
+  for (final wave in waves) {
+    buffer
+      ..writeln('### Wave ${wave.level}')
+      ..writeln('');
+    for (final module in wave.modules) {
+      final deps = state.moduleDependencies[module];
+      if (deps == null || deps.isEmpty) {
+        buffer.writeln('- **$module** → no dependencies');
+      } else {
+        final sorted = deps.toList()..sort();
+        buffer.writeln('- **$module** → depends on: ${sorted.join(', ')}');
+      }
+    }
+    buffer.writeln('');
+  }
+  return buffer.toString();
+}
+
+String _unusedDependenciesSection(
+  BuildState state,
+  Set<String> modulesWithUnused,
+) {
+  if (modulesWithUnused.isEmpty) {
+    return 'None 🎉';
+  }
+  final buffer = StringBuffer();
+  final entries =
+      state.moduleUnusedDependencies.entries.where((entry) => modulesWithUnused.contains(entry.key)).toList()
+        ..sort((a, b) => a.key.compareTo(b.key));
+  for (final entry in entries) {
+    final unused = entry.value.toList()..sort();
+    buffer.writeln('- **${entry.key}** → ${unused.join(', ')}');
+  }
+  return buffer.toString();
+}
+
+List<_WaveDetail> _collectWaveModules(BuildState state, int maxWave) {
+  if (maxWave < 0) {
+    return const <_WaveDetail>[];
+  }
+  final waves = <_WaveDetail>[];
+  for (var wave = 0; wave <= maxWave; wave++) {
+    final modules =
+        state.moduleBuildLevel.entries.where((entry) => entry.value == wave).map((entry) => entry.key).toList()..sort();
+    if (modules.isNotEmpty) {
+      waves.add(_WaveDetail(level: wave, modules: modules));
+    }
+  }
+  return waves;
+}
+
+class _WaveDetail {
+  const _WaveDetail({
+    required this.level,
+    required this.modules,
+  });
+
+  final int level;
+  final List<String> modules;
+}
+
+Future<GraphFile> _writeLayerGroupedGraph(
+  BuildState state,
+  Set<String> modulesWithUnused,
+) async {
+  const path = 'build_info/module_groups.md';
+  final buffer = StringBuffer()
+    ..writeln('# Module Groups')
+    ..writeln('')
+    ..writeln('```mermaid')
+    ..writeln('graph LR');
+
+  final groups = _buildLayerGroups(state);
+  final declared = <String>{};
+  final styles = _GraphStyleTracker();
+  for (final entry in groups.entries) {
+    final name = entry.key;
+    final modules = entry.value.toList()..sort();
+    if (modules.isEmpty) continue;
+    buffer.writeln('    subgraph "$name"');
+    buffer.writeln('        direction LR');
+    for (final module in modules) {
+      final id = _nodeId(module);
+      buffer.writeln('        $id["$module"]');
+      declared.add(module);
+      _applyModuleStyling(
+        buffer,
+        styles,
+        module,
+        modulesWithUnused,
+        indent: '        ',
+      );
+    }
+    buffer.writeln('    end');
+  }
+
+  for (final entry in state.allModuleDependencies.entries) {
+    final source = entry.key;
+    for (final target in entry.value) {
+      if (declared.contains(source) && declared.contains(target)) {
+        buffer..writeln('    ${_nodeId(target)} --> ${_nodeId(source)}');
+      }
+    }
+  }
+
+  _writeClassDefinitions(buffer, styles);
+  buffer
+    ..writeln('```')
+    ..writeln('');
+
+  await File(path).writeAsString(buffer.toString());
+  return const GraphFile(path: path, title: 'Module Groups');
+}
+
+Set<String> _featureModules(BuildState state) => state.allModulePaths.entries
+    .where((entry) => _extractFeatureSegment(entry.value) != null)
+    .map((entry) => entry.key)
+    .toSet();
+
+bool _isFeatureModule(BuildState state, String moduleName) =>
+    _extractFeatureSegment(state.allModulePaths[moduleName] ?? '') != null;
+
+Map<String, Set<String>> _groupModulesByFeature(BuildState state) {
+  final groups = <String, Set<String>>{};
+  for (final entry in state.allModulePaths.entries) {
+    final feature = _extractFeatureSegment(entry.value);
+    if (feature == null) continue;
+    groups.putIfAbsent(feature, () => <String>{}).add(entry.key);
   }
   return groups;
 }
 
+Map<String, Set<String>> _buildLayerGroups(BuildState state) {
+  final groups = <String, Set<String>>{
+    'Core Layer': <String>{},
+    'Common Layer': <String>{},
+    'UI Layer': <String>{},
+    'Data Layer': <String>{},
+    'Domain Layer': <String>{},
+  };
+
+  for (final entry in state.allModulePaths.entries) {
+    final module = entry.key;
+    if (_isFeatureModule(state, module)) {
+      continue;
+    }
+    final category = classifyModule(module);
+    if (category == null) continue;
+    if (category == 'core') {
+      groups['Core Layer']!.add(module);
+    } else if (category == 'common') {
+      groups['Common Layer']!.add(module);
+    } else if (category == 'ui') {
+      groups['UI Layer']!.add(module);
+    } else if (category == 'data') {
+      groups['Data Layer']!.add(module);
+    } else if (category == 'domain') {
+      groups['Domain Layer']!.add(module);
+    }
+  }
+
+  final featureGroups = _groupModulesByFeature(state);
+  for (final entry in featureGroups.entries) {
+    groups['Feature: ${_titleCase(entry.key)}'] = entry.value;
+  }
+
+  return groups;
+}
+
 String? _extractFeatureSegment(String path) {
-  final normalized = path.replaceFirst('./', '');
-  final segments = normalized.split('/');
+  final normalized = path.replaceFirst(RegExp('^\\./'), '');
+  final segments = normalized.split('/').where((segment) => segment.isNotEmpty).toList();
   if (segments.isEmpty || segments.first != 'feature') {
     return null;
   }
-  if (segments.length < 2) {
+
+  final lastFeatureIndex = segments.lastIndexOf('feature');
+  if (lastFeatureIndex == -1 || lastFeatureIndex + 1 >= segments.length) {
     return null;
   }
-  return segments[1];
+  return segments[lastFeatureIndex + 1];
 }
-
-String _sanitizeFeatureName(String feature) =>
-    feature.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), '_');
 
 String _titleCase(String value) {
   if (value.isEmpty) return value;
-  final parts = value.split(RegExp('[^a-zA-Z0-9]+')).where((p) => p.isNotEmpty);
+  final parts = value.split(RegExp('[^a-zA-Z0-9]+')).where((part) => part.isNotEmpty);
   return parts
-      .map((part) => part.substring(0, 1).toUpperCase() + part.substring(1))
+      .map(
+        (part) => part.substring(0, 1).toUpperCase() + part.substring(1).toLowerCase(),
+      )
       .join(' ');
+}
+
+String _nodeId(String moduleName) => moduleName.replaceAll(RegExp('[^a-zA-Z0-9_]'), '_');
+
+class _GraphStyleTracker {
+  final Set<String> usedClasses = <String>{};
+  bool featureClassUsed = false;
+
+  void markClass(String className) => usedClasses.add(className);
+
+  void markFeatureUsed() => featureClassUsed = true;
+}
+
+void _applyModuleStyling(
+  StringBuffer buffer,
+  _GraphStyleTracker tracker,
+  String module,
+  Set<String> modulesWithUnused, {
+  String indent = '    ',
+}) {
+  final className = classifyModule(module);
+  final id = _nodeId(module);
+  if (className != null) {
+    buffer.writeln('$indent$id:::${className}');
+    tracker.markClass(className);
+  }
+  if (modulesWithUnused.contains(module)) {
+    buffer.writeln('${indent}class $id unused');
+    tracker.markClass('unused');
+  }
+}
+
+void _writeClassDefinitions(StringBuffer buffer, _GraphStyleTracker tracker) {
+  if (tracker.usedClasses.isEmpty && !tracker.featureClassUsed) {
+    return;
+  }
+
+  buffer.writeln('');
+  const classOrder = <String>[
+    'presentation',
+    'domain',
+    'data',
+    'ui',
+    'common',
+    'core',
+    'unused',
+  ];
+  const classStyles = <String, String>{
+    'presentation': '    classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000;',
+    'domain': '    classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000;',
+    'data': '    classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000;',
+    'ui': '    classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000;',
+    'common': '    classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000;',
+    'core': '    classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000;',
+    'unused': '    classDef unused fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000;',
+  };
+
+  for (final className in classOrder) {
+    if (tracker.usedClasses.contains(className)) {
+      final definition = classStyles[className];
+      if (definition != null) {
+        buffer.writeln(definition);
+      }
+    }
+  }
+
+  if (tracker.featureClassUsed) {
+    buffer.writeln(
+      '    classDef feature fill:#f6d186,stroke:#c77d39,color:#1b1b1b;',
+    );
+  }
 }

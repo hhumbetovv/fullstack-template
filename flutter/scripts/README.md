@@ -62,6 +62,15 @@ scripts/lib/src/
 
 _All commands support `--help` for detailed flags._
 
+### Module graph outputs
+
+Running `module-graph` now produces four focused Mermaid files under `build_info/`:
+
+1. `foundation.md` – shows all non-feature modules and how they feed into feature modules.
+2. `features.md` – isolates only the feature packages and their inter-dependencies.
+3. `waves.md` – groups every module by build wave (subgraphs per wave).
+4. `module_groups.md` – clusters modules by layer (core/common/ui/data/domain) and by each feature area.
+
 ## Key workflows
 
 ### Build

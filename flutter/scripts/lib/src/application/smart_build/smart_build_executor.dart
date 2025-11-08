@@ -112,8 +112,8 @@ class SmartBuildExecutor {
       Logger.success('🏁 Smart build process completed!');
       log('');
 
-      if (!state.dryRun && File('build_graph.md').existsSync()) {
-        Logger.info('📊 View dependency graph: build_graph.md');
+      if (!state.dryRun && File('graph.md').existsSync()) {
+        Logger.info('📊 View dependency graph: graph.md');
       }
       if (!state.dryRun && Directory(state.buildLogsDir).existsSync()) {
         Logger.info('📁 Build logs available in: ${state.buildLogsDir}/');
