@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:scripts/src/application/workspace/workspace_state_loader.dart';
 import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/core/logging/logging.dart';
@@ -12,17 +13,22 @@ import 'package:scripts/src/domain/models/smart_build_options.dart';
 import 'package:scripts/src/domain/ports/module_graph_port.dart';
 import 'package:scripts/src/services/build_execution_service.dart';
 import 'package:scripts/src/services/environment_service.dart';
-import 'package:scripts/src/services/workspace_discovery_service.dart' as workspace_state;
 
 class SmartBuildExecutor {
   SmartBuildExecutor({
     required ModuleGraphPort moduleGraphPort,
     required EnvironmentService environmentService,
+    required WorkspaceStateLoader workspaceStateLoader,
+    required BuildExecutionService buildExecutionService,
   }) : _moduleGraphPort = moduleGraphPort,
-       _environmentService = environmentService;
+       _environmentService = environmentService,
+       _workspaceStateLoader = workspaceStateLoader,
+       _buildExecutionService = buildExecutionService;
 
   final ModuleGraphPort _moduleGraphPort;
   final EnvironmentService _environmentService;
+  final WorkspaceStateLoader _workspaceStateLoader;
+  final BuildExecutionService _buildExecutionService;
 
   Future<int> run(SmartBuildOptions options) async {
     final store = BuildStateStore();
@@ -34,7 +40,6 @@ class SmartBuildExecutor {
     );
     Logger.configure(LoggerConfig(verbose: options.verbose));
 
-    final buildExecutionService = BuildExecutionService(state);
     final subscriptions = <StreamSubscription<ProcessSignal>>[];
 
     log('');
@@ -67,7 +72,7 @@ class SmartBuildExecutor {
           ),
         );
 
-      await workspace_state.discoverModulesFromRoot(state);
+      await _workspaceStateLoader.load(state);
 
       if (state.modulePaths.isEmpty) {
         throw const CommandError(
@@ -95,7 +100,7 @@ class SmartBuildExecutor {
       }
 
       if (!state.dryRun) {
-        await buildExecutionService.execute();
+        await _buildExecutionService.execute(state);
       }
 
       if (!state.dryRun && state.targetModule == null) {
@@ -181,6 +186,8 @@ class SmartBuildExecutor {
     for (final deps in state.moduleUnusedDependencies.values) {
       deps.removeWhere(modulesToRemove.contains);
     }
+
+    state.invalidateWorkspaceSnapshot();
   }
 
   void _printPlan(BuildPlan plan) {

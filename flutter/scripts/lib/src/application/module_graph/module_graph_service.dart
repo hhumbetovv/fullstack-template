@@ -1,30 +1,32 @@
 import 'package:scripts/src/application/module_graph/workflows/build_plan_builder.dart';
 import 'package:scripts/src/application/module_graph/workflows/dependency_analyzer.dart';
 import 'package:scripts/src/application/module_graph/workflows/graph_generator.dart';
+import 'package:scripts/src/application/workspace/workspace_state_loader.dart';
 import 'package:scripts/src/core/state/build_state.dart';
 import 'package:scripts/src/domain/models/build_plan.dart';
 import 'package:scripts/src/domain/models/dependency_report.dart';
 import 'package:scripts/src/domain/models/graph_report.dart';
 import 'package:scripts/src/domain/ports/module_graph_port.dart';
-import 'package:scripts/src/services/workspace_discovery_service.dart'
-    as workspace_state;
 
 class ModuleGraphService implements ModuleGraphPort {
   ModuleGraphService({
     required DependencyAnalyzer dependencyAnalyzer,
     required BuildPlanBuilder buildPlanBuilder,
     required GraphGenerator graphGenerator,
+    required WorkspaceStateLoader workspaceStateLoader,
   }) : _dependencyAnalyzer = dependencyAnalyzer,
        _buildPlanBuilder = buildPlanBuilder,
-       _graphGenerator = graphGenerator;
+       _graphGenerator = graphGenerator,
+       _workspaceStateLoader = workspaceStateLoader;
 
   final DependencyAnalyzer _dependencyAnalyzer;
   final BuildPlanBuilder _buildPlanBuilder;
   final GraphGenerator _graphGenerator;
+  final WorkspaceStateLoader _workspaceStateLoader;
 
   @override
   Future<void> discoverModules(BuildState state) async {
-    await workspace_state.discoverModulesFromRoot(state);
+    await _workspaceStateLoader.load(state);
   }
 
   @override

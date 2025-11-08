@@ -20,6 +20,11 @@ targets:
             - "lib/src/module/**"
             - "lib/src/repository/**"
             - "lib/src/datasource/**"
+      injectable_generator|injectable_config_builder:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/init.dart"
       #! Project Generators
       gen_exporter|exporter:
         enabled: true

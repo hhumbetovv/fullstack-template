@@ -1,18 +1,21 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:common_tooling/tooling.dart';
-import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/core/state/build_state.dart';
-
-part 'build_execution/log_manager.dart';
-part 'build_execution/module_builder.dart';
-part 'build_execution/build_scheduler.dart';
+import 'package:scripts/src/services/build_execution/build_scheduler.dart';
+import 'package:scripts/src/services/build_execution/log_manager.dart';
+import 'package:scripts/src/services/build_execution/module_builder.dart';
 
 class BuildExecutionService {
-  BuildExecutionService(this.state);
+  BuildExecutionService({
+    BuildScheduler? scheduler,
+    BuildLogManager? logManager,
+    ModuleBuildRunner? moduleBuilder,
+  }) : _scheduler =
+           scheduler ??
+           BuildScheduler(
+             logManager: logManager ?? const BuildLogManager(),
+             moduleBuilder: moduleBuilder ?? const ModuleBuildRunner(),
+           );
 
-  final BuildState state;
+  final BuildScheduler _scheduler;
 
-  Future<bool> execute() => executeSmartBuildInternal(state);
+  Future<bool> execute(BuildState state) => _scheduler.execute(state);
 }

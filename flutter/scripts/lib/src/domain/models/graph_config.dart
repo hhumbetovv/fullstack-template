@@ -1,5 +1,5 @@
 class GraphConfig {
-  GraphConfig({
+  const GraphConfig({
     required this.path,
     required this.title,
     required this.primaryModules,

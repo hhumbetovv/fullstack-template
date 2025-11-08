@@ -19,15 +19,30 @@ class CleanQueueWorkflow {
       return 0;
     }
 
-    Console.write('🚀 Cleaning generated files (workers: $workerCount)');
+    final orderedModules = [...modules]
+      ..sort((a, b) => a.name.compareTo(b.name));
+    final totalModules = orderedModules.length;
 
+    Console.info(
+      '🚀 Cleaning $totalModules modules using $workerCount worker(s)...',
+    );
+
+    final tracker = _ProgressTracker(totalModules);
     final failures = <ModuleDescriptor>[];
-    final queue = Queue<ModuleDescriptor>.from(modules);
+    final queue = Queue<ModuleDescriptor>.from(orderedModules);
     final tasks = <Future<void>>[];
 
     for (var index = 0; index < workerCount; index++) {
       if (queue.isEmpty) break;
-      tasks.add(_runWorker(index, workerCount, queue, failures));
+      tasks.add(
+        _runWorker(
+          index,
+          workerCount,
+          queue,
+          failures,
+          tracker,
+        ),
+      );
     }
 
     await Future.wait(tasks);
@@ -52,11 +67,13 @@ class CleanQueueWorkflow {
     int totalWorkers,
     Queue<ModuleDescriptor> queue,
     List<ModuleDescriptor> failures,
+    _ProgressTracker tracker,
   ) async {
     while (queue.isNotEmpty) {
       final module = queue.removeFirst();
-
-      Console.write('🧹 [${index + 1}/$totalWorkers] ${module.path}');
+      Console.info(
+        '🧹 Worker ${index + 1}/$totalWorkers cleaning ${module.name}',
+      );
 
       final result = await _buildRunner.runCommand(
         module.directory,
@@ -64,11 +81,12 @@ class CleanQueueWorkflow {
         forwardOutput: false,
       );
 
+      final label = tracker.advance();
       if (result.exitCode == 0) {
-        Console.success('✅ Cleaned ${module.name}');
+        Console.success('✅ [$label] ${module.name}');
       } else {
         failures.add(module);
-        Console.error('❌ Failed to clean ${module.name}');
+        Console.error('❌ [$label] Failed to clean ${module.name}');
 
         final stderr = result.stderr?.toString().trim();
         if (stderr != null && stderr.isNotEmpty) {
@@ -80,5 +98,17 @@ class CleanQueueWorkflow {
         }
       }
     }
+  }
+}
+
+class _ProgressTracker {
+  _ProgressTracker(this.total);
+
+  final int total;
+  int _completed = 0;
+
+  String advance() {
+    _completed++;
+    return '$_completed/$total';
   }
 }

@@ -1,5 +1,5 @@
 import 'package:scripts/src/core/state/build_state.dart';
-import 'package:scripts/src/infrastructure/module_graph/graph_config.dart';
+import 'package:scripts/src/domain/models/graph_config.dart';
 
 class NodeWriteResult {
   const NodeWriteResult({

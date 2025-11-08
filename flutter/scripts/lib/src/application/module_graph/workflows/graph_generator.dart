@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/core/state/build_state.dart';
+import 'package:scripts/src/domain/models/graph_config.dart';
 import 'package:scripts/src/domain/models/graph_report.dart';
-import 'package:scripts/src/infrastructure/module_graph/graph_config.dart';
 import 'package:scripts/src/infrastructure/module_graph/graph_generation.dart'
     as legacy_graph;
 
@@ -93,6 +93,22 @@ class GraphGenerator {
     }
 
     final generatedGraphs = <GraphConfig>[];
+    final featureGroups = _groupModulesByFeature(state);
+    for (final entry in featureGroups.entries) {
+      final feature = entry.key;
+      final modules = entry.value;
+      if (modules.isEmpty) continue;
+      graphs.add(
+        GraphConfig(
+          path: 'build_info/graph_feature_${_sanitizeFeatureName(feature)}.md',
+          title: '${_titleCase(feature)} Feature Graph',
+          primaryModules: modules,
+          section: 'features',
+          description:
+              'Modules under feature/$feature with their dependencies.',
+        ),
+      );
+    }
     for (final graph in graphs) {
       final wrote = await legacy_graph.writeGraphFile(
         state,
@@ -119,4 +135,41 @@ class GraphGenerator {
       ],
     );
   }
+}
+
+Map<String, Set<String>> _groupModulesByFeature(BuildState state) {
+  final groups = <String, Set<String>>{};
+  for (final entry in state.modulePaths.entries) {
+    final moduleName = entry.key;
+    final modulePath = entry.value;
+    final feature = _extractFeatureSegment(modulePath);
+    if (feature == null || feature.isEmpty) {
+      continue;
+    }
+    groups.putIfAbsent(feature, () => <String>{}).add(moduleName);
+  }
+  return groups;
+}
+
+String? _extractFeatureSegment(String path) {
+  final normalized = path.replaceFirst('./', '');
+  final segments = normalized.split('/');
+  if (segments.isEmpty || segments.first != 'feature') {
+    return null;
+  }
+  if (segments.length < 2) {
+    return null;
+  }
+  return segments[1];
+}
+
+String _sanitizeFeatureName(String feature) =>
+    feature.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), '_');
+
+String _titleCase(String value) {
+  if (value.isEmpty) return value;
+  final parts = value.split(RegExp('[^a-zA-Z0-9]+')).where((p) => p.isNotEmpty);
+  return parts
+      .map((part) => part.substring(0, 1).toUpperCase() + part.substring(1))
+      .join(' ');
 }
