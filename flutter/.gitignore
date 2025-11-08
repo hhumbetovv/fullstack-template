@@ -47,4 +47,9 @@ app.*.map.json
 # FVM Version Cache
 .fvm/
 
+# Generated Files
 yaml/*
+*.g.dart
+*.module.dart
+public.dart
+*.config.dart
