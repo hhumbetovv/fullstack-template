@@ -11,7 +11,7 @@ class GraphGenerator {
   const GraphGenerator();
 
   Future<GraphReport> generate(BuildState state) async {
-    Logger.info('📊 Generating dependency graph (graph.md)...');
+    Logger.info('📊 Generating dependency graph (overview.md)...');
 
     final modulesWithUnusedDeps = state.moduleUnusedDependencies.keys.toSet();
 
@@ -53,7 +53,7 @@ class GraphGenerator {
 
     outputs.add(
       const GraphFile(
-        path: 'graph.md',
+        path: 'overview.md',
         title: 'Workspace Build Overview',
       ),
     );
@@ -289,8 +289,8 @@ Future<void> _writeBuildGraphOverview({
       '— Visualizes build waves from top to bottom.',
     )
     ..writeln(
-      '- [Module Groups](build_info/module_groups.md) '
-      '— Clusters modules by architectural layer.',
+      '- [Layers](build_info/layers.md) '
+      '— Clusters modules by architectural tier and feature area.',
     )
     ..writeln('')
     ..writeln('## Build Waves')
@@ -304,7 +304,7 @@ Future<void> _writeBuildGraphOverview({
     ..writeln('_Detailed graphs are available under the `build_info/` directory._')
     ..writeln('');
 
-  await File('graph.md').writeAsString(buffer.toString());
+  await File('overview.md').writeAsString(buffer.toString());
 }
 
 String _waveNarrative(BuildState state, List<_WaveDetail> waves) {
@@ -377,42 +377,54 @@ Future<GraphFile> _writeLayerGroupedGraph(
   BuildState state,
   Set<String> modulesWithUnused,
 ) async {
-  const path = 'build_info/module_groups.md';
+  const path = 'build_info/layers.md';
   final buffer = StringBuffer()
-    ..writeln('# Module Groups')
+    ..writeln('# Layers')
     ..writeln('')
     ..writeln('```mermaid')
     ..writeln('graph LR');
 
   final groups = _buildLayerGroups(state);
-  final declared = <String>{};
+  final groupNodes = <String, String>{};
+  final moduleToGroup = <String, String>{};
   final styles = _GraphStyleTracker();
+
   for (final entry in groups.entries) {
     final name = entry.key;
     final modules = entry.value.toList()..sort();
     if (modules.isEmpty) continue;
-    buffer.writeln('    subgraph "$name"');
-    buffer.writeln('        direction LR');
-    for (final module in modules) {
-      final id = _nodeId(module);
-      buffer.writeln('        $id["$module"]');
-      declared.add(module);
-      _applyModuleStyling(
-        buffer,
-        styles,
-        module,
-        modulesWithUnused,
-        indent: '        ',
-      );
+    final nodeId = _nodeId('group_$name');
+    groupNodes[name] = nodeId;
+    buffer.writeln('    $nodeId["$name"]');
+    final groupClass = _classForGroup(name);
+    if (groupClass != null) {
+      buffer.writeln('    class $nodeId $groupClass');
+      if (groupClass == 'feature') {
+        styles.markFeatureUsed();
+      } else {
+        styles.markClass(groupClass);
+      }
     }
-    buffer.writeln('    end');
+    for (final module in modules) {
+      moduleToGroup[module] = name;
+    }
   }
 
+  final renderedEdges = <String>{};
   for (final entry in state.allModuleDependencies.entries) {
     final source = entry.key;
-    for (final target in entry.value) {
-      if (declared.contains(source) && declared.contains(target)) {
-        buffer..writeln('    ${_nodeId(target)} --> ${_nodeId(source)}');
+    final targetModules = entry.value;
+    final sourceGroup = moduleToGroup[source];
+    if (sourceGroup == null) continue;
+    for (final target in targetModules) {
+      final targetGroup = moduleToGroup[target];
+      if (targetGroup == null || targetGroup == sourceGroup) continue;
+      final fromId = groupNodes[targetGroup];
+      final toId = groupNodes[sourceGroup];
+      if (fromId == null || toId == null) continue;
+      final edgeKey = '$fromId->$toId';
+      if (renderedEdges.add(edgeKey)) {
+        buffer.writeln('    $fromId --> $toId');
       }
     }
   }
@@ -423,7 +435,7 @@ Future<GraphFile> _writeLayerGroupedGraph(
     ..writeln('');
 
   await File(path).writeAsString(buffer.toString());
-  return const GraphFile(path: path, title: 'Module Groups');
+  return const GraphFile(path: path, title: 'Layer Connections');
 }
 
 Set<String> _featureModules(BuildState state) => state.allModulePaths.entries
@@ -481,8 +493,20 @@ Map<String, Set<String>> _buildLayerGroups(BuildState state) {
   return groups;
 }
 
+String? _classForGroup(String groupName) {
+  if (groupName.startsWith('Feature:')) {
+    return 'feature';
+  }
+  if (groupName.startsWith('Core')) return 'core';
+  if (groupName.startsWith('Common')) return 'common';
+  if (groupName.startsWith('UI')) return 'ui';
+  if (groupName.startsWith('Data')) return 'data';
+  if (groupName.startsWith('Domain')) return 'domain';
+  return null;
+}
+
 String? _extractFeatureSegment(String path) {
-  final normalized = path.replaceFirst(RegExp('^\\./'), '');
+  final normalized = path.replaceFirst(RegExp(r'^\./'), '');
   final segments = normalized.split('/').where((segment) => segment.isNotEmpty).toList();
   if (segments.isEmpty || segments.first != 'feature') {
     return null;
@@ -526,7 +550,7 @@ void _applyModuleStyling(
   final className = classifyModule(module);
   final id = _nodeId(module);
   if (className != null) {
-    buffer.writeln('$indent$id:::${className}');
+    buffer.writeln('$indent$id:::$className');
     tracker.markClass(className);
   }
   if (modulesWithUnused.contains(module)) {

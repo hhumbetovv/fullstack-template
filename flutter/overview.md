@@ -15,7 +15,7 @@
 - [Foundation](build_info/foundation.md) — Highlights how shared modules feed feature delivery.
 - [Features](build_info/features.md) — Focuses purely on feature-layer dependencies.
 - [Waves](build_info/waves.md) — Visualizes build waves from top to bottom.
-- [Module Groups](build_info/module_groups.md) — Clusters modules by architectural layer.
+- [Layers](build_info/layers.md) — Clusters modules by architectural tier and feature area.
 
 ## Build Waves
 
