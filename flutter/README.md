@@ -34,7 +34,8 @@ Welcome to the Flutter workspace. This README points you to the most important m
 
 Automation lives in the Dart CLI under `scripts/` (see scripts/README.md). Common commands:
 
-- `fvms gen-build` (alias for `fvm dart run scripts gen-build`) – run `build_runner` across modules (filter modules with trailing args).
+- `fvms gen-build` (alias for `fvm dart run scripts gen-build`) – run `build_runner` across modules. Pass explicit module names or a `<feature>_feature` alias (e.g. `auth_feature`) to auto-expand into `data`, `domain`, `presentation`, `data_shared`, and `presentation_shared` packages for that feature.
+- `fvms gen-watch` (alias for `fvm dart run scripts gen-watch`) – launch `build_runner watch` for all or filtered modules. Supports the same `<feature>_feature` shortcuts and can run `smart-build` first via `--pre-build`.
 - `fvms smart-build` – dependency-aware incremental builds.
 - `fvms build` – produce Android/iOS artifacts; use `--flavor`, `--debug`, and `--release` to narrow the matrix.
 - `fvms module-graph` – refresh `overview.md` with dependency stats.
