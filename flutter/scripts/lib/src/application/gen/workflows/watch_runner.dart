@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/domain/models/module_descriptor.dart';
 import 'package:scripts/src/domain/ports/build_runner_port.dart';
+import 'package:scripts/src/utils/signal_utils.dart';
 
 class WatchRunnerWorkflow {
   WatchRunnerWorkflow(this._buildRunner);
@@ -44,16 +45,20 @@ class WatchRunnerWorkflow {
       unawaited(_buildRunner.cancelProcesses(processes));
     }
 
-    final subscriptions = <StreamSubscription<ProcessSignal>>[
-      ProcessSignal.sigint.watch().listen((_) {
+    final subscriptions = <StreamSubscription<ProcessSignal>>[];
+
+    void registerSignal(ProcessSignal signal) {
+      final sub = listenForSignal(signal, (_) {
         Console.warning('Stopping watchers...');
         cleanup();
-      }),
-      ProcessSignal.sigterm.watch().listen((_) {
-        Console.warning('Stopping watchers...');
-        cleanup();
-      }),
-    ];
+      });
+      if (sub != null) {
+        subscriptions.add(sub);
+      }
+    }
+
+    registerSignal(ProcessSignal.sigint);
+    registerSignal(ProcessSignal.sigterm);
 
     await Future.wait(completers.map((c) => c.future));
 

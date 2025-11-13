@@ -13,6 +13,7 @@ import 'package:scripts/src/domain/models/smart_build_options.dart';
 import 'package:scripts/src/domain/ports/module_graph_port.dart';
 import 'package:scripts/src/services/build_execution_service.dart';
 import 'package:scripts/src/services/environment_service.dart';
+import 'package:scripts/src/utils/signal_utils.dart';
 
 class SmartBuildExecutor {
   SmartBuildExecutor({
@@ -60,17 +61,21 @@ class SmartBuildExecutor {
 
       await _environmentService.validate();
 
-      subscriptions
-        ..add(
-          ProcessSignal.sigint.watch().listen(
-            (_) => _environmentService.cleanup(state),
-          ),
-        )
-        ..add(
-          ProcessSignal.sigterm.watch().listen(
-            (_) => _environmentService.cleanup(state),
-          ),
-        );
+      final sigintSub = listenForSignal(
+        ProcessSignal.sigint,
+        (_) => _environmentService.cleanup(state),
+      );
+      if (sigintSub != null) {
+        subscriptions.add(sigintSub);
+      }
+
+      final sigtermSub = listenForSignal(
+        ProcessSignal.sigterm,
+        (_) => _environmentService.cleanup(state),
+      );
+      if (sigtermSub != null) {
+        subscriptions.add(sigtermSub);
+      }
 
       await _workspaceStateLoader.load(state);
 

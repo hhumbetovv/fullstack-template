@@ -98,8 +98,7 @@ class EffectCache {
 
 String _methodSignature(CachedEffectMethod method) {
   final normalizedName = method.name.replaceAll('_', '');
-  final buffer = StringBuffer(normalizedName);
-  buffer.write('(');
+  final buffer = StringBuffer(normalizedName)..write('(');
   final params = method.params.where((param) => param.type != 'BuildContext');
   for (final param in params) {
     buffer
