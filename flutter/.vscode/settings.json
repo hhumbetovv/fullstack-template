@@ -12,8 +12,8 @@
     "**/*.g.dart": true,
     "**/*.gr.dart": true,
     "**/*.config.dart": true,
-    "**/build/": false,
     "**/*.module.dart": true,
+    "**/build/": false,
     "**/.dart_tool": true
   },
   "files.associations": {
@@ -29,7 +29,7 @@
   "dart.flutterHotReloadOnSave": "allIfDirty",
   "dart.hotReloadOnSave": "allIfDirty",
   "editor.formatOnSave": true,
-  "editor.tabSize": 4,
+  "editor.tabSize": 2,
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
     "*.dart": "${capture}.freezed.dart, ${capture}.g.dart, ${capture}.gr.dart, ${capture}.config.dart",
@@ -39,5 +39,6 @@
   },
   "git.ignoreLimitWarning": true,
   "mobileEmulator.androidSDKPath": "/Users/humbthumbtov/Library/Android/sdk",
-  "mobileEmulator.xcodeDevPath": "/Applications/Xcode.app/Contents/Developer"
+  "mobileEmulator.xcodeDevPath": "/Applications/Xcode.app/Contents/Developer",
+  "svg.preview.background": "black"
 }
