@@ -11,7 +11,7 @@ fi
 set +e
 
 warn() {
-  printf 'Warning: %s\n' "$1"
+  printf 'Warning: %s\n' "$1" >&2
 }
 
 run_step() {
@@ -27,18 +27,28 @@ get_flutter_version() {
     return 0
   fi
 
-  if ! command -v jq >/dev/null 2>&1; then
-    warn "jq is not installed; skipping fvm global update."
-    return 1
+  if command -v jq >/dev/null 2>&1; then
+    local version
+    version="$(jq -r '.flutter // .version // empty' .fvmrc 2>/dev/null)"
+    if [ -n "$version" ] && [ "$version" != "null" ]; then
+      printf '%s' "$version"
+      return 0
+    fi
   fi
 
-  local version="$(jq -r '.flutter // empty' .fvmrc 2>/dev/null)"
+  local version=""
+  version=$(sed -n 's/.*"flutter"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' .fvmrc | head -n1)
   if [ -z "$version" ]; then
-    warn "Unable to parse Flutter version from .fvmrc; skipping fvm global update."
-    return 1
+    version=$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' .fvmrc | head -n1)
   fi
 
-  printf '%s' "$version"
+  if [ -n "$version" ]; then
+    printf '%s' "$version"
+    return 0
+  fi
+
+  warn "Unable to parse Flutter version from .fvmrc without jq; continuing without global update."
+  return 1
 }
 
 ensure_fvm_bin_on_path() {
@@ -67,13 +77,67 @@ ensure_fvm_bin_on_path() {
   esac
 }
 
+is_windows() {
+  case "$(uname -s | tr '[:upper:]' '[:lower:]')" in
+    *mingw*|*msys*|*cygwin*) return 0 ;;
+  esac
+  if [ "${OS:-}" = "Windows_NT" ]; then
+    return 0
+  fi
+  return 1
+}
+
+try_fvm_use_with_elevation() {
+  fvm use
+  local status=$?
+  if [ $status -eq 0 ]; then
+    return 0
+  fi
+  if is_windows; then
+    local fvm_bat=""
+    if [ -n "$LOCALAPPDATA" ] && [ -f "$LOCALAPPDATA/Pub/Cache/bin/fvm.bat" ]; then
+      fvm_bat="$LOCALAPPDATA/Pub/Cache/bin/fvm.bat"
+    elif [ -n "$APPDATA" ] && [ -f "$APPDATA/Pub/Cache/bin/fvm.bat" ]; then
+      fvm_bat="$APPDATA/Pub/Cache/bin/fvm.bat"
+    fi
+
+    if [ -n "$fvm_bat" ]; then
+      powershell.exe -NoProfile -Command "Start-Process -Verb RunAs -FilePath '$fvm_bat' -ArgumentList 'use' -Wait"
+      return $?
+    else
+      warn "Unable to locate fvm.bat for elevation; ensure FVM is installed or adjust PATH."
+    fi
+  fi
+  return $status
+}
+
+ensure_pub_cache_bin_on_path() {
+  local candidates=()
+  if [ -n "$PUB_CACHE" ]; then candidates+=("$PUB_CACHE/bin"); fi
+  if [ -n "$HOME" ]; then candidates+=("$HOME/.pub-cache/bin"); fi
+  if [ -n "$LOCALAPPDATA" ]; then candidates+=("$LOCALAPPDATA/Pub/Cache/bin"); fi
+  if [ -n "$APPDATA" ]; then candidates+=("$APPDATA/Pub/Cache/bin"); fi
+
+  for dir in "${candidates[@]}"; do
+    if [ -d "$dir" ]; then
+      case ":$PATH:" in
+        *":$dir:"*) ;;
+        *) export PATH="$dir:$PATH" ;;
+      esac
+    fi
+  done
+}
+
 run_step bash scripts/bash/setup.sh
-run_step fvm use
+ensure_pub_cache_bin_on_path
+try_fvm_use_with_elevation || warn "'fvm use' did not complete; continuing."
 
 flutter_version="$(get_flutter_version)"
 if [ -n "$flutter_version" ] && [ "$flutter_version" != "null" ]; then
   run_step fvm global "$flutter_version"
-  ensure_fvm_bin_on_path "$flutter_version"
+  if ! is_windows; then
+    ensure_fvm_bin_on_path "$flutter_version"
+  fi
 else
   warn "Unable to determine Flutter version from .fvmrc; skipping fvm global update."
 fi
@@ -106,11 +170,13 @@ fi
 run_step fvm flutter pub get
 
 run_step fvm dart pub global activate flutterfire_cli
+ensure_pub_cache_bin_on_path
 if ! command -v flutterfire >/dev/null 2>&1; then
   warn "flutterfire_cli (flutterfire) command not available; ensure pub-cache/bin is in PATH."
 fi
 
 run_step fvm dart pub global activate icon_font_generator
+ensure_pub_cache_bin_on_path
 if ! command -v icon_font_generator >/dev/null 2>&1; then
   warn "icon_font_generator command not available; ensure pub-cache/bin is in PATH."
 fi
