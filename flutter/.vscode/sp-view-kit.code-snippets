@@ -31,7 +31,7 @@
       "",
       "@viewModel",
       "final class ${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}ViewModel extends _${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}ViewModel {",
-      "const ${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}ViewModel();",
+      "\t${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}ViewModel();",
       "",
       "\t@override",
       "\t${4:${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}State} get initialState => ${5:const ${3:${TM_DIRECTORY/(.*[\\/\\\\])?([^\\/\\\\]+)/${2:/pascalcase}/}}State()};",
