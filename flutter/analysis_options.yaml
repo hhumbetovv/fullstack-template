@@ -23,6 +23,7 @@ analyzer:
       lib/extended_wrap/**.dart,
       lib/generated_plugin_registrant.dart,
       lib/**/export.dart,
+      templates/**,
     ]
 
 linter:
