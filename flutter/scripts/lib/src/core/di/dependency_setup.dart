@@ -3,6 +3,7 @@ import 'package:scripts/src/application/build/build_executor.dart';
 import 'package:scripts/src/application/gen/gen_executor.dart';
 import 'package:scripts/src/application/links/links_executor.dart';
 import 'package:scripts/src/application/locale/locale_executor.dart';
+import 'package:scripts/src/application/module_create/module_create_executor.dart';
 import 'package:scripts/src/application/module_graph/module_graph_executor.dart';
 import 'package:scripts/src/application/module_graph/module_graph_service.dart';
 import 'package:scripts/src/application/module_graph/workflows/build_plan_builder.dart';
@@ -69,6 +70,7 @@ void configureDependencies() {
     ..registerLazySingleton<IosBuildService>(IosBuildService.new)
     ..registerLazySingleton<AndroidKeystoreManager>(AndroidKeystoreManager.new)
     ..registerLazySingleton<LinkCreator>(LinkCreator.new)
+    ..registerLazySingleton<ModuleCreateExecutor>(ModuleCreateExecutor.new)
     ..registerLazySingleton<LocaleExecutor>(LocaleExecutor.new)
     ..registerLazySingleton<BuildExecutor>(
       () => BuildExecutor(
@@ -98,7 +100,8 @@ void configureDependencies() {
       () => GenExecutor(
         moduleDiscovery: _locator.get<ModuleDiscoveryPort>(),
         buildRunner: _locator.get<BuildRunnerPort>(),
-        smartBuildRunner: (options) => _locator.get<SmartBuildExecutor>().run(options),
+        smartBuildRunner: (options) =>
+            _locator.get<SmartBuildExecutor>().run(options),
       ),
     );
 }

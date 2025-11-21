@@ -49,6 +49,7 @@ scripts/lib/src/
 
 | Command                                                          | Description                                                                                             |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `create-module <feature-path> <module-type>`                     | Scaffold a module under `feature/` from `scripts/templates/modules/<module-type>`, append the module path to the workspace list, and regenerate the module graph. |
 | `build`                                                          | Execute the mobile build matrix (Android/iOS × mode × flavour). Use `--flavor`, `--debug`, or `--release` to filter. Artifacts land in `.misc/artifacts/`. |
 | `gen-build [modules…]`                                           | Run `build_runner build -d` for all build_runner packages or a filtered set. `foo_feature` expands to `foo_data`, `foo_domain`, `foo_presentation`, `foo_data_shared`, and `foo_presentation_shared`. |
 | `gen-clean [--workers <n>]`                                      | Clean generated files and run `build_runner clean` across modules.                                      |
@@ -127,3 +128,18 @@ class ExampleCommand extends ScriptsCommand {
 - Build artifacts are also staged under `.misc/artifacts/` for grab-and-go archives
 
 Happy automating!
+
+### Module templates
+
+Module scaffolding pulls files from `scripts/templates/modules/<module-type>/`.
+Each file is copied into the target module directory and placeholders such as
+`{{module_name}}`, `{{feature_name}}`, and `{{module_type}}` are replaced. Add
+any additional files (e.g. `lib/` skeletons) to those template folders and they
+will be included automatically during `fvms create-module`.
+
+Place a file named `.template_dir` inside any template directory you want to
+keep even when it is otherwise empty (e.g. `lib/.template_dir`). The scaffolder
+creates the folder but ignores the marker file, keeping generated modules clean.
+Each successful run also appends the new module path (relative to repo root) to
+the root `pubspec.yaml` `workspace` list and triggers `module-graph` so the
+documentation stays up to date.

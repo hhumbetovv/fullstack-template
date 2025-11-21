@@ -1,0 +1,41 @@
+name: {{module_name}}
+
+environment:
+  sdk: 3.9.0
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  #! Modules
+  core_domain: any
+  core_data: any
+  {{feature_name}}_domain: any
+
+  #! Serialization
+  json_annotation: ^4.9.0
+
+  #! Network
+  dio: ^5.8.0+1
+  retrofit: ^4.7.2
+
+  #! Dependency Injection
+  injectable: ^2.5.0
+  get_it: ^8.0.3
+
+dev_dependencies:
+  #! Generator
+  build_runner: ^2.4.15
+
+  #? Modules
+  gen_exporter: any
+
+  #? Serialization
+  json_serializable: ^6.9.4
+
+  #? Network
+  retrofit_generator: ^10.0.5
+
+  #? Dependency Injection
+  injectable_generator: ^2.7.0

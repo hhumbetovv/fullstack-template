@@ -1,0 +1,34 @@
+targets:
+  $default:
+    auto_apply_builders: false
+    builders:
+      #! Project Generators
+      gen_data|data:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/usecase/**"
+            - "lib/src/entity/**"
+      gen_exporter|exporter:
+        enabled: true
+        options:
+          folders:
+            - entity
+            - repository
+            - usecase
+      #! Dependency Injection
+      injectable_generator|injectable_builder:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/**"
+      injectable_generator|injectable_config_builder:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/init.dart"
+
+global_options:
+  gen_exporter|exporter:
+    runs_before:
+      - injectable_generator|injectable_builder

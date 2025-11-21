@@ -15,11 +15,18 @@ class WorkspaceDiscoveryService implements ModuleDiscoveryPort {
   }) async {
     final modules = <ModuleDescriptor>[];
     final walker = DirectoryWalker(root: Directory.current);
+    final templatesRoot = p.normalize(
+      p.join(Directory.current.path, 'scripts', 'templates'),
+    );
+    final hasTemplates = Directory(templatesRoot).existsSync();
     final seen = <String>{};
 
     for (final directory in walker.traverse()) {
       final normalizedPath = p.normalize(directory.absolute.path);
       if (!seen.add(normalizedPath)) {
+        continue;
+      }
+      if (hasTemplates && _isUnderTemplate(normalizedPath, templatesRoot)) {
         continue;
       }
       final pubspec = File(p.join(directory.path, 'pubspec.yaml'));
@@ -89,5 +96,10 @@ class WorkspaceDiscoveryService implements ModuleDiscoveryPort {
     } on Object {
       return false;
     }
+  }
+
+  bool _isUnderTemplate(String path, String templatesRoot) {
+    return path == templatesRoot ||
+        path.startsWith('$templatesRoot${Platform.pathSeparator}');
   }
 }
