@@ -127,8 +127,7 @@ class ModuleCreateExecutor {
       if (entity is Directory) {
         final targetDir = Directory(
           p.join(destination.path, p.basename(entity.path)),
-        );
-        targetDir.createSync(recursive: true);
+        )..createSync(recursive: true);
         _copyTemplateDirectory(
           source: entity,
           destination: targetDir,
@@ -183,8 +182,7 @@ class ModuleCreateExecutor {
       return;
     }
     final relativeInclude = p.relative(rootAnalysis.path, from: moduleDir.path).replaceAll(r'\', '/');
-    final analysisFile = File(p.join(moduleDir.path, 'analysis_options.yaml'));
-    analysisFile.writeAsStringSync('include: $relativeInclude\n');
+    File(p.join(moduleDir.path, 'analysis_options.yaml')).writeAsStringSync('include: $relativeInclude\n');
   }
 
   void _registerModuleInWorkspace(Directory moduleDir) {
