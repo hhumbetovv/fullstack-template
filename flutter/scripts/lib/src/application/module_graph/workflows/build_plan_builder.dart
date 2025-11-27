@@ -53,7 +53,16 @@ class BuildPlanBuilder {
       }
 
       if (waveModules.isEmpty && processed < total) {
-        Logger.error('Circular dependency detected or disconnected modules!');
+        final cycles = _findCircularDependencies(state.moduleDependencies);
+        if (cycles.isNotEmpty) {
+          Logger.error('Circular dependencies detected:');
+          for (final cycle in cycles) {
+            final cyclePath = [...cycle, if (cycle.isNotEmpty) cycle.first];
+            Logger.error('   ${cyclePath.join(' -> ')}');
+          }
+        } else {
+          Logger.error('Circular dependency detected or disconnected modules!');
+        }
         throw Exception('Circular dependency detected');
       }
 
@@ -124,4 +133,70 @@ class BuildPlanBuilder {
 
     return BuildPlan(waves: waves, order: order);
   }
+}
+
+List<List<String>> _findCircularDependencies(
+  Map<String, Set<String>> dependencies,
+) {
+  final visited = <String>{};
+  final onStack = <String>{};
+  final stack = <String>[];
+  final cycles = <List<String>>[];
+  final seen = <String>{};
+
+  void dfs(String node) {
+    visited.add(node);
+    onStack.add(node);
+    stack.add(node);
+
+    for (final neighbor in dependencies[node] ?? const <String>{}) {
+      if (!visited.contains(neighbor)) {
+        dfs(neighbor);
+      } else if (onStack.contains(neighbor)) {
+        final startIndex = stack.indexOf(neighbor);
+        if (startIndex != -1) {
+          final cycle = stack.sublist(startIndex);
+          final normalized = _normalizeCycle(cycle);
+          if (normalized.isNotEmpty && seen.add(normalized)) {
+            cycles.add(List<String>.from(cycle));
+          }
+        }
+      }
+    }
+
+    stack.removeLast();
+    onStack.remove(node);
+  }
+
+  final nodes = <String>{...dependencies.keys};
+  for (final deps in dependencies.values) {
+    nodes.addAll(deps);
+  }
+
+  for (final node in nodes) {
+    if (!visited.contains(node)) {
+      dfs(node);
+    }
+  }
+
+  return cycles;
+}
+
+String _normalizeCycle(List<String> cycle) {
+  if (cycle.isEmpty) {
+    return '';
+  }
+
+  final rotations = cycle.length;
+  var best = cycle.join('->');
+
+  for (var i = 1; i < rotations; i++) {
+    final rotated = <String>[...cycle.sublist(i), ...cycle.sublist(0, i)];
+    final candidate = rotated.join('->');
+    if (candidate.compareTo(best) < 0) {
+      best = candidate;
+    }
+  }
+
+  return best;
 }

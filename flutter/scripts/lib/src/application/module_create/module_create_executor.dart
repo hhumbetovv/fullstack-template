@@ -5,10 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/logging/console.dart';
 
 class ModuleCreateExecutor {
-  ModuleCreateExecutor({
-    String? workspaceRoot,
-  }) : workspaceRoot = workspaceRoot ?? Directory.current.path;
-
+  ModuleCreateExecutor({String? workspaceRoot}) : workspaceRoot = workspaceRoot ?? Directory.current.path;
   static const _emptyDirectoryMarkerName = '.template_dir';
 
   final String workspaceRoot;
