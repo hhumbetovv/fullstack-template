@@ -1,4 +1,4 @@
-name: {{module_name}}
+name: { { module_name } }
 
 environment:
   sdk: 3.9.0

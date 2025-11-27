@@ -28,6 +28,10 @@ class BuildState {
       workspace.allModuleDependencies;
   Map<String, Set<String>> get moduleUnusedDependencies =>
       workspace.moduleUnusedDependencies;
+  Map<String, Set<String>> get modulePackageDependencies =>
+      workspace.modulePackageDependencies;
+  Map<String, Set<String>> get moduleUnusedPackages =>
+      workspace.moduleUnusedPackages;
 
   WorkspaceSnapshot get workspaceSnapshot =>
       _workspaceSnapshot ??= WorkspaceSnapshot.fromGraph(workspace);

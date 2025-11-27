@@ -11,6 +11,8 @@ class DependencyAnalyzer {
     state.moduleDependencies.clear();
     state.allModuleDependencies.clear();
     state.moduleUnusedDependencies.clear();
+    state.modulePackageDependencies.clear();
+    state.moduleUnusedPackages.clear();
 
     if (state.allModulePaths.isEmpty) {
       Logger.warning('No modules discovered for dependency analysis');
@@ -22,15 +24,20 @@ class DependencyAnalyzer {
       final modulePath = entry.value;
       final pubspecFile = '$modulePath/pubspec.yaml';
 
-      final fullDependencies = await _parseDependencies(
+      final dependencySets = await _parseDependencies(
         pubspecFile,
         moduleName,
         state.allModulePaths,
       );
+      final fullDependencies = dependencySets.moduleDependencies;
       state.allModuleDependencies[moduleName] = fullDependencies;
+      state.modulePackageDependencies[moduleName] =
+          dependencySets.packageDependencies;
 
       if (state.modulePaths.containsKey(moduleName)) {
-        final buildDependencies = fullDependencies.where(state.modulePaths.containsKey).toSet();
+        final buildDependencies = fullDependencies
+            .where(state.modulePaths.containsKey)
+            .toSet();
         state.moduleDependencies[moduleName] = buildDependencies;
 
         if (buildDependencies.isNotEmpty) {
@@ -78,12 +85,15 @@ class DependencyAnalyzer {
     Logger.info('🧹 Analyzing unused module dependencies...');
 
     state.moduleUnusedDependencies.clear();
+    state.moduleUnusedPackages.clear();
 
     for (final entry in state.allModuleDependencies.entries) {
       final moduleName = entry.key;
       final declaredDeps = entry.value;
+      final declaredPackages =
+          state.modulePackageDependencies[moduleName] ?? <String>{};
 
-      if (declaredDeps.isEmpty) {
+      if (declaredDeps.isEmpty && declaredPackages.isEmpty) {
         continue;
       }
 
@@ -92,33 +102,48 @@ class DependencyAnalyzer {
         moduleName,
       );
       final unused = declaredDeps.difference(importedPackages);
+      final unusedPackages = declaredPackages.difference(importedPackages);
 
       if (unused.isNotEmpty) {
         state.moduleUnusedDependencies[moduleName] = unused;
-        Logger.info('   🚫 $moduleName unused: ${unused.join(', ')}');
+        Logger.info('   🚫 $moduleName unused modules: ${unused.join(', ')}');
       } else if (state.verbose) {
         Logger.verbose('   ✅ $moduleName uses all declared modules');
+      }
+
+      if (unusedPackages.isNotEmpty) {
+        state.moduleUnusedPackages[moduleName] = unusedPackages;
+        Logger.info(
+          '   📦 $moduleName unused packages: ${unusedPackages.join(', ')}',
+        );
+      } else if (state.verbose && declaredPackages.isNotEmpty) {
+        Logger.verbose('   📦 $moduleName uses all declared packages');
       }
     }
 
     if (state.moduleUnusedDependencies.isEmpty) {
       Logger.success('No unused module dependencies detected.');
     }
+    if (state.moduleUnusedPackages.isEmpty) {
+      Logger.success('No unused external packages detected.');
+    }
   }
 
-  Future<Set<String>> _parseDependencies(
+  Future<_DependencySets> _parseDependencies(
     String pubspecPath,
     String moduleName,
     Map<String, String> knownModules,
   ) async {
     final dependencies = <String>{};
+    final packages = <String>{};
 
     try {
       final pubspec = await readPubspec(pubspecPath);
-      if (pubspec == null) return dependencies;
+      if (pubspec == null) {
+        return const _DependencySets();
+      }
 
       final deps = pubspec['dependencies'] as Map<String, dynamic>?;
-      final devDeps = pubspec['dev_dependencies'] as Map<String, dynamic>?;
 
       void processDeps(Map<String, dynamic>? depsMap) {
         if (depsMap == null) return;
@@ -126,26 +151,30 @@ class DependencyAnalyzer {
         depsMap.forEach((key, value) {
           final depName = key;
 
-          if (!knownModules.containsKey(depName)) {
+          if (knownModules.containsKey(depName)) {
+            if (shouldIgnoreModule(depName)) {
+              return;
+            }
+
+            dependencies.add(depName);
+            Logger.debug('   Found module dependency: $moduleName → $depName');
             return;
           }
 
-          if (shouldIgnoreModule(depName)) {
-            return;
-          }
-
-          dependencies.add(depName);
-          Logger.debug('   Found dependency: $moduleName → $depName');
+          packages.add(depName);
+          Logger.debug('   Found external dependency: $moduleName → $depName');
         });
       }
 
       processDeps(deps);
-      processDeps(devDeps);
     } on Object catch (e) {
       Logger.error('Error parsing dependencies from $pubspecPath: $e');
     }
 
-    return dependencies;
+    return _DependencySets(
+      moduleDependencies: dependencies,
+      packageDependencies: packages,
+    );
   }
 
   Future<Set<String>> _collectImportedPackages(
@@ -198,4 +227,15 @@ class DependencyAnalyzer {
 
     return collected;
   }
+}
+
+class _DependencySets {
+  const _DependencySets({
+    Set<String>? moduleDependencies,
+    Set<String>? packageDependencies,
+  }) : moduleDependencies = moduleDependencies ?? const <String>{},
+       packageDependencies = packageDependencies ?? const <String>{};
+
+  final Set<String> moduleDependencies;
+  final Set<String> packageDependencies;
 }

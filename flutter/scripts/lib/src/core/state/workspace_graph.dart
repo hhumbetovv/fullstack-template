@@ -9,6 +9,9 @@ class WorkspaceGraph {
       <String, Set<String>>{};
   final Map<String, Set<String>> moduleUnusedDependencies =
       <String, Set<String>>{};
+  final Map<String, Set<String>> modulePackageDependencies =
+      <String, Set<String>>{};
+  final Map<String, Set<String>> moduleUnusedPackages = <String, Set<String>>{};
 
   void reset() {
     modulePaths.clear();
@@ -16,5 +19,7 @@ class WorkspaceGraph {
     moduleDependencies.clear();
     allModuleDependencies.clear();
     moduleUnusedDependencies.clear();
+    modulePackageDependencies.clear();
+    moduleUnusedPackages.clear();
   }
 }
