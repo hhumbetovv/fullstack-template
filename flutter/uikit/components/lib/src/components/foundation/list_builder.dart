@@ -31,9 +31,11 @@ final class ListBuilder<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (separator != null) {
-      return GlowingOverscrollIndicator(
-        axisDirection: AxisDirection.down,
-        color: Colors.red,
+      return NotificationListener<OverscrollIndicatorNotification>(
+        onNotification: (OverscrollIndicatorNotification overscroll) {
+          overscroll.disallowIndicator();
+          return true;
+        },
         child: ListView.separated(
           clipBehavior: clipBehavior,
           controller: controller,
@@ -52,18 +54,24 @@ final class ListBuilder<T> extends StatelessWidget {
         ),
       );
     }
-    return ListView.builder(
-      clipBehavior: clipBehavior,
-      padding: padding,
-      controller: controller,
-      physics: physics,
-      reverse: reverse,
-      shrinkWrap: shrinkWrap,
-      scrollDirection: scrollDirection,
-      itemBuilder: (context, index) {
-        return itemBuilder(items[index], index);
+    return NotificationListener<OverscrollIndicatorNotification>(
+      onNotification: (OverscrollIndicatorNotification overscroll) {
+        overscroll.disallowIndicator();
+        return true;
       },
-      itemCount: items.length,
+      child: ListView.builder(
+        clipBehavior: clipBehavior,
+        padding: padding,
+        controller: controller,
+        physics: physics,
+        reverse: reverse,
+        shrinkWrap: shrinkWrap,
+        scrollDirection: scrollDirection,
+        itemBuilder: (context, index) {
+          return itemBuilder(items[index], index);
+        },
+        itemCount: items.length,
+      ),
     );
   }
 }
