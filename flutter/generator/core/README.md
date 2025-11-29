@@ -74,4 +74,4 @@ Remember to update unit tests or add new ones to cover both resolver validation 
 - Use `allowSyntaxErrors: true` sparingly—only when a generator must run even if the target library is mid-edit.
 - If formatting fails, `BaseBuilder` logs the exception and writes the unformatted output so you can still inspect the generated code.
 
-With these building blocks understood, maintaining or creating new builders becomes a matter of implementing focused resolvers and factories while leaning on the shared infrastructure for caching and code emission (see generator/builder/README.md for concrete implementations).
+With these building blocks understood, maintaining or creating new builders becomes a matter of implementing focused resolvers and factories while leaning on the shared infrastructure for caching and code emission (see generator/plugins/README.md for concrete implementations).

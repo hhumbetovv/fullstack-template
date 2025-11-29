@@ -16,12 +16,12 @@ Think of `processor` as the shared language between handwritten source code and 
 
 Every builder under `generator/` depends on the contracts defined here:
 
-- `gen_data` (see `generator/builder/data`) looks for classes annotated with `@data`. It serializes them to `DataConfig`/`FieldConfig` and generates value types, copy/apply helpers, and equality overrides that lean on `isEquals` and `LoadableState`.
-- `gen_view_kit` (`generator/builder/view_kit`) reacts to `@view`, `@viewModel`, `@provider`, `@intent`, and `@effect`. It reads `ViewConfig`, `ViewModelConfig`, and `EffectConfig` instances to emit widgets, sealed intent/effect classes, and base view-model glue.
-- `gen_palette` (`generator/builder/palette`) targets `@palette` and `@rootPalette`, reusing `DataConfig` while switching the factory behaviour to produce lerp/copyWith helpers and `ThemeExtension` implementations.
+- `gen_data` (see `generator/plugins/data`) looks for classes annotated with `@data`. It serializes them to `DataConfig`/`FieldConfig` and generates value types, copy/apply helpers, and equality overrides that lean on `isEquals` and `LoadableState`.
+- `gen_view_kit` (`generator/plugins/view_kit`) reacts to `@view`, `@viewModel`, `@provider`, `@intent`, and `@effect`. It reads `ViewConfig`, `ViewModelConfig`, and `EffectConfig` instances to emit widgets, sealed intent/effect classes, and base view-model glue.
+- `gen_palette` (`generator/plugins/palette`) targets `@palette` and `@rootPalette`, reusing `DataConfig` while switching the factory behaviour to produce lerp/copyWith helpers and `ThemeExtension` implementations.
 - The exporter and core generator packages reference the configs to wire caching, validation, and shared behaviors.
 
-Because every generator depends on `processor/public.dart`, any change to annotations or config schemas requires coordinated updates across these builders (see generator/builder/README.md).
+Because every generator depends on `processor/public.dart`, any change to annotations or config schemas requires coordinated updates across these builders (see generator/plugins/README.md).
 
 ## When you add a new annotation
 
@@ -73,7 +73,7 @@ As a new developer, you can think of the workflow like this:
 - **Keep annotations minimalistic.** They should not hold heavy dependencies—just enough data for the generators to decide what to emit.
 - **Version control config changes.** Because generators serialize configs, changing field names or types has ripple effects. Unit-test the generator changes and clear `.dart_tool/build/cache` when needed.
 - **Avoid runtime logic here.** Aside from helpers like `LoadableState` and `isEquals`, most code is declarative. Business logic belongs in domain or presentation layers.
-- **Coordinate with generator maintainers.** Any change in `processor` typically requires corresponding updates in `generator/builder/*` packages and possibly downstream modules that consume generated code.
+- **Coordinate with generator maintainers.** Any change in `processor` typically requires corresponding updates in `generator/plugins/*` packages and possibly downstream modules that consume generated code.
 
 ## Getting started checklist
 

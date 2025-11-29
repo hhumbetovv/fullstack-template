@@ -10,11 +10,11 @@ workspace:
   - processor
   #? Generator
   - generator/core
-  - generator/builder/assets
-  - generator/builder/data
-  - generator/builder/exporter
-  - generator/builder/palette
-  - generator/builder/view_kit
+  - generator/plugins/assets
+  - generator/plugins/data
+  - generator/plugins/exporter
+  - generator/plugins/palette
+  - generator/plugins/view_kit
   #? Common
   - common/shared
   - common/presentation

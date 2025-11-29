@@ -53,5 +53,15 @@
 - **demo_data** → core_data
 - **demo_domain** → core_domain
 
+## Unused Packages
+
+- **console_presentation** → get_it, injectable
+- **core_data** → flutter
+- **core_domain** → flutter
+- **core_presentation** → auto_route
+- **demo_data** → get_it
+- **demo_domain** → get_it
+- **demo_presentation** → get_it
+
 _Detailed graphs are available under the `build_info/` directory._
 
