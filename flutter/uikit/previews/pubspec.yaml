@@ -1,0 +1,13 @@
+name: ui_previews
+
+environment:
+  sdk: ^3.10.1
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  #! Modules
+  ui_foundation: any
+  ui_components: any

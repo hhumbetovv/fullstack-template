@@ -27,6 +27,8 @@ workspace:
   #? UiKit
   - uikit/foundation
   - uikit/components
+  - uikit/previews
+  #? Console
   - feature/global/feature/console/presentation
   #? Demo
   - feature/demo/domain
