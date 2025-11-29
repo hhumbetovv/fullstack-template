@@ -10,21 +10,31 @@ class DataExtensionsBuilder {
   final void Function(Spec spec) writeSpec;
 
   void writeGetters(DataConfig config) {
-    final ref = config.isFactory ? '_self' : '(this as ${config.name})';
+    final genericsSuffix = _genericsSuffix(config.generics);
+    final ref = config.isFactory
+        ? '_self'
+        : '(this as ${config.name}$genericsSuffix)';
     final getterExtension = Extension((extDef) {
       extDef
         ..name = '${!config.isFactory ? '_' : ''}${config.name}Getter'
-        ..on = refer('${!config.isFactory ? '_' : ''}${config.name}')
+        ..types.addAll(_typeParameters(config))
+        ..on = _typeWithGenerics(
+          '${!config.isFactory ? '_' : ''}${config.name}',
+          config.generics,
+        )
         ..methods.addAll(
           [
             if (config.isFactory)
               Method((methodDef) {
                 methodDef
-                  ..returns = refer('_${config.name}')
+                  ..returns = _typeWithGenerics(
+                    '_${config.name}',
+                    config.generics,
+                  )
                   ..type = MethodType.getter
                   ..name = '_self'
                   ..lambda = true
-                  ..body = Code('this as _${config.name}');
+                  ..body = Code('this as _${config.name}$genericsSuffix');
               }),
             ...config.fields.map((field) {
               return Method((methodDef) {
@@ -45,14 +55,17 @@ class DataExtensionsBuilder {
 
   void writeCopy(DataConfig config) {
     final ref = config.isFactory ? '_self' : 'this';
+    final genericsSuffix = _genericsSuffix(config.generics);
+    final className = '${config.isFactory ? '_' : ''}${config.name}';
     final copyExt = Extension((extDef) {
       extDef
         ..name = '${config.name}Copy'
-        ..on = refer(config.name)
+        ..types.addAll(_typeParameters(config))
+        ..on = _typeWithGenerics(config.name, config.generics)
         ..methods.add(
           Method((methodDef) {
             methodDef
-              ..returns = refer(config.name)
+              ..returns = _typeWithGenerics(config.name, config.generics)
               ..name = 'copy'
               ..optionalParameters.addAll(
                 config.fields.map((field) {
@@ -67,7 +80,7 @@ class DataExtensionsBuilder {
                 }),
               )
               ..body = Code(
-                'return ${config.isFactory ? '_' : ''}${config.name}('
+                'return $className$genericsSuffix('
                 '${config.fields.map((field) {
                   final name = field.name;
                   if (field.isNullable) {
@@ -88,12 +101,13 @@ class DataExtensionsBuilder {
     final applyExt = Extension((extDef) {
       extDef
         ..name = '${config.name}Apply'
-        ..on = refer(config.name)
+        ..types.addAll(_typeParameters(config))
+        ..on = _typeWithGenerics(config.name, config.generics)
         ..methods.addAll(
           config.fields.map((field) {
             return Method((methodDef) {
               methodDef
-                ..returns = refer(config.name)
+                ..returns = _typeWithGenerics(config.name, config.generics)
                 ..name = 'apply${field.name.capitalize()}'
                 ..requiredParameters.add(
                   Parameter((paramDef) {
@@ -113,4 +127,22 @@ class DataExtensionsBuilder {
 
     writeSpec(applyExt);
   }
+}
+
+List<Reference> _typeParameters(DataConfig config) {
+  return config.generics.map(refer).toList();
+}
+
+Reference _typeWithGenerics(String symbol, List<String> generics) {
+  if (generics.isEmpty) return refer(symbol);
+  return TypeReference((type) {
+    type
+      ..symbol = symbol
+      ..types.addAll(generics.map(refer));
+  });
+}
+
+String _genericsSuffix(List<String> generics) {
+  if (generics.isEmpty) return '';
+  return '<${generics.join(',')}>';
 }

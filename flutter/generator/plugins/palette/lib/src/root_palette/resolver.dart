@@ -41,6 +41,9 @@ class RootPaletteResolver extends BaseResolver<DataConfig, ClassElement2> {
     return DataConfig(
       name: element.displayName,
       isFactory: true,
+      generics: element.typeParameters2
+          .map((parameter) => parameter.displayName)
+          .toList(),
       fields: fields,
     );
   }

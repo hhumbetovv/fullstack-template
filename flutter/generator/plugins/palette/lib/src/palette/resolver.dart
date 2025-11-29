@@ -16,6 +16,9 @@ class PaletteResolver extends BaseResolver<DataConfig, ClassElement2> {
     return DataConfig(
       name: element.displayName,
       isFactory: constructor.isFactory,
+      generics: element.typeParameters2
+          .map((parameter) => parameter.displayName)
+          .toList(),
       fields: fieldParser.parseFields(constructor),
     );
   }

@@ -20,15 +20,17 @@ class DataClassBuilder {
     final isLoadableState = config.fields.any((element) {
       return element.name == 'isLoading';
     });
+    final typeParams = _typeParameters(config);
 
     final dataClass = Class((classDef) {
       classDef
         ..annotations.add(refer('immutable'))
+        ..types.addAll(typeParams)
         ..modifier = config.isFactory ? ClassModifier.base : null
         ..abstract = !config.isFactory
         ..name = '_${config.name}'
         ..implements.addAll([
-          if (config.isFactory) refer(config.name),
+          if (config.isFactory) _typeWithGenerics(config.name, config.generics),
           if (isLoadableState) refer('$LoadableState'),
           ...getAdditionalImplements(config),
         ])
@@ -37,7 +39,7 @@ class DataClassBuilder {
             Method((methodDef) {
               methodDef
                 ..annotations.add(refer('override'))
-                ..returns = refer(config.name)
+                ..returns = _typeWithGenerics(config.name, config.generics)
                 ..name = 'copyLoading'
                 ..requiredParameters.add(
                   Parameter((paramDef) {
@@ -113,7 +115,7 @@ class DataClassBuilder {
           }),
         )
         ..body = Code(
-          'return identical(this, other) || other is _${config.name} ${config.fields.map((field) {
+          'return identical(this, other) || other is _${config.name}${_genericsSuffix(config.generics)} ${config.fields.map((field) {
             return " && isEquals(other.${field.name}, ${field.name})";
           }).join(' ')};',
         );
@@ -163,4 +165,22 @@ class DataClassBuilder {
       }
     });
   }
+}
+
+List<Reference> _typeParameters(DataConfig config) {
+  return config.generics.map(refer).toList();
+}
+
+Reference _typeWithGenerics(String symbol, List<String> generics) {
+  if (generics.isEmpty) return refer(symbol);
+  return TypeReference((type) {
+    type
+      ..symbol = symbol
+      ..types.addAll(generics.map(refer));
+  });
+}
+
+String _genericsSuffix(List<String> generics) {
+  if (generics.isEmpty) return '';
+  return '<${generics.join(',')}>';
 }
