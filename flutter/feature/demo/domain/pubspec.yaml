@@ -1,7 +1,7 @@
 name: demo_domain
 
 environment:
-  sdk: 3.9.0
+  sdk: ^3.10.1
 resolution: workspace
 
 dependencies:
