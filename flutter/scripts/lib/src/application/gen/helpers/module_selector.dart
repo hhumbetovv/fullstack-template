@@ -11,8 +11,8 @@ class ModuleSelector {
     'data',
     'domain',
     'presentation',
-    'data_shared',
-    'presentation_shared',
+    'data_api',
+    'presentation_api',
   ];
 
   Future<List<ModuleDescriptor>> selectForBuild(

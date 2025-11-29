@@ -47,19 +47,19 @@ scripts/lib/src/
 
 ## Command summary
 
-| Command                                                          | Description                                                                                             |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `create-module <feature-path> <module-type>`                     | Scaffold a module under `feature/` from `scripts/templates/modules/<module-type>`, append the module path to the workspace list, and regenerate the module graph. |
-| `build`                                                          | Execute the mobile build matrix (Android/iOS × mode × flavour). Use `--flavor`, `--debug`, or `--release` to filter. Artifacts land in `.misc/artifacts/`. |
-| `gen-build [modules…]`                                           | Run `build_runner build -d` for all build_runner packages or a filtered set. `foo_feature` expands to `foo_data`, `foo_domain`, `foo_presentation`, `foo_data_shared`, and `foo_presentation_shared`. |
-| `gen-clean [--workers <n>]`                                      | Clean generated files and run `build_runner clean` across modules.                                      |
-| `gen-watch [modules…] [--pre-build]`                             | Launch `build_runner watch -d`, optionally running `smart-build` first. Accepts the same `<feature>_feature` shortcuts as `gen-build`. |
-| `smart-build [module?] [--dry-run] [--parallel <n>] [--verbose]` | Dependency-aware incremental build orchestration with mermaid output.                                   |
-| `module-graph [--parallel <n>] [--verbose]`                      | Generate dependency graphs/stats without executing builds.                                              |
-| `build-links`                                                    | Symlink all `build.yaml` files into `yaml/builds/`.                                                     |
-| `pubspec-links`                                                  | Symlink all `pubspec.yaml` files into `yaml/pubspecs/`.                                                 |
-| `yaml-links`                                                     | Run both linkers sequentially (clears previous output).                                                 |
-| `locale [--input dir] [--output file]`                           | Produce locale key constants from translation JSON.                                                     |
+| Command                                                          | Description                                                                                                                                                                                     |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create-module <feature-path> <module-type>`                     | Scaffold a module under `feature/` from `scripts/templates/modules/<module-type>`, append the module path to the workspace list, and regenerate the module graph.                               |
+| `build`                                                          | Execute the mobile build matrix (Android/iOS × mode × flavour). Use `--flavor`, `--debug`, or `--release` to filter. Artifacts land in `.misc/artifacts/`.                                      |
+| `gen-build [modules…]`                                           | Run `build_runner build -d` for all build_runner packages or a filtered set. `foo_feature` expands to `foo_data`, `foo_domain`, `foo_presentation`, `foo_data_api`, and `foo_presentation_api`. |
+| `gen-clean [--workers <n>]`                                      | Clean generated files and run `build_runner clean` across modules.                                                                                                                              |
+| `gen-watch [modules…] [--pre-build]`                             | Launch `build_runner watch -d`, optionally running `smart-build` first. Accepts the same `<feature>_feature` shortcuts as `gen-build`.                                                          |
+| `smart-build [module?] [--dry-run] [--parallel <n>] [--verbose]` | Dependency-aware incremental build orchestration with mermaid output.                                                                                                                           |
+| `module-graph [--parallel <n>] [--verbose]`                      | Generate dependency graphs/stats without executing builds.                                                                                                                                      |
+| `build-links`                                                    | Symlink all `build.yaml` files into `yaml/builds/`.                                                                                                                                             |
+| `pubspec-links`                                                  | Symlink all `pubspec.yaml` files into `yaml/pubspecs/`.                                                                                                                                         |
+| `yaml-links`                                                     | Run both linkers sequentially (clears previous output).                                                                                                                                         |
+| `locale [--input dir] [--output file]`                           | Produce locale key constants from translation JSON.                                                                                                                                             |
 
 _All commands support `--help` for detailed flags._
 
@@ -85,7 +85,7 @@ Running `module-graph` now produces four focused Mermaid files under `build_info
 
 - `GenExecutor` discovers modules via `ModuleDiscoveryPort` and drives specific workflows: `build_runner` builds, clean queue (multi-worker), or watch processes.
 - `--workers` defaults to half CPU count; `--pre-build` on `gen-watch` triggers smart-build before watchers attach.
-- Filters support `<feature>_feature` shortcuts (e.g. `auth_feature`) which expand to every module in that feature’s `data`, `domain`, `presentation`, `data_shared`, and `presentation_shared` packages. The shortcut works for both `gen-build` and `gen-watch`.
+- Filters support `<feature>_feature` shortcuts (e.g. `auth_feature`) which expand to every module in that feature’s `data`, `domain`, `presentation`, `data_api`, and `presentation_api` packages. The shortcut works for both `gen-build` and `gen-watch`.
 
 ### Smart-build & Module-graph
 
