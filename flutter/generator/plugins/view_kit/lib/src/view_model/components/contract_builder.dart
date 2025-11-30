@@ -136,7 +136,7 @@ class ViewModelContractBuilder {
                 ..returns = refer('String')
                 ..name = 'toString';
 
-              final fields = method.params
+              final fields = filteredParams
                   .map((param) => '${param.name}: \$${param.name}')
                   .join(', ');
 
