@@ -1,0 +1,11 @@
+name: gen_exporter
+modules: []
+dev_modules: []
+dependencies:
+  - analyzer
+  - build
+  - dart_style
+  - glob
+  - source_gen
+dev_dependencies: []
+

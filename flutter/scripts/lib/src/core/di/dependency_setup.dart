@@ -3,6 +3,7 @@ import 'package:scripts/src/application/build/build_executor.dart';
 import 'package:scripts/src/application/gen/gen_executor.dart';
 import 'package:scripts/src/application/links/links_executor.dart';
 import 'package:scripts/src/application/locale/locale_executor.dart';
+import 'package:scripts/src/application/module_config/module_config_executor.dart';
 import 'package:scripts/src/application/module_create/module_create_executor.dart';
 import 'package:scripts/src/application/module_graph/module_graph_executor.dart';
 import 'package:scripts/src/application/module_graph/module_graph_service.dart';
@@ -19,6 +20,7 @@ import 'package:scripts/src/infrastructure/build/ios_builder.dart';
 import 'package:scripts/src/infrastructure/build/keystore_manager.dart';
 import 'package:scripts/src/infrastructure/build_runner/build_runner_service.dart';
 import 'package:scripts/src/infrastructure/links/link_creator.dart';
+import 'package:scripts/src/infrastructure/module_config/module_config_service.dart';
 import 'package:scripts/src/infrastructure/workspace/workspace_discovery_service.dart';
 import 'package:scripts/src/services/build_execution/build_scheduler.dart';
 import 'package:scripts/src/services/build_execution/log_manager.dart';
@@ -71,6 +73,7 @@ void configureDependencies() {
     ..registerLazySingleton<AndroidKeystoreManager>(AndroidKeystoreManager.new)
     ..registerLazySingleton<LinkCreator>(LinkCreator.new)
     ..registerLazySingleton<ModuleCreateExecutor>(ModuleCreateExecutor.new)
+    ..registerLazySingleton<ModuleConfigService>(ModuleConfigService.new)
     ..registerLazySingleton<LocaleExecutor>(LocaleExecutor.new)
     ..registerLazySingleton<BuildExecutor>(
       () => BuildExecutor(
@@ -81,6 +84,9 @@ void configureDependencies() {
     )
     ..registerLazySingleton<LinksExecutor>(
       () => LinksExecutor(linkCreator: _locator.get<LinkCreator>()),
+    )
+    ..registerLazySingleton<ModuleConfigExecutor>(
+      () => ModuleConfigExecutor(service: _locator.get<ModuleConfigService>()),
     )
     ..registerLazySingleton<SmartBuildExecutor>(
       () => SmartBuildExecutor(

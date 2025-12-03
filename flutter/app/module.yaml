@@ -1,0 +1,22 @@
+name: app
+modules:
+  - common_presentation
+  - common_shared
+  - console_presentation
+  - core_data
+  - core_navigation
+  - core_presentation
+  - demo_presentation
+  - ui_components
+  - ui_foundation
+dev_modules: []
+dependencies:
+  - auto_route
+  - flutter
+  - get_it
+  - injectable
+  - intl
+dev_dependencies:
+  - build_runner
+  - injectable_generator
+

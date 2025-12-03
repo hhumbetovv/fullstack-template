@@ -1,0 +1,9 @@
+name: common_presentation
+modules:
+  - common_shared
+dev_modules:
+  - gen_exporter
+dependencies:
+  - flutter
+dev_dependencies:
+  - build_runner

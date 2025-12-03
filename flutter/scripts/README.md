@@ -50,6 +50,7 @@ scripts/lib/src/
 | Command                                                          | Description                                                                                                                                                                                     |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `create-module <feature-path> <module-type>`                     | Scaffold a module under `feature/` from `scripts/templates/modules/<module-type>`, append the module path to the workspace list, and regenerate the module graph.                               |
+| `modules-sync [--modules <name\|path>…] [module…]`               | Sync every module’s `pubspec.yaml` from its `module.yaml` plus root `workspace_modules.yaml` definitions.                                                                                    |
 | `build`                                                          | Execute the mobile build matrix (Android/iOS × mode × flavour). Use `--flavor`, `--debug`, or `--release` to filter. Artifacts land in `.misc/artifacts/`.                                      |
 | `gen-build [modules…]`                                           | Run `build_runner build -d` for all build_runner packages or a filtered set. `foo_feature` expands to `foo_data`, `foo_domain`, `foo_presentation`, `foo_data_api`, and `foo_presentation_api`. |
 | `gen-clean [--workers <n>]`                                      | Clean generated files and run `build_runner clean` across modules.                                                                                                                              |
@@ -62,6 +63,25 @@ scripts/lib/src/
 | `locale [--input dir] [--output file]`                           | Produce locale key constants from translation JSON.                                                                                                                                             |
 
 _All commands support `--help` for detailed flags._
+
+### Module specs
+
+`modules-sync` keeps all `pubspec.yaml` files aligned with two lightweight configuration layers:
+
+1. `workspace_modules.yaml` (repo root) stores the canonical Dart SDK constraint plus a `packages:` map of package → version.
+2. Each workspace module owns a `module.yaml` with its `name`, `modules`/`dev_modules` (internal workspace dependencies), and `dependencies`/`dev_dependencies` (third-party package names without versions).
+
+Running `fvms modules-sync` applies the central versions to every module. Pass module names or paths to limit the update set: `fvms modules-sync --modules core_data feature/demo/presentation`.
+
+Additional flags help during maintenance:
+
+- `--check`: dry-run and fail if any pubspec would change.
+- `--packages dio retrofit`: only touch modules that depend on the listed packages.
+- `--format`: sort & rewrite every `module.yaml` (dedupe lists, lint field order) before syncing.
+- `--lock`: emit `build_info/modules_lock.yaml` summarising every module’s resolved third-party package versions.
+- `--report`: emit `build_info/dependencies.md` containing a Markdown dependency digest per module.
+
+Flags can be combined: e.g. `fvms modules-sync --packages dio --lock --report` updates just dio consumers, writes new pubspecs, a lock snapshot, and the dependency report in one pass.
 
 ### Module graph outputs
 

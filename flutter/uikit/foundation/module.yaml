@@ -1,0 +1,10 @@
+name: ui_foundation
+modules: []
+dev_modules:
+  - gen_assets
+  - gen_exporter
+dependencies:
+  - flutter
+dev_dependencies:
+  - build_runner
+

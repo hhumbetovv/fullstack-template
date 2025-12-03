@@ -8,6 +8,7 @@ import 'package:scripts/src/cli/links/build_links_command.dart';
 import 'package:scripts/src/cli/links/pubspec_links_command.dart';
 import 'package:scripts/src/cli/links/yaml_links_command.dart';
 import 'package:scripts/src/cli/locale/command.dart';
+import 'package:scripts/src/cli/module_config/command.dart';
 import 'package:scripts/src/cli/module_graph/command.dart';
 import 'package:scripts/src/cli/smart_build/command.dart';
 
@@ -16,6 +17,7 @@ typedef CommandFactory = Command<int> Function();
 CommandRunner<int> createScriptsCommandRunner() {
   final commandFactories = <CommandFactory>[
     CreateModuleCommand.new,
+    ModuleConfigCommand.new,
     BuildCommand.new,
     GenBuildCommand.new,
     GenCleanCommand.new,

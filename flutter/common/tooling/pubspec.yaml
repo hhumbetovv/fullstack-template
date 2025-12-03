@@ -1,8 +1,7 @@
 name: common_tooling
-
 environment:
   sdk: ^3.10.1
 resolution: workspace
-
 dependencies:
   path: ^1.9.0
+

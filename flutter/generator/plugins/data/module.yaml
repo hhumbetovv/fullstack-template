@@ -1,0 +1,12 @@
+name: gen_data
+modules:
+  - gen_core
+  - processor
+dev_modules: []
+dependencies:
+  - analyzer
+  - build
+  - code_builder
+  - source_gen
+dev_dependencies: []
+

@@ -1,22 +1,13 @@
 name: core_navigation
-
 environment:
   sdk: ^3.10.1
 resolution: workspace
-
 dependencies:
   flutter:
     sdk: flutter
-
-  #! Modules
-  ui_foundation: any
-
-  #! Navigation
   auto_route: ^10.1.0
-
+  ui_foundation: any
 dev_dependencies:
-  #! Generator
   build_runner: ^2.4.15
-
-  #? Modules
   gen_exporter: any
+

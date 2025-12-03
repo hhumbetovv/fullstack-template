@@ -1,34 +1,20 @@
 name: demo_presentation
-
 environment:
   sdk: ^3.10.1
 resolution: workspace
-
 dependencies:
   flutter:
     sdk: flutter
-
-  #! Modules
-  processor: any
-  core_presentation: any
-  core_navigation: any
-  demo_domain: any
-  demo_data: any
-
-  #! Navigation
   auto_route: ^10.1.0
-
-  #! Dependency Injection
-  injectable: ^2.5.0
+  core_navigation: any
+  core_presentation: any
+  demo_data: any
+  demo_domain: any
   get_it: ^8.0.3
-
+  injectable: ^2.5.2
+  processor: any
 dev_dependencies:
-  #! Generator
   build_runner: ^2.4.15
-
-  #? Modules
   gen_data: any
   gen_view_kit: any
-
-  #? Dependency Injection
   injectable_generator: ^2.7.0

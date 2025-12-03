@@ -21,7 +21,7 @@ dependencies:
   retrofit: ^4.7.2
 
   #! Dependency Injection
-  injectable: ^2.5.0
+  injectable: ^2.5.2
 
 dev_dependencies:
   #! Generator

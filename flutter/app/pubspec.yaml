@@ -1,53 +1,32 @@
 name: app
-description: "A template Flutter project."
-publish_to: "none"
+description: A template Flutter project.
+publish_to: none
 version: 1.0.0+1
-
 environment:
   sdk: ^3.10.1
 resolution: workspace
-
 dependencies:
   flutter:
     sdk: flutter
-
-  #! Modules
-  #? Common
-  common_shared: any
-  common_presentation: any
-  #? Core
-  core_data: any
-  core_presentation: any
-  core_navigation: any
-  #? UIKit
-  ui_foundation: any
-  ui_components: any
-  #? Console
-  console_presentation: any
-  #? Demo
-  demo_presentation: any
-
-  #! Navigation
   auto_route: ^10.1.0
-
-  #! Dependency Injection
-  injectable: ^2.5.0
+  common_presentation: any
+  common_shared: any
+  console_presentation: any
+  core_data: any
+  core_navigation: any
+  core_presentation: any
+  demo_presentation: any
   get_it: ^8.0.3
-
-  #! Localization
+  injectable: ^2.5.2
   intl: ^0.20.2
-
+  ui_components: any
+  ui_foundation: any
 dev_dependencies:
-  #! Generator
   build_runner: ^2.4.15
-
-  #? Dependency Injection
   injectable_generator: ^2.7.0
-
 flutter:
-  uses-material-design: true
-  default-flavor: prod
-
   assets:
     - .env.dev
     - .env.prod
+  default-flavor: prod
+  uses-material-design: true

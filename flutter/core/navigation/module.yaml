@@ -1,0 +1,11 @@
+name: core_navigation
+modules:
+  - ui_foundation
+dev_modules:
+  - gen_exporter
+dependencies:
+  - auto_route
+  - flutter
+dev_dependencies:
+  - build_runner
+

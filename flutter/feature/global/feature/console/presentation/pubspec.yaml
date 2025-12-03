@@ -1,42 +1,24 @@
 name: console_presentation
-
 environment:
   sdk: ^3.10.1
 resolution: workspace
-
 dependencies:
   flutter:
     sdk: flutter
-
-  #! Modules
-  processor: any
-  core_presentation: any
-  core_navigation: any
-  common_shared: any
-  common_presentation: any
-  ui_foundation: any
-  ui_components: any
-
-  #! Navigation
   auto_route: ^10.1.0
-
-  #! Dependency Injection
-  injectable: ^2.5.0
+  common_presentation: any
+  common_shared: any
+  core_navigation: any
+  core_presentation: any
   get_it: ^8.0.3
-
-  #! Directory
+  injectable: ^2.5.2
   path_provider: ^2.1.5
-
-  #! Share
+  processor: any
   share_plus: ^11.0.0
-
+  ui_components: any
+  ui_foundation: any
 dev_dependencies:
-  #! Generator
   build_runner: ^2.4.15
-
-  #? Modules
   gen_data: any
   gen_view_kit: any
-
-  #? Dependency Injection
   injectable_generator: ^2.7.0

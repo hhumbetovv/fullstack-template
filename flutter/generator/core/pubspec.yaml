@@ -1,18 +1,12 @@
 name: gen_core
-
 environment:
   sdk: ^3.10.1
 resolution: workspace
-
 dependencies:
-  #! Directory and Folders
-  dart_style: ^3.1.0
-  common_tooling: any
-
-  #! Analyzer
   analyzer: ^7.4.5
-
-  #! Builders Core
   build: ^3.0.0
-  source_gen: ^3.0.0
   code_builder: ^4.10.1
+  common_tooling: any
+  dart_style: ^3.1.0
+  source_gen: ^3.0.0
+

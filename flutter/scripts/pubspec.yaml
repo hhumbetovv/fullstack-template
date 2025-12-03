@@ -1,19 +1,11 @@
 name: scripts
-
 environment:
   sdk: ^3.10.1
 resolution: workspace
-
 dependencies:
-  #! Modules
-  common_tooling: any
-
-  #! cli
   args: ^2.5.0
-
-  #! File and Folders
+  common_tooling: any
+  get_it: ^8.0.3
   path: ^1.9.0
   yaml: ^3.1.2
 
-  #! Dependency Injection
-  get_it: ^8.0.3

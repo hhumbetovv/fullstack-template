@@ -1,0 +1,13 @@
+name: demo_data
+modules:
+  - core_data
+  - demo_domain
+dev_modules:
+  - gen_exporter
+dependencies:
+  - get_it
+  - injectable
+dev_dependencies:
+  - build_runner
+  - injectable_generator
+

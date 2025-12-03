@@ -1,0 +1,9 @@
+name: common_shared
+modules: []
+dev_modules:
+  - gen_exporter
+dependencies:
+  - flutter_dotenv
+  - intl
+dev_dependencies:
+  - build_runner

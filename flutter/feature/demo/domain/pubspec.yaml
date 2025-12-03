@@ -1,23 +1,12 @@
 name: demo_domain
-
 environment:
   sdk: ^3.10.1
 resolution: workspace
-
 dependencies:
-  #! Modules
   core_domain: any
-
-  #! Dependency Injection
-  injectable: ^2.5.0
   get_it: ^8.0.3
-
+  injectable: ^2.5.2
 dev_dependencies:
-  #! Generator
   build_runner: ^2.4.15
-
-  #? Modules
   gen_exporter: any
-
-  #? Dependency Injection
   injectable_generator: ^2.7.0

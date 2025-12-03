@@ -1,0 +1,12 @@
+name: demo_domain
+modules:
+  - core_domain
+dev_modules:
+  - gen_exporter
+dependencies:
+  - get_it
+  - injectable
+dev_dependencies:
+  - build_runner
+  - injectable_generator
+

@@ -1,0 +1,13 @@
+name: gen_palette
+modules:
+  - gen_core
+  - gen_data
+  - processor
+dev_modules: []
+dependencies:
+  - analyzer
+  - build
+  - code_builder
+  - source_gen
+dev_dependencies: []
+

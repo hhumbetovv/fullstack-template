@@ -1,0 +1,21 @@
+name: core_data
+modules:
+  - common_shared
+  - core_domain
+dev_modules:
+  - gen_exporter
+dependencies:
+  - dio
+  - flutter
+  - flutter_secure_storage
+  - get_it
+  - injectable
+  - json_annotation
+  - retrofit
+  - shared_preferences
+dev_dependencies:
+  - build_runner
+  - injectable_generator
+  - json_serializable
+  - retrofit_generator
+
