@@ -106,6 +106,8 @@ class AndroidBuildService {
       command,
       '--flavor',
       spec.flavor,
+      '--dart-define',
+      'FLAVOR=${spec.flavor}',
       if (spec.mode == BuildMode.release) '--release' else '--debug',
     ];
 

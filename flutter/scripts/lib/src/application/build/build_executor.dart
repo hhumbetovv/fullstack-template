@@ -46,6 +46,31 @@ class BuildExecutor {
       selectedFlavors,
     );
 
+    final needsIosReleaseBuilds =
+        options.requestIosIpa &&
+        options.platforms.contains(BuildPlatform.ios) &&
+        !specs.any(
+          (spec) =>
+              spec.platform == BuildPlatform.ios &&
+              spec.mode == BuildMode.release,
+        );
+
+    if (needsIosReleaseBuilds) {
+      Console.warning(
+        'IPA artifacts require iOS release builds. Adding release mode to the build matrix.',
+      );
+      for (final flavor in selectedFlavors) {
+        specs.add(
+          BuildSpec(
+            platform: BuildPlatform.ios,
+            mode: BuildMode.release,
+            flavor: flavor,
+          ),
+        );
+      }
+      specs.sort(compareBuildSpecs);
+    }
+
     if (specs.isEmpty) {
       Console.warning('No build targets selected.');
       return 0;

@@ -47,6 +47,8 @@ class IosBuildService {
       'ios',
       '--flavor',
       spec.flavor,
+      '--dart-define',
+      'FLAVOR=${spec.flavor}',
       if (spec.mode == BuildMode.release) '--release' else '--debug',
     ];
 
@@ -71,16 +73,23 @@ class IosBuildService {
       );
     }
 
-    if (options.copyAppBundle) {
+    final needsBundleLookup =
+        options.copyAppBundle ||
+        (spec.mode == BuildMode.release && options.copyIpa);
+
+    Directory? bundle;
+    if (needsBundleLookup) {
       final bundleRoot = spec.mode == BuildMode.release
           ? Directory('${outputDir.path}/iphoneos')
           : Directory('${outputDir.path}/iphonesimulator');
-      final bundle = _findAppBundle(bundleRoot, spec.flavor);
-      if (bundle != null) {
-        storeDirectoryArtifact(bundle, artifactsRoot, spec, version);
-      } else {
+      bundle = _findAppBundle(bundleRoot, spec.flavor);
+      if (bundle == null) {
         Console.warning('No iOS .app bundle found for ${spec.description}.');
       }
+    }
+
+    if (options.copyAppBundle && bundle != null) {
+      storeDirectoryArtifact(bundle, artifactsRoot, spec, version);
     }
 
     if (options.copyIpa) {
@@ -88,13 +97,13 @@ class IosBuildService {
         Console.warning(
           'Skipping IPA for ${spec.description} (only release builds supported).',
         );
-      } else {
-        final archive = File('${outputDir.path}/ipa/${spec.flavor}.ipa');
-        if (archive.existsSync()) {
-          storeFileArtifact(archive, artifactsRoot, spec, version);
-        } else {
-          Console.warning('No IPA artifact found for ${spec.description}.');
-        }
+      } else if (bundle != null) {
+        final archive = await _createUnsignedIpa(
+          bundle,
+          Directory('${outputDir.path}/ipa'),
+          spec.flavor,
+        );
+        storeFileArtifact(archive, artifactsRoot, spec, version);
       }
     }
   }
@@ -117,5 +126,53 @@ class IosBuildService {
       fallback ??= entry;
     }
     return fallback;
+  }
+
+  Future<File> _createUnsignedIpa(
+    Directory bundle,
+    Directory ipaDir,
+    String flavor,
+  ) async {
+    ipaDir.createSync(recursive: true);
+    final ipaFile = File(p.join(ipaDir.path, '$flavor.ipa'));
+    if (ipaFile.existsSync()) {
+      ipaFile.deleteSync();
+    }
+
+    final tempRoot = Directory.systemTemp.createTempSync('ipa-build-');
+    try {
+      final payloadDir = Directory(p.join(tempRoot.path, 'Payload'))
+        ..createSync(recursive: true);
+      final bundleCopy = Directory(
+        p.join(payloadDir.path, p.basename(bundle.path)),
+      );
+      _copyDirectorySync(bundle, bundleCopy);
+      await runProcess(
+        ['zip', '-qry', ipaFile.path, 'Payload'],
+        workingDirectory: tempRoot.path,
+      );
+      return ipaFile;
+    } finally {
+      if (tempRoot.existsSync()) {
+        tempRoot.deleteSync(recursive: true);
+      }
+    }
+  }
+
+  void _copyDirectorySync(Directory source, Directory destination) {
+    if (!destination.existsSync()) {
+      destination.createSync(recursive: true);
+    }
+
+    for (final entity in source.listSync(followLinks: false)) {
+      final newPath = p.join(destination.path, p.basename(entity.path));
+      if (entity is File) {
+        File(newPath)
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(entity.readAsBytesSync());
+      } else if (entity is Directory) {
+        _copyDirectorySync(entity, Directory(newPath));
+      }
+    }
   }
 }

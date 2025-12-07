@@ -31,7 +31,7 @@ List<BuildSpec> createBuildSpecs(
             mode: mode,
             flavor: flavor,
           ),
-  ]..sort(_compareSpecs);
+  ]..sort(compareBuildSpecs);
   return specs;
 }
 
@@ -55,7 +55,7 @@ BuildMode? parseMode(String value) {
   return null;
 }
 
-int _compareSpecs(BuildSpec a, BuildSpec b) {
+int compareBuildSpecs(BuildSpec a, BuildSpec b) {
   final platformCompare = a.platform.index.compareTo(b.platform.index);
   if (platformCompare != 0) return platformCompare;
   final modeCompare = a.mode.index.compareTo(b.mode.index);
