@@ -1,14 +1,18 @@
 import 'package:args/command_runner.dart';
 import 'package:scripts/src/application/module_config/module_config_executor.dart';
+import 'package:scripts/src/application/module_graph/module_graph_executor.dart';
 import 'package:scripts/src/core/command/base_command.dart';
 import 'package:scripts/src/core/di/dependency_setup.dart';
+import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/domain/models/module_config.dart';
+import 'package:scripts/src/domain/models/module_graph_options.dart';
 
 class ModuleConfigCommand extends ScriptsCommand {
   ModuleConfigCommand()
     : super(
-        commandName: 'modules-sync',
+        commandName: 'pub-sync',
         commandDescription: 'Update pubspec.yaml files from module.yaml specs.',
+        aliases: const ['modules-sync'],
       ) {
     argParser
       ..addMultiOption(
@@ -56,7 +60,7 @@ class ModuleConfigCommand extends ScriptsCommand {
   }
 
   @override
-  Future<int> runCommand() {
+  Future<int> runCommand() async {
     configureDependencies();
     final modules = <String>[
       ...((argResults?['modules'] as List<String>?) ?? const <String>[]),
@@ -95,6 +99,20 @@ class ModuleConfigCommand extends ScriptsCommand {
       reverse: reverse,
     );
 
-    return getDependency<ModuleConfigExecutor>().run(options: options);
+    final result = await getDependency<ModuleConfigExecutor>().run(
+      options: options,
+    );
+    if (result != 0 || options.checkOnly) {
+      return result;
+    }
+
+    Console.info('Regenerating module graph...');
+    final graphResult = await getDependency<ModuleGraphExecutor>().run(
+      const ModuleGraphOptions(verbose: false, maxParallelBuilds: 4),
+    );
+    if (graphResult == 0) {
+      Console.success('Module graph updated.');
+    }
+    return graphResult;
   }
 }

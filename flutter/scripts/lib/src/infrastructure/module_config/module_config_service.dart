@@ -25,7 +25,10 @@ class ModuleConfigService {
   Future<ModuleSyncSummary> syncModules({
     required ModuleSyncOptions options,
   }) async {
-    final workspaceEntries = await _loadWorkspaceEntries();
+    final workspaceEntries = _augmentWorkspaceEntries(
+      await _loadWorkspaceEntries(),
+      options.targets,
+    );
     if (options.reverse) {
       return _syncModuleSpecsFromPubspecs(
         workspaceEntries: workspaceEntries,
@@ -63,6 +66,7 @@ class ModuleConfigService {
       }
     }
 
+    final moduleNames = modules.map((module) => module.name).toSet();
     var filtered = _filterModules(modules, options.targets, failures);
     filtered = _filterModulesByPackages(filtered, options.packageFilters);
 
@@ -72,6 +76,13 @@ class ModuleConfigService {
     final snapshots = <ModuleDependencySnapshot>[];
 
     for (final module in filtered) {
+      final missingModuleDeps = _missingModuleDependencies(module, moduleNames);
+      if (missingModuleDeps.isNotEmpty) {
+        failures[module.name] =
+            'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
+        continue;
+      }
+
       final unknownPackages = _unknownPackages(module, versions);
       if (unknownPackages.isNotEmpty) {
         failures[module.name] =
@@ -105,8 +116,12 @@ class ModuleConfigService {
       }
     }
 
-    final lockPath = options.generateLockFile ? _writeLockFile(snapshots, versions.dartSdk) : null;
-    final reportPath = options.generateReport ? _writeDependencyReport(snapshots) : null;
+    final lockPath = options.generateLockFile
+        ? _writeLockFile(snapshots, versions.dartSdk)
+        : null;
+    final reportPath = options.generateReport
+        ? _writeDependencyReport(snapshots)
+        : null;
 
     return ModuleSyncSummary(
       changed: changed,
@@ -150,6 +165,13 @@ class ModuleConfigService {
     final unchanged = <String>[];
 
     for (final module in filtered) {
+      final missingModuleDeps = _missingModuleDependencies(module, moduleNames);
+      if (missingModuleDeps.isNotEmpty) {
+        failures[module.name] =
+            'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
+        continue;
+      }
+
       final didChange = _writeModuleYamlFromSpec(
         module,
         checkOnly: options.checkOnly,
@@ -174,6 +196,25 @@ class ModuleConfigService {
     );
   }
 
+  List<String> _missingModuleDependencies(
+    ModuleSpec module,
+    Set<String> workspaceModules,
+  ) {
+    final missing = <String>{};
+    void collect(List<String> modulesList) {
+      for (final dependency in modulesList) {
+        if (!workspaceModules.contains(dependency)) {
+          missing.add(dependency);
+        }
+      }
+    }
+
+    collect(module.modules);
+    collect(module.devModules);
+    final result = missing.toList()..sort();
+    return result;
+  }
+
   Future<_WorkspaceConfigResult> _ensureWorkspaceConfigFile({
     required List<_ModulePubspecData> modules,
     required Set<String> workspaceModuleNames,
@@ -188,7 +229,8 @@ class ModuleConfigService {
 
     final dartSdk = await _readRootDartSdkConstraint();
     if (dartSdk == null || dartSdk.isEmpty) {
-      failures[workspaceConfigFile] = 'Cannot infer `dart_sdk` constraint from $rootPubspecFile';
+      failures[workspaceConfigFile] =
+          'Cannot infer `dart_sdk` constraint from $rootPubspecFile';
       return const _WorkspaceConfigResult(changed: false, path: null);
     }
 
@@ -396,7 +438,9 @@ class ModuleConfigService {
     );
 
     final content = '${writer.convert(data)}\n';
-    final existing = file.existsSync() ? file.readAsStringSync().trimRight() : '';
+    final existing = file.existsSync()
+        ? file.readAsStringSync().trimRight()
+        : '';
     final changed = existing != content.trimRight();
 
     if (!checkOnly && changed) {
@@ -468,6 +512,40 @@ class ModuleConfigService {
     return entries;
   }
 
+  List<String> _augmentWorkspaceEntries(
+    List<String> workspaceEntries,
+    List<String> targets,
+  ) {
+    if (targets.isEmpty) {
+      return workspaceEntries;
+    }
+
+    final seen = workspaceEntries.toSet();
+    for (final target in targets) {
+      final path = _resolveTargetPath(target);
+      if (path != null && seen.add(path)) {
+        workspaceEntries.add(path);
+      }
+    }
+    return workspaceEntries;
+  }
+
+  String? _resolveTargetPath(String target) {
+    final trimmed = target.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    final absolutePath = p.isAbsolute(trimmed)
+        ? p.normalize(trimmed)
+        : p.normalize(p.join(_root.path, trimmed));
+    final directory = Directory(absolutePath);
+    if (!directory.existsSync()) {
+      return null;
+    }
+    final relative = p.relative(directory.path, from: _root.path);
+    return relative;
+  }
+
   ModuleSpec _readModuleSpec(Directory directory) {
     final configFile = File(p.join(directory.path, 'module.yaml'));
     if (!configFile.existsSync()) {
@@ -525,7 +603,10 @@ class ModuleConfigService {
     List<String> targets,
     Map<String, String> failures,
   ) {
-    final cleanedTargets = targets.map((target) => target.trim()).where((target) => target.isNotEmpty).toList();
+    final cleanedTargets = targets
+        .map((target) => target.trim())
+        .where((target) => target.isNotEmpty)
+        .toList();
     if (cleanedTargets.isEmpty) {
       return modules;
     }
@@ -555,7 +636,10 @@ class ModuleConfigService {
     List<ModuleSpec> modules,
     List<String> packageFilters,
   ) {
-    final cleaned = packageFilters.map((pkg) => pkg.trim()).where((pkg) => pkg.isNotEmpty).toSet();
+    final cleaned = packageFilters
+        .map((pkg) => pkg.trim())
+        .where((pkg) => pkg.isNotEmpty)
+        .toSet();
     if (cleaned.isEmpty) {
       return modules;
     }
@@ -580,7 +664,9 @@ class ModuleConfigService {
     final normalizedRelative = p.normalize(relative);
     final normalizedTarget = p.normalize(target);
 
-    return normalizedRelative == normalizedTarget || relative == target || p.basename(relative) == target;
+    return normalizedRelative == normalizedTarget ||
+        relative == target ||
+        p.basename(relative) == target;
   }
 
   List<String> _unknownPackages(
@@ -591,7 +677,8 @@ class ModuleConfigService {
     final seen = <String>{};
     void collect(List<String> packages) {
       for (final package in packages) {
-        if (!_isFlutterSdkPackage(package) && versions.versionFor(package) == null) {
+        if (!_isFlutterSdkPackage(package) &&
+            versions.versionFor(package) == null) {
           if (seen.add(package)) {
             unknown.add(package);
           }
@@ -609,7 +696,8 @@ class ModuleConfigService {
     final sortedModules = List<String>.from(module.modules)..sort();
     final sortedDevModules = List<String>.from(module.devModules)..sort();
     final sortedDependencies = List<String>.from(module.dependencies)..sort();
-    final sortedDevDependencies = List<String>.from(module.devDependencies)..sort();
+    final sortedDevDependencies = List<String>.from(module.devDependencies)
+      ..sort();
 
     module.modules
       ..clear()
@@ -656,12 +744,11 @@ class ModuleConfigService {
     required bool checkOnly,
   }) async {
     final pubspecFile = module.pubspecFile;
-    if (!pubspecFile.existsSync()) {
-      final relative = p.relative(module.directory.path, from: _root.path);
-      throw CommandError('pubspec.yaml not found for $relative');
-    }
-
-    final pubspec = await readPubspec(pubspecFile.path) ?? <String, dynamic>{};
+    final pubspecExists = pubspecFile.existsSync();
+    final pubspec = pubspecExists
+        ? await readPubspec(pubspecFile.path) ??
+              (throw CommandError('Failed to parse ${pubspecFile.path}'))
+        : <String, dynamic>{};
     final updated = Map<String, dynamic>.from(pubspec);
 
     updated['name'] = module.name;
@@ -688,12 +775,13 @@ class ModuleConfigService {
 
     const writer = YamlWriter();
     final content = '${writer.convert(_normalizeMap(updated))}\n';
-    final existingContent = pubspecFile.readAsStringSync();
+    final existingContent = pubspecExists ? pubspecFile.readAsStringSync() : '';
     final normalizedExisting = existingContent.trimRight();
     final normalizedExpected = content.trimRight();
     final changed = normalizedExisting != normalizedExpected;
 
     if (!checkOnly && changed) {
+      pubspecFile.parent.createSync(recursive: true);
       pubspecFile.writeAsStringSync(content);
     }
 
@@ -841,7 +929,8 @@ class ModuleConfigService {
     if (snapshots.isEmpty) {
       buffer.writeln('No modules processed.');
     } else {
-      final sorted = List<ModuleDependencySnapshot>.from(snapshots)..sort((a, b) => a.name.compareTo(b.name));
+      final sorted = List<ModuleDependencySnapshot>.from(snapshots)
+        ..sort((a, b) => a.name.compareTo(b.name));
       for (final snapshot in sorted) {
         buffer
           ..writeln('## ${snapshot.name}')
@@ -883,7 +972,9 @@ class ModuleConfigService {
         buffer.writeln('- Modules: ${modules.join(', ')}');
       }
       if (packages.isNotEmpty) {
-        final entries = packages.entries.map((entry) => '${entry.key} (${entry.value})').join(', ');
+        final entries = packages.entries
+            .map((entry) => '${entry.key} (${entry.value})')
+            .join(', ');
         buffer.writeln('- Packages: $entries');
       }
     }
@@ -898,7 +989,8 @@ class ModuleConfigService {
     }
     if (data is Map) {
       return data.map(
-        (key, dynamic value) => MapEntry(key.toString(), _convertYamlValue(value)),
+        (key, dynamic value) =>
+            MapEntry(key.toString(), _convertYamlValue(value)),
       );
     }
     throw CommandError('Invalid YAML format in ${file.path}');
@@ -918,7 +1010,8 @@ class ModuleConfigService {
     }
     if (value is Map) {
       return value.map(
-        (key, dynamic entryValue) => MapEntry(key.toString(), _convertYamlValue(entryValue)),
+        (key, dynamic entryValue) =>
+            MapEntry(key.toString(), _convertYamlValue(entryValue)),
       );
     }
     if (value is YamlList) {

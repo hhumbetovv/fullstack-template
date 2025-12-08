@@ -23,27 +23,31 @@ graph LR
     ui_components:::ui
     ui_foundation["ui_foundation"]
     ui_foundation:::ui
+    ui_previews["ui_previews"]
+    ui_previews:::ui
     class app feature
     common_tooling --> scripts
-    common_shared --> app
     common_presentation --> app
+    common_shared --> app
     core_data --> app
-    core_presentation --> app
     core_navigation --> app
-    ui_foundation --> app
+    core_presentation --> app
     ui_components --> app
+    ui_foundation --> app
     common_shared --> common_presentation
-    processor --> core_presentation
-    common_shared --> core_presentation
     common_presentation --> core_presentation
+    common_shared --> core_presentation
     core_domain --> core_presentation
+    processor --> core_presentation
     ui_foundation --> core_navigation
     common_shared --> core_data
     core_domain --> core_data
-    processor --> ui_components
     common_presentation --> ui_components
     common_shared --> ui_components
+    processor --> ui_components
     ui_foundation --> ui_components
+    ui_components --> ui_previews
+    ui_foundation --> ui_previews
     features["Features"]
     class features feature
     common_presentation --> features

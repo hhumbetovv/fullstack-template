@@ -1,0 +1,21 @@
+name: {{module_name}}
+modules:
+  - processor
+  - core_presentation
+  - core_navigation
+  - common_shared
+  - common_presentation
+  - ui_foundation
+  - ui_components
+dev_modules:
+  - gen_data
+  - gen_view_kit
+dependencies:
+  # Navigation
+  - auto_route
+  # Dependency Injection
+  - injectable
+dev_dependencies:
+  - build_runner
+  # Dependency Injection
+  - injectable_generator

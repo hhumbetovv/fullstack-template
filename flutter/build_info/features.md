@@ -13,8 +13,8 @@ graph LR
     demo_presentation["demo_presentation"]
     demo_presentation:::presentation
     demo_domain --> demo_data
-    demo_domain --> demo_presentation
     demo_data --> demo_presentation
+    demo_domain --> demo_presentation
 
     classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000;
     classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000;

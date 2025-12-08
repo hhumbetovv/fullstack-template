@@ -15,8 +15,8 @@ graph LR
     group_Common_Layer --> group_Core_Layer
     group_UI_Layer --> group_Core_Layer
     group_Common_Layer --> group_UI_Layer
-    group_Core_Layer --> group_Feature__Console
     group_Common_Layer --> group_Feature__Console
+    group_Core_Layer --> group_Feature__Console
     group_UI_Layer --> group_Feature__Console
     group_Core_Layer --> group_Feature__Demo
 

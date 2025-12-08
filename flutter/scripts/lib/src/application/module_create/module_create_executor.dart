@@ -2,10 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/core/logging/console.dart';
+import 'package:scripts/src/domain/models/module_config.dart';
+import 'package:scripts/src/infrastructure/module_config/module_config_service.dart';
 
 class ModuleCreateExecutor {
-  ModuleCreateExecutor({String? workspaceRoot}) : workspaceRoot = workspaceRoot ?? Directory.current.path;
+  ModuleCreateExecutor({String? workspaceRoot})
+    : workspaceRoot = workspaceRoot ?? Directory.current.path;
   static const _emptyDirectoryMarkerName = '.template_dir';
 
   final String workspaceRoot;
@@ -81,6 +85,12 @@ class ModuleCreateExecutor {
       replacements: replacements,
     );
     _writeAnalysisOptions(moduleDir);
+
+    final bootstrapResult = await _bootstrapModulePubspec(moduleDir);
+    if (bootstrapResult != 0) {
+      return bootstrapResult;
+    }
+
     _registerModuleInWorkspace(moduleDir);
 
     Console.success(
@@ -178,8 +188,51 @@ class ModuleCreateExecutor {
       );
       return;
     }
-    final relativeInclude = p.relative(rootAnalysis.path, from: moduleDir.path).replaceAll(r'\', '/');
-    File(p.join(moduleDir.path, 'analysis_options.yaml')).writeAsStringSync('include: $relativeInclude\n');
+    final relativeInclude = p
+        .relative(rootAnalysis.path, from: moduleDir.path)
+        .replaceAll(r'\', '/');
+    File(
+      p.join(moduleDir.path, 'analysis_options.yaml'),
+    ).writeAsStringSync('include: $relativeInclude\n');
+  }
+
+  Future<int> _bootstrapModulePubspec(Directory moduleDir) async {
+    final relativePath = p
+        .relative(moduleDir.path, from: workspaceRoot)
+        .replaceAll(r'\', '/');
+    Console.info('Syncing pubspec.yaml for $relativePath ...');
+
+    try {
+      final service = ModuleConfigService();
+      final summary = await service.syncModules(
+        options: ModuleSyncOptions(targets: [relativePath]),
+      );
+
+      if (summary.hasFailures) {
+        summary.failures.forEach((module, message) {
+          Console.error('✗ $module – $message');
+        });
+        Console.error('Failed to generate pubspec.yaml for $relativePath.');
+        return 65;
+      }
+
+      final pubspecFile = File(p.join(moduleDir.path, 'pubspec.yaml'));
+      if (!pubspecFile.existsSync()) {
+        Console.error(
+          'pub-sync completed but pubspec.yaml was not created for $relativePath.',
+        );
+        return 65;
+      }
+
+      Console.success('pubspec.yaml created for $relativePath.');
+      return 0;
+    } on CommandError catch (error) {
+      Console.error('Module sync failed: ${error.message}');
+      return error.exitCode;
+    } on Object catch (error) {
+      Console.error('Unexpected error while syncing pubspec: $error');
+      return 70;
+    }
   }
 
   void _registerModuleInWorkspace(Directory moduleDir) {
@@ -198,11 +251,15 @@ class ModuleCreateExecutor {
       return;
     }
 
-    final modulePath = p.relative(moduleDir.path, from: workspaceRoot).replaceAll(r'\', '/');
+    final modulePath = p
+        .relative(moduleDir.path, from: workspaceRoot)
+        .replaceAll(r'\', '/');
     final entry = '  - $modulePath';
 
     final insertionIndex = _findWorkspaceInsertionIndex(lines, workspaceIndex);
-    final existingLines = lines.sublist(workspaceIndex + 1, insertionIndex).map((line) => line.trim());
+    final existingLines = lines
+        .sublist(workspaceIndex + 1, insertionIndex)
+        .map((line) => line.trim());
     if (existingLines.contains('- $modulePath')) {
       Console.info('Workspace already references $modulePath.');
       return;
@@ -234,7 +291,13 @@ class ModuleCreateExecutor {
     if (!modulesDir.existsSync()) {
       return const [];
     }
-    final templates = modulesDir.listSync().whereType<Directory>().map((dir) => p.basename(dir.path)).toList()..sort();
+    final templates =
+        modulesDir
+            .listSync()
+            .whereType<Directory>()
+            .map((dir) => p.basename(dir.path))
+            .toList()
+          ..sort();
     return templates;
   }
 }
