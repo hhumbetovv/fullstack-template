@@ -39,11 +39,17 @@ class GraphGenerator {
       (sum, deps) => sum + deps.length,
     );
 
+    final sections = <_GraphSection>[
+      _buildBaseToFeatureSection(state, modulesWithUnusedDeps),
+      _buildFeaturesOnlySection(state, modulesWithUnusedDeps),
+      _buildWaveGroupedSection(state, maxWave, modulesWithUnusedDeps),
+      _buildLayerGroupedSection(state, modulesWithUnusedDeps),
+    ];
+
+    await _writeCombinedGraphFile(sections);
+
     final outputs = <GraphFile>[
-      await _writeBaseToFeatureGraph(state, modulesWithUnusedDeps),
-      await _writeFeaturesOnlyGraph(state, modulesWithUnusedDeps),
-      await _writeWaveGroupedGraph(state, maxWave, modulesWithUnusedDeps),
-      await _writeLayerGroupedGraph(state, modulesWithUnusedDeps),
+      const GraphFile(path: 'module_graph.md', title: 'Module Graphs'),
     ];
 
     await _writeBuildGraphOverview(
@@ -52,6 +58,7 @@ class GraphGenerator {
       modulesWithUnused: modulesWithUnusedDeps,
       modulesWithUnusedPackages: modulesWithUnusedPackages,
       maxWave: maxWave,
+      sections: sections,
     );
 
     outputs.add(
@@ -72,14 +79,11 @@ class GraphGenerator {
   }
 }
 
-Future<GraphFile> _writeBaseToFeatureGraph(
+_GraphSection _buildBaseToFeatureSection(
   BuildState state,
   Set<String> modulesWithUnused,
-) async {
-  const path = 'build_info/foundation.md';
+) {
   final buffer = StringBuffer()
-    ..writeln('# Foundation Modules')
-    ..writeln('')
     ..writeln('```mermaid')
     ..writeln('graph LR');
 
@@ -152,21 +156,17 @@ Future<GraphFile> _writeBaseToFeatureGraph(
     ..writeln('```')
     ..writeln('');
 
-  await File(path).writeAsString(buffer.toString());
-  return const GraphFile(
-    path: path,
-    title: 'Foundation View',
+  return _GraphSection(
+    title: 'foundation.md',
+    content: buffer.toString(),
   );
 }
 
-Future<GraphFile> _writeFeaturesOnlyGraph(
+_GraphSection _buildFeaturesOnlySection(
   BuildState state,
   Set<String> modulesWithUnused,
-) async {
-  const path = 'build_info/features.md';
+) {
   final buffer = StringBuffer()
-    ..writeln('# Feature Modules')
-    ..writeln('')
     ..writeln('```mermaid')
     ..writeln('graph LR');
 
@@ -198,19 +198,18 @@ Future<GraphFile> _writeFeaturesOnlyGraph(
     ..writeln('```')
     ..writeln('');
 
-  await File(path).writeAsString(buffer.toString());
-  return const GraphFile(path: path, title: 'Feature Modules');
+  return _GraphSection(
+    title: 'features.md',
+    content: buffer.toString(),
+  );
 }
 
-Future<GraphFile> _writeWaveGroupedGraph(
+_GraphSection _buildWaveGroupedSection(
   BuildState state,
   int maxWave,
   Set<String> modulesWithUnused,
-) async {
-  const path = 'build_info/waves.md';
+) {
   final buffer = StringBuffer()
-    ..writeln('# Waves Overview')
-    ..writeln('')
     ..writeln('```mermaid')
     ..writeln('graph TB');
 
@@ -253,8 +252,10 @@ Future<GraphFile> _writeWaveGroupedGraph(
     ..writeln('```')
     ..writeln('');
 
-  await File(path).writeAsString(buffer.toString());
-  return const GraphFile(path: path, title: 'Wave Groups');
+  return _GraphSection(
+    title: 'waves.md',
+    content: buffer.toString(),
+  );
 }
 
 Future<void> _writeBuildGraphOverview({
@@ -263,6 +264,7 @@ Future<void> _writeBuildGraphOverview({
   required Set<String> modulesWithUnused,
   required Set<String> modulesWithUnusedPackages,
   required int maxWave,
+  required List<_GraphSection> sections,
 }) async {
   final totalModules = state.allModulePaths.length;
   final buildRunnerModules = state.modulePaths.length;
@@ -293,22 +295,7 @@ Future<void> _writeBuildGraphOverview({
     ..writeln('')
     ..writeln('## Graph Index')
     ..writeln('')
-    ..writeln(
-      '- [Foundation](build_info/foundation.md) '
-      '— Highlights how shared modules feed feature delivery.',
-    )
-    ..writeln(
-      '- [Features](build_info/features.md) '
-      '— Focuses purely on feature-layer dependencies.',
-    )
-    ..writeln(
-      '- [Waves](build_info/waves.md) '
-      '— Visualizes build waves from top to bottom.',
-    )
-    ..writeln(
-      '- [Layers](build_info/layers.md) '
-      '— Clusters modules by architectural tier and feature area.',
-    )
+    ..write(_graphIndexSection(sections))
     ..writeln('')
     ..writeln('## Build Waves')
     ..writeln('')
@@ -323,7 +310,7 @@ Future<void> _writeBuildGraphOverview({
     ..write(_unusedPackagesSection(state, modulesWithUnusedPackages))
     ..writeln('')
     ..writeln(
-      '_Detailed graphs are available under the `build_info/` directory._',
+      '_Detailed graphs are available in `module_graph.md`._',
     )
     ..writeln('');
 
@@ -422,14 +409,18 @@ class _WaveDetail {
   final List<String> modules;
 }
 
-Future<GraphFile> _writeLayerGroupedGraph(
+class _GraphSection {
+  const _GraphSection({required this.title, required this.content});
+
+  final String title;
+  final String content;
+}
+
+_GraphSection _buildLayerGroupedSection(
   BuildState state,
   Set<String> modulesWithUnused,
-) async {
-  const path = 'build_info/layers.md';
+) {
   final buffer = StringBuffer()
-    ..writeln('# Layers')
-    ..writeln('')
     ..writeln('```mermaid')
     ..writeln('graph LR');
 
@@ -483,8 +474,10 @@ Future<GraphFile> _writeLayerGroupedGraph(
     ..writeln('```')
     ..writeln('');
 
-  await File(path).writeAsString(buffer.toString());
-  return const GraphFile(path: path, title: 'Layer Connections');
+  return _GraphSection(
+    title: 'layers.md',
+    content: buffer.toString(),
+  );
 }
 
 Set<String> _featureModules(BuildState state) => state.allModulePaths.entries
@@ -540,6 +533,31 @@ Map<String, Set<String>> _buildLayerGroups(BuildState state) {
   }
 
   return groups;
+}
+
+const Map<String, String> _sectionDescriptions = <String, String>{
+  'foundation.md': 'Highlights how shared modules feed feature delivery',
+  'features.md': 'Focuses purely on feature-layer dependencies',
+  'waves.md': 'Visualizes build waves from top to bottom',
+  'layers.md': 'Clusters modules by architectural tier and feature area',
+};
+
+Future<void> _writeCombinedGraphFile(List<_GraphSection> sections) async {
+  final buffer = StringBuffer()
+    ..writeln('# Module Graphs')
+    ..writeln('');
+
+  for (final section in sections) {
+    buffer
+      ..writeln('## ${section.title}')
+      ..writeln('')
+      ..write(section.content.trimRight())
+      ..writeln('')
+      ..writeln('');
+  }
+
+  final content = buffer.toString().trimRight();
+  await File('module_graph.md').writeAsString('$content\n');
 }
 
 String? _classForGroup(String groupName) {
@@ -662,4 +680,24 @@ void _writeClassDefinitions(StringBuffer buffer, _GraphStyleTracker tracker) {
       '    classDef feature fill:#f6d186,stroke:#c77d39,color:#1b1b1b;',
     );
   }
+}
+
+String _graphIndexSection(List<_GraphSection> sections) {
+  final buffer = StringBuffer();
+  for (final section in sections) {
+    final description = _sectionDescriptions[section.title];
+    if (description == null) continue;
+    final anchor = _anchorForSection(section.title);
+    buffer..writeln(
+      '- [${section.title}](module_graph.md#$anchor) — $description.',
+    );
+  }
+  return buffer.toString();
+}
+
+String _anchorForSection(String title) {
+  final lower = title.toLowerCase();
+  final removedPunctuation = lower.replaceAll(RegExp('[^a-z0-9 ]+'), '');
+  final dasherized = removedPunctuation.trim().replaceAll(RegExp(' +'), '-');
+  return dasherized;
 }

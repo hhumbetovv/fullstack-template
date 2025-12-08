@@ -86,12 +86,7 @@ Flags can be combined: e.g. `fvms pub-sync --packages dio --lock --report` updat
 
 ### Module graph outputs
 
-Running `module-graph` now produces four focused Mermaid files under `build_info/`:
-
-1. `foundation.md` – shows all non-feature modules and how they feed into feature modules.
-2. `features.md` – isolates only the feature packages and their inter-dependencies.
-3. `waves.md` – groups every module by build wave (subgraphs per wave).
-4. `layers.md` – clusters modules by layer (core/common/ui/data/domain) and by each feature area.
+Running `module-graph` now produces a single `module_graph.md` in the repo root with four sections (foundation, features, waves, layers) and an `overview.md` summary. Each section heading is the former file name (e.g. `foundation.md`) for easy linking.
 
 ## Key workflows
 
@@ -112,7 +107,7 @@ Running `module-graph` now produces four focused Mermaid files under `build_info
 
 - Shared module discovery and dependency analysis via `ModuleGraphPort` (`ModuleGraphService`).
 - Smart-build executes builds in dependency order; `--dry-run` prints the plan without running.
-- Module-graph generates `build_info/*.md` mermaid diagrams plus summary stats.
+- Module-graph generates `module_graph.md` (Mermaid diagrams) plus `overview.md` stats.
 
 ### Links & Locale
 
@@ -145,7 +140,7 @@ class ExampleCommand extends ScriptsCommand {
 ## Misc
 
 - Bootstrap script: `sh scripts/bash/bootstrap.sh`
-- Logs: `build_logs/`, graphs under `build_info/`
+- Logs: `build_logs/`, graphs under `module_graph.md`
 - Build artifacts are also staged under `.misc/artifacts/` for grab-and-go archives
 
 Happy automating!

@@ -12,10 +12,10 @@
 
 ## Graph Index
 
-- [Foundation](build_info/foundation.md) — Highlights how shared modules feed feature delivery.
-- [Features](build_info/features.md) — Focuses purely on feature-layer dependencies.
-- [Waves](build_info/waves.md) — Visualizes build waves from top to bottom.
-- [Layers](build_info/layers.md) — Clusters modules by architectural tier and feature area.
+- [foundation.md](module_graph.md#foundationmd) — Highlights how shared modules feed feature delivery.
+- [features.md](module_graph.md#featuresmd) — Focuses purely on feature-layer dependencies.
+- [waves.md](module_graph.md#wavesmd) — Visualizes build waves from top to bottom.
+- [layers.md](module_graph.md#layersmd) — Clusters modules by architectural tier and feature area.
 
 ## Build Waves
 
@@ -63,5 +63,5 @@
 - **demo_domain** → get_it
 - **demo_presentation** → get_it
 
-_Detailed graphs are available under the `build_info/` directory._
+_Detailed graphs are available in `module_graph.md`._
 
