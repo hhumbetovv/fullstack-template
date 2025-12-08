@@ -25,8 +25,27 @@ class ModuleConfigService {
   Future<ModuleSyncSummary> syncModules({
     required ModuleSyncOptions options,
   }) async {
-    final versions = _loadWorkspaceVersions();
     final workspaceEntries = await _loadWorkspaceEntries();
+    if (options.reverse) {
+      return _syncModuleSpecsFromPubspecs(
+        workspaceEntries: workspaceEntries,
+        options: options,
+      );
+    }
+
+    final versions = _loadWorkspaceVersions();
+    return _syncPubspecsFromModuleSpecs(
+      workspaceEntries: workspaceEntries,
+      options: options,
+      versions: versions,
+    );
+  }
+
+  Future<ModuleSyncSummary> _syncPubspecsFromModuleSpecs({
+    required List<String> workspaceEntries,
+    required ModuleSyncOptions options,
+    required WorkspaceModuleVersions versions,
+  }) async {
     final modules = <ModuleSpec>[];
     final failures = <String, String>{};
 
@@ -102,6 +121,181 @@ class ModuleConfigService {
       reportFilePath: reportPath,
       checkMode: options.checkOnly,
     );
+  }
+
+  Future<ModuleSyncSummary> _syncModuleSpecsFromPubspecs({
+    required List<String> workspaceEntries,
+    required ModuleSyncOptions options,
+  }) async {
+    final failures = <String, String>{};
+    final rawEntries = await _loadModulePubspecs(workspaceEntries, failures);
+    final moduleNames = rawEntries.map((entry) => entry.name).toSet();
+    final modules = rawEntries
+        .map(
+          (entry) => _buildModuleSpecFromPubspec(
+            data: entry,
+            workspaceModuleNames: moduleNames,
+          ),
+        )
+        .toList();
+
+    var filtered = _filterModules(modules, options.targets, failures);
+    filtered = _filterModulesByPackages(filtered, options.packageFilters);
+
+    final changed = <String>[];
+    final unchanged = <String>[];
+
+    for (final module in filtered) {
+      final didChange = _writeModuleYamlFromSpec(
+        module,
+        checkOnly: options.checkOnly,
+      );
+      if (didChange) {
+        changed.add(module.name);
+      } else {
+        unchanged.add(module.name);
+      }
+    }
+
+    return ModuleSyncSummary(
+      changed: changed,
+      unchanged: unchanged,
+      formatted: const <String>[],
+      failures: failures,
+      lockFilePath: null,
+      reportFilePath: null,
+      checkMode: options.checkOnly,
+    );
+  }
+
+  Future<List<_ModulePubspecData>> _loadModulePubspecs(
+    List<String> workspaceEntries,
+    Map<String, String> failures,
+  ) async {
+    final modules = <_ModulePubspecData>[];
+    for (final entry in workspaceEntries) {
+      final absolutePath = p.normalize(p.join(_root.path, entry));
+      final directory = Directory(absolutePath);
+      if (!directory.existsSync()) {
+        failures[entry] = 'Directory not found: $absolutePath';
+        continue;
+      }
+
+      final relative = p.relative(directory.path, from: _root.path);
+      final pubspecFile = File(p.join(directory.path, 'pubspec.yaml'));
+      if (!pubspecFile.existsSync()) {
+        failures[relative] = 'pubspec.yaml not found for $relative';
+        continue;
+      }
+
+      final pubspec = await readPubspec(pubspecFile.path);
+      if (pubspec == null) {
+        failures[relative] = 'Failed to parse ${pubspecFile.path}';
+        continue;
+      }
+
+      final name = pubspec['name']?.toString();
+      if (name == null || name.isEmpty) {
+        failures[relative] = '`name` missing in ${pubspecFile.path}';
+        continue;
+      }
+
+      modules.add(
+        _ModulePubspecData(
+          name: name,
+          directory: directory,
+          pubspec: pubspec,
+        ),
+      );
+    }
+    return modules;
+  }
+
+  ModuleSpec _buildModuleSpecFromPubspec({
+    required _ModulePubspecData data,
+    required Set<String> workspaceModuleNames,
+  }) {
+    final dependencyBreakdown = _splitDependenciesFromPubspec(
+      data.pubspec['dependencies'],
+      workspaceModuleNames,
+      data.name,
+    );
+    final devDependencyBreakdown = _splitDependenciesFromPubspec(
+      data.pubspec['dev_dependencies'],
+      workspaceModuleNames,
+      data.name,
+    );
+
+    return ModuleSpec(
+      name: data.name,
+      directory: data.directory,
+      dependencies: dependencyBreakdown.packages,
+      devDependencies: devDependencyBreakdown.packages,
+      modules: dependencyBreakdown.modules,
+      devModules: devDependencyBreakdown.modules,
+    );
+  }
+
+  _DependencyBreakdown _splitDependenciesFromPubspec(
+    dynamic dependencies,
+    Set<String> workspaceModuleNames,
+    String currentModuleName,
+  ) {
+    if (dependencies is! Map) {
+      return const _DependencyBreakdown();
+    }
+
+    final moduleSet = <String>{};
+    final packageSet = <String>{};
+    dependencies.forEach((dynamic key, dynamic _) {
+      final name = key?.toString().trim();
+      if (name == null || name.isEmpty || name == currentModuleName) {
+        return;
+      }
+      if (workspaceModuleNames.contains(name)) {
+        moduleSet.add(name);
+      } else {
+        packageSet.add(name);
+      }
+    });
+
+    return _DependencyBreakdown(
+      modules: moduleSet.toList()..sort(),
+      packages: packageSet.toList()..sort(),
+    );
+  }
+
+  bool _writeModuleYamlFromSpec(ModuleSpec module, {required bool checkOnly}) {
+    final file = module.moduleConfigFile;
+    final data = <String, dynamic>{
+      'name': module.name,
+      'modules': List<String>.from(module.modules)..sort(),
+      'dev_modules': List<String>.from(module.devModules)..sort(),
+      'dependencies': List<String>.from(module.dependencies)..sort(),
+      'dev_dependencies': List<String>.from(module.devDependencies)..sort(),
+    };
+
+    final writer = const YamlWriter(
+      preferredOrder: [
+        'name',
+        'modules',
+        'dev_modules',
+        'dependencies',
+        'dev_dependencies',
+      ],
+    );
+
+    final content = '${writer.convert(data)}\n';
+    final existing = file.existsSync()
+        ? file.readAsStringSync().trimRight()
+        : '';
+    final changed = existing != content.trimRight();
+
+    if (!checkOnly && changed) {
+      file.writeAsStringSync(content);
+    }
+
+    return changed;
   }
 
   WorkspaceModuleVersions _loadWorkspaceVersions() {
@@ -668,4 +862,26 @@ class _ModuleProcessResult {
 
   final ModuleDependencySnapshot snapshot;
   final bool changed;
+}
+
+class _ModulePubspecData {
+  _ModulePubspecData({
+    required this.name,
+    required this.directory,
+    required this.pubspec,
+  });
+
+  final String name;
+  final Directory directory;
+  final Map<String, dynamic> pubspec;
+}
+
+class _DependencyBreakdown {
+  const _DependencyBreakdown({
+    this.modules = const <String>[],
+    this.packages = const <String>[],
+  });
+
+  final List<String> modules;
+  final List<String> packages;
 }

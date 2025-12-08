@@ -71,13 +71,14 @@ _All commands support `--help` for detailed flags._
 1. `workspace_modules.yaml` (repo root) stores the canonical Dart SDK constraint plus a `packages:` map of package → version.
 2. Each workspace module owns a `module.yaml` with its `name`, `modules`/`dev_modules` (internal workspace dependencies), and `dependencies`/`dev_dependencies` (third-party package names without versions).
 
-Running `fvms modules-sync` applies the central versions to every module. Pass module names or paths to limit the update set: `fvms modules-sync --modules core_data feature/demo/presentation`.
+Running `fvms modules-sync` applies the central versions to every module. Pass module names or paths to limit the update set: `fvms modules-sync --modules core_data feature/demo/presentation`. Add `--reverse` to derive minimal `module.yaml` specs from the current `pubspec.yaml` contents (useful after manual pubspec edits).
 
 Additional flags help during maintenance:
 
 - `--check`: dry-run and fail if any pubspec would change.
 - `--packages dio retrofit`: only touch modules that depend on the listed packages.
 - `--format`: sort & rewrite every `module.yaml` (dedupe lists, lint field order) before syncing.
+- `--reverse`: write `module.yaml` files based on the current pubspec dependencies (incompatible with `--format`, `--lock`, and `--report`).
 - `--lock`: emit `build_info/modules_lock.yaml` summarising every module’s resolved third-party package versions.
 - `--report`: emit `build_info/dependencies.md` containing a Markdown dependency digest per module.
 

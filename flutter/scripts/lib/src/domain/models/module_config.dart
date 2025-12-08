@@ -43,6 +43,7 @@ class ModuleSyncOptions {
     this.formatSpecs = false,
     this.generateLockFile = false,
     this.generateReport = false,
+    this.reverse = false,
   });
 
   final List<String> targets;
@@ -51,6 +52,7 @@ class ModuleSyncOptions {
   final bool formatSpecs;
   final bool generateLockFile;
   final bool generateReport;
+  final bool reverse;
 
   bool get hasTargetFilters => targets.isNotEmpty;
   bool get hasPackageFilters => packageFilters.isNotEmpty;

@@ -10,7 +10,10 @@ class ModuleConfigExecutor {
 
   Future<int> run({required ModuleSyncOptions options}) async {
     Console.write('=====================================');
-    Console.write('    Module pubspec sync');
+    final headline = options.reverse
+        ? '    Module module.yaml sync'
+        : '    Module pubspec sync';
+    Console.write(headline);
     Console.write('=====================================');
 
     final summary = await _service.syncModules(options: options);

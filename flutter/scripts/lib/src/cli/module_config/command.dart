@@ -46,6 +46,12 @@ class ModuleConfigCommand extends ScriptsCommand {
         negatable: false,
         help:
             'Emit build_info/dependencies.md with a Markdown dependency report.',
+      )
+      ..addFlag(
+        'reverse',
+        negatable: false,
+        help:
+            'Generate module.yaml files from the current pubspec.yaml definitions instead of syncing pubspecs.',
       );
   }
 
@@ -63,10 +69,18 @@ class ModuleConfigCommand extends ScriptsCommand {
     final formatSpecs = argResults?['format'] as bool? ?? false;
     final generateLock = argResults?['lock'] as bool? ?? false;
     final generateReport = argResults?['report'] as bool? ?? false;
+    final reverse = argResults?['reverse'] as bool? ?? false;
 
     if (checkOnly && (formatSpecs || generateLock || generateReport)) {
       throw UsageException(
         '--check cannot be combined with --format, --lock, or --report because those flags write files.',
+        usage,
+      );
+    }
+
+    if (reverse && (formatSpecs || generateLock || generateReport)) {
+      throw UsageException(
+        '--reverse cannot be combined with --format, --lock, or --report.',
         usage,
       );
     }
@@ -78,6 +92,7 @@ class ModuleConfigCommand extends ScriptsCommand {
       formatSpecs: formatSpecs,
       generateLockFile: generateLock,
       generateReport: generateReport,
+      reverse: reverse,
     );
 
     return getDependency<ModuleConfigExecutor>().run(options: options);
