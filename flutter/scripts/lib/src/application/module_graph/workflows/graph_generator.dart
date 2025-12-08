@@ -17,16 +17,6 @@ class GraphGenerator {
     final modulesWithUnusedDeps = state.moduleUnusedDependencies.keys.toSet();
     final modulesWithUnusedPackages = state.moduleUnusedPackages.keys.toSet();
 
-    final graphDir = Directory('build_info');
-    if (!graphDir.existsSync()) {
-      graphDir.createSync(recursive: true);
-    }
-    for (final entity in graphDir.listSync()) {
-      if (entity is File && entity.path.endsWith('.md')) {
-        entity.deleteSync();
-      }
-    }
-
     var maxWave = -1;
     for (final level in state.moduleBuildLevel.values) {
       if (level > maxWave) {
