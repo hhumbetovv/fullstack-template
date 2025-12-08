@@ -45,6 +45,11 @@ class ModuleConfigExecutor {
       Console.info('Wrote ${summary.reportFilePath}');
     }
 
+    if (summary.workspaceConfigPath != null) {
+      final prefix = summary.checkMode ? 'Would write' : 'Wrote';
+      Console.info('$prefix ${summary.workspaceConfigPath}');
+    }
+
     if (summary.failures.isNotEmpty) {
       Console.write('\nFailures:');
       summary.failures.forEach((module, message) {

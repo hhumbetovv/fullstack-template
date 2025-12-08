@@ -1,5 +1,4 @@
 dart_sdk: ^3.10.1
-
 packages:
   analyzer: ^7.4.5
   args: ^2.5.0
@@ -32,3 +31,4 @@ packages:
   shared_preferences: ^2.5.3
   source_gen: ^3.0.0
   yaml: ^3.1.2
+

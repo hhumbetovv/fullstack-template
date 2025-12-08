@@ -83,6 +83,8 @@ class ModuleSyncSummary {
     required this.lockFilePath,
     required this.reportFilePath,
     required this.checkMode,
+    required this.workspaceConfigChanged,
+    required this.workspaceConfigPath,
   });
 
   final List<String> changed;
@@ -92,7 +94,9 @@ class ModuleSyncSummary {
   final String? lockFilePath;
   final String? reportFilePath;
   final bool checkMode;
+  final bool workspaceConfigChanged;
+  final String? workspaceConfigPath;
 
   bool get hasFailures => failures.isNotEmpty;
-  bool get hasChanges => changed.isNotEmpty;
+  bool get hasChanges => changed.isNotEmpty || workspaceConfigChanged;
 }
