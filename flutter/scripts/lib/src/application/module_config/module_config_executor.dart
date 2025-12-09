@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/domain/models/module_config.dart';
 import 'package:scripts/src/infrastructure/module_config/module_config_service.dart';
@@ -70,7 +73,64 @@ class ModuleConfigExecutor {
       return 1;
     }
 
+    if (_shouldRunPubGet(options, summary)) {
+      try {
+        await _runPubGet(summary.pubspecChanges);
+      } on CommandError catch (error) {
+        _revertPubspecChanges(summary.pubspecChanges);
+        Console.error(
+          'flutter pub get failed: ${error.message}. Changes have been reverted.',
+        );
+        return 1;
+      } on ProcessException catch (error) {
+        _revertPubspecChanges(summary.pubspecChanges);
+        Console.error(
+          'Failed to start flutter pub get (${error.message}). Changes have been reverted.',
+        );
+        return 1;
+      }
+    }
+
     Console.success('Module sync completed successfully.');
     return 0;
+  }
+
+  bool _shouldRunPubGet(ModuleSyncOptions options, ModuleSyncSummary summary) {
+    return !options.checkOnly && !summary.hasFailures &&
+        summary.pubspecChanges.isNotEmpty;
+  }
+
+  Future<void> _runPubGet(List<ModulePubspecChange> modules) async {
+    for (final change in modules) {
+      Console.info('Running flutter pub get for ${change.moduleName}...');
+      final process = await Process.start(
+        'fvm',
+        const ['flutter', 'pub', 'get'],
+        workingDirectory: change.directoryPath,
+        mode: ProcessStartMode.inheritStdio,
+      );
+      final exitCode = await process.exitCode;
+      if (exitCode != 0) {
+        throw CommandError(
+          '`flutter pub get` failed for ${change.moduleName}',
+          exitCode: exitCode,
+        );
+      }
+    }
+  }
+
+  void _revertPubspecChanges(List<ModulePubspecChange> modules) {
+    for (final change in modules) {
+      final file = File(change.pubspecPath);
+      if (!change.hadExistingFile) {
+        if (file.existsSync()) {
+          file.deleteSync();
+        }
+        continue;
+      }
+      file
+        ..createSync(recursive: true)
+        ..writeAsStringSync(change.previousContent ?? '');
+    }
   }
 }

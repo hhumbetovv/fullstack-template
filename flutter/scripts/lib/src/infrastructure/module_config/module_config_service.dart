@@ -8,6 +8,24 @@ import 'package:scripts/src/services/yaml_service.dart';
 import 'package:scripts/src/utils/yaml_writer.dart';
 import 'package:yaml/yaml.dart';
 
+const _moduleSpecReservedKeys = <String>{
+  'name',
+  'modules',
+  'dev_modules',
+  'dependencies',
+  'dev_dependencies',
+  'environment',
+  'resolution',
+};
+
+const _managedPubspecKeys = <String>{
+  'name',
+  'dependencies',
+  'dev_dependencies',
+  'environment',
+  'resolution',
+};
+
 class ModuleConfigService {
   ModuleConfigService({
     this.workspaceConfigFile = 'pub_versions.yaml',
@@ -74,6 +92,7 @@ class ModuleConfigService {
     final unchanged = <String>[];
     final formatted = <String>[];
     final snapshots = <ModuleDependencySnapshot>[];
+    final pubspecChanges = <ModulePubspecChange>[];
 
     for (final module in filtered) {
       final missingModuleDeps = _missingModuleDependencies(module, moduleNames);
@@ -106,6 +125,15 @@ class ModuleConfigService {
         snapshots.add(result.snapshot);
         if (result.changed) {
           changed.add(module.name);
+          pubspecChanges.add(
+            ModulePubspecChange(
+              moduleName: module.name,
+              directoryPath: module.directory.path,
+              pubspecPath: module.pubspecFile.path,
+              previousContent: result.previousContent,
+              hadExistingFile: result.hadExistingPubspec,
+            ),
+          );
         } else {
           unchanged.add(module.name);
         }
@@ -133,6 +161,7 @@ class ModuleConfigService {
       checkMode: options.checkOnly,
       workspaceConfigChanged: false,
       workspaceConfigPath: null,
+      pubspecChanges: pubspecChanges,
     );
   }
 
@@ -193,6 +222,7 @@ class ModuleConfigService {
       checkMode: options.checkOnly,
       workspaceConfigChanged: workspaceResult.changed,
       workspaceConfigPath: workspaceResult.path,
+      pubspecChanges: const <ModulePubspecChange>[],
     );
   }
 
@@ -378,6 +408,9 @@ class ModuleConfigService {
       data.name,
     );
 
+    final additionalFields = Map<String, dynamic>.from(data.pubspec)
+      ..removeWhere((key, _) => _managedPubspecKeys.contains(key));
+
     return ModuleSpec(
       name: data.name,
       directory: data.directory,
@@ -385,6 +418,7 @@ class ModuleConfigService {
       devDependencies: devDependencyBreakdown.packages,
       modules: dependencyBreakdown.modules,
       devModules: devDependencyBreakdown.modules,
+      additionalFields: additionalFields,
     );
   }
 
@@ -425,16 +459,11 @@ class ModuleConfigService {
       'dev_modules': List<String>.from(module.devModules)..sort(),
       'dependencies': List<String>.from(module.dependencies)..sort(),
       'dev_dependencies': List<String>.from(module.devDependencies)..sort(),
+      ...module.additionalFields,
     };
 
-    const writer = YamlWriter(
-      preferredOrder: [
-        'name',
-        'modules',
-        'dev_modules',
-        'dependencies',
-        'dev_dependencies',
-      ],
+    final writer = YamlWriter(
+      preferredOrder: _moduleYamlOrder(module.additionalFields.keys),
     );
 
     final content = '${writer.convert(data)}\n';
@@ -558,10 +587,13 @@ class ModuleConfigService {
     if (name == null || name.isEmpty) {
       throw CommandError('`name` missing in ${configFile.path}');
     }
+    final additionalFields = Map<String, dynamic>.from(data)
+      ..removeWhere((key, _) => _moduleSpecReservedKeys.contains(key));
 
     return ModuleSpec(
       name: name,
       directory: directory,
+      additionalFields: additionalFields,
       dependencies: _stringList(
         data['dependencies'],
         configFile.path,
@@ -718,16 +750,11 @@ class ModuleConfigService {
       'dev_modules': module.devModules,
       'dependencies': module.dependencies,
       'dev_dependencies': module.devDependencies,
+      ...module.additionalFields,
     };
 
-    const writer = YamlWriter(
-      preferredOrder: [
-        'name',
-        'modules',
-        'dev_modules',
-        'dependencies',
-        'dev_dependencies',
-      ],
+    final writer = YamlWriter(
+      preferredOrder: _moduleYamlOrder(module.additionalFields.keys),
     );
     final content = '${writer.convert(data)}\n';
     final existing = file.existsSync() ? file.readAsStringSync() : '';
@@ -745,11 +772,13 @@ class ModuleConfigService {
   }) async {
     final pubspecFile = module.pubspecFile;
     final pubspecExists = pubspecFile.existsSync();
-    final pubspec = pubspecExists
-        ? await readPubspec(pubspecFile.path) ??
-              (throw CommandError('Failed to parse ${pubspecFile.path}'))
-        : <String, dynamic>{};
-    final updated = Map<String, dynamic>.from(pubspec);
+    if (pubspecExists) {
+      final parsed = await readPubspec(pubspecFile.path);
+      if (parsed == null) {
+        throw CommandError('Failed to parse ${pubspecFile.path}');
+      }
+    }
+    final updated = Map<String, dynamic>.from(module.additionalFields);
 
     updated['name'] = module.name;
     updated['environment'] = <String, dynamic>{'sdk': versions.dartSdk};
@@ -776,6 +805,7 @@ class ModuleConfigService {
     const writer = YamlWriter();
     final content = '${writer.convert(_normalizeMap(updated))}\n';
     final existingContent = pubspecExists ? pubspecFile.readAsStringSync() : '';
+    final previousContent = pubspecExists ? existingContent : null;
     final normalizedExisting = existingContent.trimRight();
     final normalizedExpected = content.trimRight();
     final changed = normalizedExisting != normalizedExpected;
@@ -786,7 +816,12 @@ class ModuleConfigService {
     }
 
     final snapshot = _buildSnapshot(module, versions);
-    return _ModuleProcessResult(snapshot: snapshot, changed: changed);
+    return _ModuleProcessResult(
+      snapshot: snapshot,
+      changed: changed,
+      previousContent: previousContent,
+      hadExistingPubspec: pubspecExists,
+    );
   }
 
   Map<String, dynamic> _buildDependencyMap({
@@ -1051,16 +1086,39 @@ class ModuleConfigService {
       directory.createSync(recursive: true);
     }
   }
+
+  List<String> _moduleYamlOrder(Iterable<String> additionalKeys) {
+    const baseOrder = <String>[
+      'name',
+      'modules',
+      'dev_modules',
+      'dependencies',
+      'dev_dependencies',
+    ];
+    final order = <String>[]..addAll(baseOrder);
+    final seen = order.toSet();
+    for (final key in additionalKeys) {
+      if (key.isEmpty) continue;
+      if (seen.add(key)) {
+        order.add(key);
+      }
+    }
+    return order;
+  }
 }
 
 class _ModuleProcessResult {
   _ModuleProcessResult({
     required this.snapshot,
     required this.changed,
+    required this.previousContent,
+    required this.hadExistingPubspec,
   });
 
   final ModuleDependencySnapshot snapshot;
   final bool changed;
+  final String? previousContent;
+  final bool hadExistingPubspec;
 }
 
 class _ModulePubspecData {

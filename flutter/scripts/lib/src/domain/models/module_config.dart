@@ -22,6 +22,7 @@ class ModuleSpec {
     required this.devDependencies,
     required this.modules,
     required this.devModules,
+    this.additionalFields = const <String, dynamic>{},
   });
 
   final String name;
@@ -30,6 +31,7 @@ class ModuleSpec {
   final List<String> devDependencies;
   final List<String> modules;
   final List<String> devModules;
+  final Map<String, dynamic> additionalFields;
 
   File get moduleConfigFile => File(p.join(directory.path, 'module.yaml'));
   File get pubspecFile => File(p.join(directory.path, 'pubspec.yaml'));
@@ -74,6 +76,22 @@ class ModuleDependencySnapshot {
   final Map<String, String> devPackageDependencies;
 }
 
+class ModulePubspecChange {
+  ModulePubspecChange({
+    required this.moduleName,
+    required this.directoryPath,
+    required this.pubspecPath,
+    required this.previousContent,
+    required this.hadExistingFile,
+  });
+
+  final String moduleName;
+  final String directoryPath;
+  final String pubspecPath;
+  final String? previousContent;
+  final bool hadExistingFile;
+}
+
 class ModuleSyncSummary {
   ModuleSyncSummary({
     required this.changed,
@@ -85,6 +103,7 @@ class ModuleSyncSummary {
     required this.checkMode,
     required this.workspaceConfigChanged,
     required this.workspaceConfigPath,
+    required this.pubspecChanges,
   });
 
   final List<String> changed;
@@ -96,6 +115,7 @@ class ModuleSyncSummary {
   final bool checkMode;
   final bool workspaceConfigChanged;
   final String? workspaceConfigPath;
+  final List<ModulePubspecChange> pubspecChanges;
 
   bool get hasFailures => failures.isNotEmpty;
   bool get hasChanges => changed.isNotEmpty || workspaceConfigChanged;
