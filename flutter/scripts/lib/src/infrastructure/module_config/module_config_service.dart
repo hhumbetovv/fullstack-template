@@ -1,8 +1,7 @@
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:common_tooling/tooling.dart'
-    show normalizeLineEndings, preferredLineEndingForContent;
+import 'package:common_tooling/tooling.dart' show normalizeLineEndings, preferredLineEndingForContent;
 import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/domain/models/module_config.dart';
@@ -99,8 +98,7 @@ class ModuleConfigService {
     for (final module in filtered) {
       final missingModuleDeps = _missingModuleDependencies(module, moduleNames);
       if (missingModuleDeps.isNotEmpty) {
-        failures[module.name] =
-            'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
+        failures[module.name] = 'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
         continue;
       }
 
@@ -146,12 +144,8 @@ class ModuleConfigService {
       }
     }
 
-    final lockPath = options.generateLockFile
-        ? _writeLockFile(snapshots, versions.dartSdk)
-        : null;
-    final reportPath = options.generateReport
-        ? _writeDependencyReport(snapshots)
-        : null;
+    final lockPath = options.generateLockFile ? _writeLockFile(snapshots, versions.dartSdk) : null;
+    final reportPath = options.generateReport ? _writeDependencyReport(snapshots) : null;
 
     return ModuleSyncSummary(
       changed: changed,
@@ -198,8 +192,7 @@ class ModuleConfigService {
     for (final module in filtered) {
       final missingModuleDeps = _missingModuleDependencies(module, moduleNames);
       if (missingModuleDeps.isNotEmpty) {
-        failures[module.name] =
-            'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
+        failures[module.name] = 'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
         continue;
       }
 
@@ -261,8 +254,7 @@ class ModuleConfigService {
 
     final dartSdk = await _readRootDartSdkConstraint();
     if (dartSdk == null || dartSdk.isEmpty) {
-      failures[workspaceConfigFile] =
-          'Cannot infer `dart_sdk` constraint from $rootPubspecFile';
+      failures[workspaceConfigFile] = 'Cannot infer `dart_sdk` constraint from $rootPubspecFile';
       return const _WorkspaceConfigResult(changed: false, path: null);
     }
 
@@ -473,8 +465,7 @@ class ModuleConfigService {
     );
 
     final content = '${writer.convert(data)}\n';
-    final String? existingContent =
-        file.existsSync() ? file.readAsStringSync() : null;
+    final existingContent = file.existsSync() ? file.readAsStringSync() : null;
     final existing = existingContent?.trimRight() ?? '';
     final changed = existing != content.trimRight();
 
@@ -574,9 +565,7 @@ class ModuleConfigService {
     if (trimmed.isEmpty) {
       return null;
     }
-    final absolutePath = p.isAbsolute(trimmed)
-        ? p.normalize(trimmed)
-        : p.normalize(p.join(_root.path, trimmed));
+    final absolutePath = p.isAbsolute(trimmed) ? p.normalize(trimmed) : p.normalize(p.join(_root.path, trimmed));
     final directory = Directory(absolutePath);
     if (!directory.existsSync()) {
       return null;
@@ -645,10 +634,7 @@ class ModuleConfigService {
     List<String> targets,
     Map<String, String> failures,
   ) {
-    final cleanedTargets = targets
-        .map((target) => target.trim())
-        .where((target) => target.isNotEmpty)
-        .toList();
+    final cleanedTargets = targets.map((target) => target.trim()).where((target) => target.isNotEmpty).toList();
     if (cleanedTargets.isEmpty) {
       return modules;
     }
@@ -678,10 +664,7 @@ class ModuleConfigService {
     List<ModuleSpec> modules,
     List<String> packageFilters,
   ) {
-    final cleaned = packageFilters
-        .map((pkg) => pkg.trim())
-        .where((pkg) => pkg.isNotEmpty)
-        .toSet();
+    final cleaned = packageFilters.map((pkg) => pkg.trim()).where((pkg) => pkg.isNotEmpty).toSet();
     if (cleaned.isEmpty) {
       return modules;
     }
@@ -706,9 +689,7 @@ class ModuleConfigService {
     final normalizedRelative = p.normalize(relative);
     final normalizedTarget = p.normalize(target);
 
-    return normalizedRelative == normalizedTarget ||
-        relative == target ||
-        p.basename(relative) == target;
+    return normalizedRelative == normalizedTarget || relative == target || p.basename(relative) == target;
   }
 
   List<String> _unknownPackages(
@@ -719,8 +700,7 @@ class ModuleConfigService {
     final seen = <String>{};
     void collect(List<String> packages) {
       for (final package in packages) {
-        if (!_isFlutterSdkPackage(package) &&
-            versions.versionFor(package) == null) {
+        if (!_isFlutterSdkPackage(package) && versions.versionFor(package) == null) {
           if (seen.add(package)) {
             unknown.add(package);
           }
@@ -738,8 +718,7 @@ class ModuleConfigService {
     final sortedModules = List<String>.from(module.modules)..sort();
     final sortedDevModules = List<String>.from(module.devModules)..sort();
     final sortedDependencies = List<String>.from(module.dependencies)..sort();
-    final sortedDevDependencies = List<String>.from(module.devDependencies)
-      ..sort();
+    final sortedDevDependencies = List<String>.from(module.devDependencies)..sort();
 
     module.modules
       ..clear()
@@ -767,8 +746,7 @@ class ModuleConfigService {
       preferredOrder: _moduleYamlOrder(module.additionalFields.keys),
     );
     final content = '${writer.convert(data)}\n';
-    final String? existingContent =
-        file.existsSync() ? file.readAsStringSync() : null;
+    final existingContent = file.existsSync() ? file.readAsStringSync() : null;
     if ((existingContent?.trimRight() ?? '') == content.trimRight()) {
       return false;
     }
@@ -819,20 +797,26 @@ class ModuleConfigService {
 
     const writer = YamlWriter();
     final content = '${writer.convert(_normalizeMap(updated))}\n';
-    final String? existingContent =
-        pubspecExists ? pubspecFile.readAsStringSync() : null;
+    final existingContent = pubspecExists ? pubspecFile.readAsStringSync() : null;
     final previousContent = existingContent;
-    final normalizedExisting = (existingContent ?? '').trimRight();
-    final normalizedExpected = content.trimRight();
-    final changed = normalizedExisting != normalizedExpected;
+
+    // Normalize both contents for comparison to avoid false positives from line ending differences
+    final normalizedContent = normalizeLineEndings(
+      content,
+      preferredLineEnding: preferredLineEndingForContent(existingContent),
+    );
+    final normalizedExisting = existingContent != null
+        ? normalizeLineEndings(
+            existingContent,
+            preferredLineEnding: preferredLineEndingForContent(existingContent),
+          )
+        : '';
+
+    final changed = normalizedExisting.trimRight() != normalizedContent.trimRight();
 
     if (!checkOnly && changed) {
       pubspecFile.parent.createSync(recursive: true);
-      final normalized = normalizeLineEndings(
-        content,
-        preferredLineEnding: preferredLineEndingForContent(existingContent),
-      );
-      pubspecFile.writeAsStringSync(normalized);
+      pubspecFile.writeAsStringSync(normalizedContent);
     }
 
     final snapshot = _buildSnapshot(module, versions);
@@ -973,8 +957,7 @@ class ModuleConfigService {
     final outputPath = p.join(_root.path, lockFilePath);
     _ensureDirectory(outputPath);
     final outputFile = File(outputPath);
-    final String? existingContent =
-        outputFile.existsSync() ? outputFile.readAsStringSync() : null;
+    final existingContent = outputFile.existsSync() ? outputFile.readAsStringSync() : null;
     final normalized = normalizeLineEndings(
       content,
       preferredLineEnding: preferredLineEndingForContent(existingContent),
@@ -991,8 +974,7 @@ class ModuleConfigService {
     if (snapshots.isEmpty) {
       buffer.writeln('No modules processed.');
     } else {
-      final sorted = List<ModuleDependencySnapshot>.from(snapshots)
-        ..sort((a, b) => a.name.compareTo(b.name));
+      final sorted = List<ModuleDependencySnapshot>.from(snapshots)..sort((a, b) => a.name.compareTo(b.name));
       for (final snapshot in sorted) {
         buffer
           ..writeln('## ${snapshot.name}')
@@ -1015,8 +997,7 @@ class ModuleConfigService {
     final outputPath = p.join(_root.path, dependencyReportPath);
     _ensureDirectory(outputPath);
     final outputFile = File(outputPath);
-    final String? existingContent =
-        outputFile.existsSync() ? outputFile.readAsStringSync() : null;
+    final existingContent = outputFile.existsSync() ? outputFile.readAsStringSync() : null;
     final normalized = normalizeLineEndings(
       '${buffer.toString().trim()}\n',
       preferredLineEnding: preferredLineEndingForContent(existingContent),
@@ -1041,9 +1022,7 @@ class ModuleConfigService {
         buffer.writeln('- Modules: ${modules.join(', ')}');
       }
       if (packages.isNotEmpty) {
-        final entries = packages.entries
-            .map((entry) => '${entry.key} (${entry.value})')
-            .join(', ');
+        final entries = packages.entries.map((entry) => '${entry.key} (${entry.value})').join(', ');
         buffer.writeln('- Packages: $entries');
       }
     }
@@ -1058,8 +1037,7 @@ class ModuleConfigService {
     }
     if (data is Map) {
       return data.map(
-        (key, dynamic value) =>
-            MapEntry(key.toString(), _convertYamlValue(value)),
+        (key, dynamic value) => MapEntry(key.toString(), _convertYamlValue(value)),
       );
     }
     throw CommandError('Invalid YAML format in ${file.path}');
@@ -1079,8 +1057,7 @@ class ModuleConfigService {
     }
     if (value is Map) {
       return value.map(
-        (key, dynamic entryValue) =>
-            MapEntry(key.toString(), _convertYamlValue(entryValue)),
+        (key, dynamic entryValue) => MapEntry(key.toString(), _convertYamlValue(entryValue)),
       );
     }
     if (value is YamlList) {
@@ -1129,7 +1106,7 @@ class ModuleConfigService {
       'dependencies',
       'dev_dependencies',
     ];
-    final order = <String>[]..addAll(baseOrder);
+    final order = <String>[...baseOrder];
     final seen = order.toSet();
     for (final key in additionalKeys) {
       if (key.isEmpty) continue;
