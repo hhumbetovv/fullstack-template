@@ -32,8 +32,7 @@ class DirectoryWalker {
       final normalized = p.normalize(directory.absolute.path);
       if (!visited.add(normalized)) continue;
 
-      if (_shouldSkip(normalized) &&
-          normalized != p.normalize(root.absolute.path)) {
+      if (_shouldSkip(normalized) && normalized != p.normalize(root.absolute.path)) {
         continue;
       }
 

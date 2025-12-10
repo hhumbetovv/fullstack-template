@@ -2,6 +2,8 @@
 
 import 'dart:io';
 
+import 'package:common_tooling/tooling.dart'
+    show normalizeLineEndings, preferredLineEndingForContent;
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/core/state/build_state.dart';
 import 'package:scripts/src/domain/models/graph_config.dart'
@@ -547,7 +549,16 @@ Future<void> _writeCombinedGraphFile(List<_GraphSection> sections) async {
   }
 
   final content = buffer.toString().trimRight();
-  await File('module_graph.md').writeAsString('$content\n');
+  final file = File('module_graph.md');
+  String? existing;
+  if (await file.exists()) {
+    existing = await file.readAsString();
+  }
+  final normalized = normalizeLineEndings(
+    '$content\n',
+    preferredLineEnding: preferredLineEndingForContent(existing),
+  );
+  await file.writeAsString(normalized);
 }
 
 String? _classForGroup(String groupName) {

@@ -1,6 +1,8 @@
 import 'dart:collection';
 import 'dart:io';
 
+import 'package:common_tooling/tooling.dart'
+    show normalizeLineEndings, preferredLineEndingForContent;
 import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/domain/models/module_config.dart';
@@ -313,7 +315,11 @@ class ModuleConfigService {
         })}\n';
 
     if (!checkOnly) {
-      file.writeAsStringSync(content);
+      final normalized = normalizeLineEndings(
+        content,
+        preferredLineEnding: preferredLineEndingForContent(null),
+      );
+      file.writeAsStringSync(normalized);
     }
 
     if (missingVersions.isNotEmpty || conflicts.isNotEmpty) {
@@ -467,13 +473,17 @@ class ModuleConfigService {
     );
 
     final content = '${writer.convert(data)}\n';
-    final existing = file.existsSync()
-        ? file.readAsStringSync().trimRight()
-        : '';
+    final String? existingContent =
+        file.existsSync() ? file.readAsStringSync() : null;
+    final existing = existingContent?.trimRight() ?? '';
     final changed = existing != content.trimRight();
 
     if (!checkOnly && changed) {
-      file.writeAsStringSync(content);
+      final normalized = normalizeLineEndings(
+        content,
+        preferredLineEnding: preferredLineEndingForContent(existingContent),
+      );
+      file.writeAsStringSync(normalized);
     }
 
     return changed;
@@ -757,11 +767,16 @@ class ModuleConfigService {
       preferredOrder: _moduleYamlOrder(module.additionalFields.keys),
     );
     final content = '${writer.convert(data)}\n';
-    final existing = file.existsSync() ? file.readAsStringSync() : '';
-    if (existing.trimRight() == content.trimRight()) {
+    final String? existingContent =
+        file.existsSync() ? file.readAsStringSync() : null;
+    if ((existingContent?.trimRight() ?? '') == content.trimRight()) {
       return false;
     }
-    file.writeAsStringSync(content);
+    final normalized = normalizeLineEndings(
+      content,
+      preferredLineEnding: preferredLineEndingForContent(existingContent),
+    );
+    file.writeAsStringSync(normalized);
     return true;
   }
 
@@ -804,15 +819,20 @@ class ModuleConfigService {
 
     const writer = YamlWriter();
     final content = '${writer.convert(_normalizeMap(updated))}\n';
-    final existingContent = pubspecExists ? pubspecFile.readAsStringSync() : '';
-    final previousContent = pubspecExists ? existingContent : null;
-    final normalizedExisting = existingContent.trimRight();
+    final String? existingContent =
+        pubspecExists ? pubspecFile.readAsStringSync() : null;
+    final previousContent = existingContent;
+    final normalizedExisting = (existingContent ?? '').trimRight();
     final normalizedExpected = content.trimRight();
     final changed = normalizedExisting != normalizedExpected;
 
     if (!checkOnly && changed) {
       pubspecFile.parent.createSync(recursive: true);
-      pubspecFile.writeAsStringSync(content);
+      final normalized = normalizeLineEndings(
+        content,
+        preferredLineEnding: preferredLineEndingForContent(existingContent),
+      );
+      pubspecFile.writeAsStringSync(normalized);
     }
 
     final snapshot = _buildSnapshot(module, versions);
@@ -952,7 +972,14 @@ class ModuleConfigService {
         })}\n';
     final outputPath = p.join(_root.path, lockFilePath);
     _ensureDirectory(outputPath);
-    File(outputPath).writeAsStringSync(content);
+    final outputFile = File(outputPath);
+    final String? existingContent =
+        outputFile.existsSync() ? outputFile.readAsStringSync() : null;
+    final normalized = normalizeLineEndings(
+      content,
+      preferredLineEnding: preferredLineEndingForContent(existingContent),
+    );
+    outputFile.writeAsStringSync(normalized);
     return lockFilePath;
   }
 
@@ -987,7 +1014,14 @@ class ModuleConfigService {
 
     final outputPath = p.join(_root.path, dependencyReportPath);
     _ensureDirectory(outputPath);
-    File(outputPath).writeAsStringSync('${buffer.toString().trim()}\n');
+    final outputFile = File(outputPath);
+    final String? existingContent =
+        outputFile.existsSync() ? outputFile.readAsStringSync() : null;
+    final normalized = normalizeLineEndings(
+      '${buffer.toString().trim()}\n',
+      preferredLineEnding: preferredLineEndingForContent(existingContent),
+    );
+    outputFile.writeAsStringSync(normalized);
     return dependencyReportPath;
   }
 
