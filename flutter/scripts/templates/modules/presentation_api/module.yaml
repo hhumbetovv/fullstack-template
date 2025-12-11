@@ -1,5 +1,6 @@
 name: {{module_name}}
 modules:
+  #! Core Modules
   - processor
   - core_navigation
   - common_shared

@@ -6,10 +6,6 @@ modules:
 dev_modules:
   - gen_exporter
   - gen_data
-dependencies:
-  # Dependency Injection
-  - injectable
+dependencies: []
 dev_dependencies:
   - build_runner
-  # Dependency Injection
-  - injectable_generator

@@ -1,5 +1,6 @@
 name: {{module_name}}
 modules:
+  #! Core Modules
   - core_domain
   - core_data
 dev_modules: 

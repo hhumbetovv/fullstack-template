@@ -1,5 +1,6 @@
 name: {{module_name}}
 modules:
+  #! Core Modules
   - processor
   - core_presentation
   - core_navigation
@@ -11,6 +12,7 @@ dev_modules:
   - gen_data
   - gen_view_kit
 dependencies:
+  - flutter
   # Navigation
   - auto_route
   # Dependency Injection
