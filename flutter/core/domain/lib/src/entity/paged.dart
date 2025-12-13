@@ -29,18 +29,20 @@ class Paged<T> {
 
 extension PagedCastX<T> on Paged<T> {
   Paged<R> castAs<R>({
-    List<R> content = const [],
+    List<R>? content,
     Paged<T>? copyFrom,
   }) {
+    final source = copyFrom ?? this;
+    final resolvedContent = content ?? source.content.whereType<R>().toList();
     return Paged(
-      content: content,
-      page: copyFrom?.page ?? page,
-      size: copyFrom?.size ?? size,
-      totalElements: copyFrom?.totalElements ?? totalElements,
-      totalPages: copyFrom?.totalPages ?? totalPages,
-      firstPage: copyFrom?.firstPage ?? firstPage,
-      lastPage: copyFrom?.lastPage ?? lastPage,
-      isLoading: copyFrom?.isLoading ?? isLoading,
+      content: resolvedContent,
+      page: source.page,
+      size: source.size,
+      totalElements: source.totalElements,
+      totalPages: source.totalPages,
+      firstPage: source.firstPage,
+      lastPage: source.lastPage,
+      isLoading: source.isLoading,
     );
   }
 }
