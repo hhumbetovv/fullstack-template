@@ -44,6 +44,8 @@ graph LR
     ui_foundation --> core_navigation
     common_shared --> core_data
     core_domain --> core_data
+    common_shared --> core_domain
+    processor --> core_domain
     common_presentation --> ui_components
     common_shared --> ui_components
     processor --> ui_components
@@ -101,8 +103,6 @@ graph TB
         direction TB
         common_shared["common_shared"]
         common_shared:::common
-        core_domain["core_domain"]
-        core_domain:::core
         processor["processor"]
         ui_foundation["ui_foundation"]
         ui_foundation:::ui
@@ -111,19 +111,18 @@ graph TB
         direction TB
         common_presentation["common_presentation"]
         common_presentation:::common
-        core_data["core_data"]
-        core_data:::core
+        core_domain["core_domain"]
+        core_domain:::core
         core_navigation["core_navigation"]
         core_navigation:::core
-        demo_domain["demo_domain"]
-        demo_domain:::domain
-        class demo_domain unused
     end
     subgraph wave_cluster_2["Wave 2"]
         direction TB
-        demo_data["demo_data"]
-        demo_data:::data
-        class demo_data unused
+        core_data["core_data"]
+        core_data:::core
+        demo_domain["demo_domain"]
+        demo_domain:::domain
+        class demo_domain unused
         ui_components["ui_components"]
         ui_components:::ui
     end
@@ -131,10 +130,16 @@ graph TB
         direction TB
         console_presentation["console_presentation"]
         console_presentation:::presentation
+        demo_data["demo_data"]
+        demo_data:::data
+        class demo_data unused
+    end
+    subgraph wave_cluster_4["Wave 4"]
+        direction TB
         demo_presentation["demo_presentation"]
         demo_presentation:::presentation
     end
-    subgraph wave_cluster_4["Wave 4"]
+    subgraph wave_cluster_5["Wave 5"]
         direction TB
         app["app"]
     end
@@ -142,6 +147,7 @@ graph TB
     wave_cluster_1 --> wave_cluster_2
     wave_cluster_2 --> wave_cluster_3
     wave_cluster_3 --> wave_cluster_4
+    wave_cluster_4 --> wave_cluster_5
 
     classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000;
     classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000;

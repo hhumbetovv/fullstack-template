@@ -20,3 +20,4 @@ dev_dependencies:
   injectable_generator: ^2.7.0
   json_serializable: ^6.9.4
   retrofit_generator: ^10.0.5
+

@@ -3,12 +3,21 @@ targets:
     auto_apply_builders: false
     builders:
       #! Project Generators
+      gen_data|data:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/usecase/**"
+            - "lib/src/orchestrator/**"
+            - "lib/src/entity/**"
       gen_exporter|exporter:
         enabled: true
         options:
           folders:
+            - entity
             - repository
             - usecase
+            - orchestrator
       #! Dependency Injection
       injectable_generator|injectable_builder:
         enabled: true

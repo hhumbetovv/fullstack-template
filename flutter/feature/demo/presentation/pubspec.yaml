@@ -18,3 +18,4 @@ dev_dependencies:
   gen_data: any
   gen_view_kit: any
   injectable_generator: ^2.7.0
+
