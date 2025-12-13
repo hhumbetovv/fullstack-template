@@ -2,8 +2,6 @@ import 'package:core_domain/src/entity/failure.dart';
 import 'package:core_domain/src/entity/types.dart';
 import 'package:core_domain/src/result/result.dart';
 
-typedef Page<Data> = ({List<Data> data, bool hasNextPage});
-
 abstract class PaginationUseCase<Params, Data> {
   PaginationUseCase();
 
@@ -15,7 +13,7 @@ abstract class PaginationUseCase<Params, Data> {
     required int size,
   });
 
-  PaginationResult<Data> fetch({
+  PagedResult<Data> fetch({
     required String id,
     required Params params,
     required int size,
@@ -32,7 +30,7 @@ abstract class PaginationUseCase<Params, Data> {
     if (result.isSuccess()) {
       final entity = result.getOrThrow();
       _pageTracker[id] = currentPage + 1;
-      return Success((data: entity.content, hasNextPage: !entity.lastPage));
+      return Success(entity);
     } else {
       return Error(result.tryGetError() ?? Failure());
     }

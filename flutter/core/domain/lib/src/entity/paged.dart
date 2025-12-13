@@ -1,33 +1,46 @@
-class Paged<T> {
-  const Paged({
-    required this.content,
-    required this.number,
-    required this.size,
-    required this.totalElements,
-    required this.totalPages,
-    required this.firstPage,
-    required this.lastPage,
-  });
+import 'package:processor/public.dart';
 
-  final List<T> content;
-  final int number;
-  final int size;
-  final int totalElements;
-  final int totalPages;
-  final bool firstPage;
-  final bool lastPage;
+part 'paged.g.dart';
+
+@data
+class Paged<T> {
+  const factory Paged({
+    required List<T> content,
+    required int page,
+    required int size,
+    required int totalElements,
+    required int totalPages,
+    required bool firstPage,
+    required bool lastPage,
+    required bool isLoading,
+  }) = _Paged;
+
+  static const empty = Paged(
+    content: [],
+    page: 0,
+    size: 0,
+    totalElements: 0,
+    totalPages: 0,
+    firstPage: true,
+    lastPage: false,
+    isLoading: false,
+  );
 }
 
-extension PagedMapper<T> on Paged<T> {
-  Paged<R> map<R>(R Function(T) mapper) {
+extension PagedCastX<T> on Paged<T> {
+  Paged<R> castAs<R>({
+    List<R> content = const [],
+    Paged<T>? copyFrom,
+  }) {
     return Paged(
-      content: content.map(mapper).toList(),
-      number: number,
-      size: size,
-      totalElements: totalElements,
-      totalPages: totalPages,
-      firstPage: firstPage,
-      lastPage: lastPage,
+      content: content,
+      page: copyFrom?.page ?? page,
+      size: copyFrom?.size ?? size,
+      totalElements: copyFrom?.totalElements ?? totalElements,
+      totalPages: copyFrom?.totalPages ?? totalPages,
+      firstPage: copyFrom?.firstPage ?? firstPage,
+      lastPage: copyFrom?.lastPage ?? lastPage,
+      isLoading: copyFrom?.isLoading ?? isLoading,
     );
   }
 }

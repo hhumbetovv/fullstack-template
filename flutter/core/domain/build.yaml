@@ -8,6 +8,13 @@ targets:
         options:
           folders:
             - entity
+            - extensions
             - result
             - repository
             - usecase
+            - utils
+      gen_data|data:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/entity/**"

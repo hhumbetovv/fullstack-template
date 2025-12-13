@@ -8,6 +8,7 @@ targets:
         generate_for:
           include:
             - "lib/src/usecase/**"
+            - "lib/src/orchestrator/**"
             - "lib/src/entity/**"
       gen_exporter|exporter:
         enabled: true
@@ -16,6 +17,7 @@ targets:
             - entity
             - repository
             - usecase
+            - orchestrator
       #! Dependency Injection
       injectable_generator|injectable_builder:
         enabled: true

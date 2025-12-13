@@ -1,13 +1,12 @@
-import 'package:core_domain/public.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'paged_model.g.dart';
 
 @JsonSerializable(genericArgumentFactories: true, createToJson: false)
-class PagedModel<T> implements Paged<T> {
+class PagedModel<T> {
   const PagedModel({
     required this.content,
-    required this.number,
+    required this.page,
     required this.size,
     required this.totalElements,
     required this.totalPages,
@@ -22,31 +21,24 @@ class PagedModel<T> implements Paged<T> {
     return _$PagedModelFromJson(json, fromJsonT);
   }
 
-  @override
   @JsonKey(name: 'content')
-  final List<T> content;
+  final List<T?>? content;
 
-  @override
   @JsonKey(name: 'firstPage')
-  final bool firstPage;
+  final bool? firstPage;
 
-  @override
   @JsonKey(name: 'lastPage')
-  final bool lastPage;
+  final bool? lastPage;
 
-  @override
-  @JsonKey(name: 'number')
-  final int number;
+  @JsonKey(name: 'page')
+  final int? page;
 
-  @override
   @JsonKey(name: 'size')
-  final int size;
+  final int? size;
 
-  @override
   @JsonKey(name: 'totalElements')
-  final int totalElements;
+  final int? totalElements;
 
-  @override
   @JsonKey(name: 'totalPages')
-  final int totalPages;
+  final int? totalPages;
 }

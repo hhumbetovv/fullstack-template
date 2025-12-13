@@ -3,9 +3,6 @@ export 'package:flutter/widgets.dart' show BuildContext;
 export 'package:nested/nested.dart' show SingleChildStatelessWidget;
 export 'package:provider/provider.dart' show MultiProvider, ReadContext, SelectContext, WatchContext;
 
-export '/src/extensions/flow_usecase.dart';
-export '/src/extensions/pagination_usecase.dart';
-export '/src/extensions/usecase.dart';
 export '/src/state/base_view_model.dart';
 export '/src/state/event_bus.dart';
 export '/src/state/state_notifier.dart';

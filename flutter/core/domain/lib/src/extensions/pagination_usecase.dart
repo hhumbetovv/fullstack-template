@@ -2,7 +2,7 @@ import 'package:common_shared/public.dart';
 import 'package:core_domain/public.dart';
 
 extension PaginationUseCaseExt<Data, Params> on PaginationUseCase<Params, Data> {
-  PaginationResult<Data> call(
+  PagedResult<Data> call(
     Params params, {
     bool isUnique = false,
     int size = 10,
@@ -14,7 +14,7 @@ extension PaginationUseCaseExt<Data, Params> on PaginationUseCase<Params, Data> 
     );
   }
 
-  PaginationResult<Data> _callWithoutLog(
+  PagedResult<Data> _callWithoutLog(
     Params params, {
     required String id,
     required int page,
@@ -46,7 +46,7 @@ extension PaginationUseCaseExt<Data, Params> on PaginationUseCase<Params, Data> 
     }
   }
 
-  PaginationResult<Data> _callWithLog(
+  PagedResult<Data> _callWithLog(
     Params params, {
     required String id,
     required int page,
@@ -75,7 +75,7 @@ extension PaginationUseCaseExt<Data, Params> on PaginationUseCase<Params, Data> 
     return result;
   }
 
-  PaginationResult<Data> _callWithParams(
+  PagedResult<Data> _callWithParams(
     Params params, {
     bool isUnique = false,
     int size = 10,
@@ -100,7 +100,7 @@ extension PaginationUseCaseExt<Data, Params> on PaginationUseCase<Params, Data> 
 }
 
 extension UnitPaginationUseCaseExt<Data> on PaginationUseCase<Unit, Data> {
-  PaginationResult<Data> call({
+  PagedResult<Data> call({
     int size = 10,
     bool isUnique = false,
   }) {

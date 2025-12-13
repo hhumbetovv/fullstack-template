@@ -13,7 +13,7 @@ final class FirstViewModel extends _FirstViewModel {
   @override
   FirstState get initialState => const FirstState();
 
-  final _demoUseCase = useCase<DemoUseCase>();
+  final _demoUseCase = inject<DemoUseCase>();
 
   @intent
   void _method() {

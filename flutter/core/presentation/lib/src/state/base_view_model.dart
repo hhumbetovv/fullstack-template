@@ -6,7 +6,6 @@ import 'package:core_domain/public.dart';
 import 'package:core_presentation/src/state/event_bus.dart';
 import 'package:core_presentation/src/state/state_notifier.dart';
 import 'package:core_presentation/src/utils/compare_and_format.dart';
-import 'package:get_it/get_it.dart';
 import 'package:processor/public.dart';
 
 typedef ViewMessage = ({String content, MessageType type});
@@ -154,8 +153,4 @@ abstract class BaseViewModel<UIntent, UIState, UIEffect> extends StateNotifier<U
       await callback();
     }
   }
-}
-
-T useCase<T extends Object>() {
-  return GetIt.I<T>();
 }
