@@ -6,16 +6,13 @@ import 'package:scripts/src/domain/models/module_config.dart';
 import 'package:scripts/src/infrastructure/module_config/module_config_service.dart';
 
 class ModuleConfigExecutor {
-  ModuleConfigExecutor({required ModuleConfigService service})
-    : _service = service;
+  ModuleConfigExecutor({required ModuleConfigService service}) : _service = service;
 
   final ModuleConfigService _service;
 
   Future<int> run({required ModuleSyncOptions options}) async {
     Console.write('=====================================');
-    final headline = options.reverse
-        ? '    Module module.yaml sync'
-        : '    Module pubspec sync';
+    final headline = options.reverse ? '    Module module.yaml sync' : '    Module pubspec sync';
     Console.write(headline);
     Console.write('=====================================');
 
@@ -28,9 +25,7 @@ class ModuleConfigExecutor {
       }
     } else {
       Console.warning(
-        summary.checkMode
-            ? 'No pubspec changes detected.'
-            : 'No modules needed updates.',
+        summary.checkMode ? 'No pubspec changes detected.' : 'No modules needed updates.',
       );
     }
 
@@ -96,26 +91,26 @@ class ModuleConfigExecutor {
   }
 
   bool _shouldRunPubGet(ModuleSyncOptions options, ModuleSyncSummary summary) {
-    return !options.checkOnly && !summary.hasFailures &&
-        summary.pubspecChanges.isNotEmpty;
+    return !options.checkOnly && !summary.hasFailures && summary.pubspecChanges.isNotEmpty;
   }
 
   Future<void> _runPubGet(List<ModulePubspecChange> modules) async {
-    for (final change in modules) {
-      Console.info('Running flutter pub get for ${change.moduleName}...');
-      final process = await Process.start(
-        'fvm',
-        const ['flutter', 'pub', 'get'],
-        workingDirectory: change.directoryPath,
-        mode: ProcessStartMode.inheritStdio,
+    final moduleSummary = modules.length == 1 ? modules.first.moduleName : '${modules.length} modules';
+    Console.info(
+      'Running flutter pub get at workspace root after updating $moduleSummary...',
+    );
+    final process = await Process.start(
+      'fvm',
+      const ['flutter', 'pub', 'get'],
+      workingDirectory: Directory.current.path,
+      mode: ProcessStartMode.inheritStdio,
+    );
+    final exitCode = await process.exitCode;
+    if (exitCode != 0) {
+      throw CommandError(
+        '`flutter pub get` failed at the workspace root',
+        exitCode: exitCode,
       );
-      final exitCode = await process.exitCode;
-      if (exitCode != 0) {
-        throw CommandError(
-          '`flutter pub get` failed for ${change.moduleName}',
-          exitCode: exitCode,
-        );
-      }
     }
   }
 
