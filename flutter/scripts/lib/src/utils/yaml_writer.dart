@@ -1,6 +1,5 @@
 class YamlWriter {
-  const YamlWriter({List<String>? preferredOrder})
-    : _preferredOrder = preferredOrder ?? _defaultPreferredOrder;
+  const YamlWriter({List<String>? preferredOrder}) : _preferredOrder = preferredOrder ?? _defaultPreferredOrder;
 
   static const List<String> _defaultPreferredOrder = <String>[
     'name',
@@ -67,8 +66,7 @@ class YamlWriter {
   }
 
   List<String> _orderedKeys(Map<String, dynamic> map) {
-    final keys = map.keys.whereType<String>().toList();
-    keys.sort((a, b) {
+    return map.keys.whereType<String>().toList()..sort((a, b) {
       final aIndex = _preferredIndex(a);
       final bIndex = _preferredIndex(b);
       if (aIndex != bIndex) {
@@ -76,7 +74,6 @@ class YamlWriter {
       }
       return a.compareTo(b);
     });
-    return keys;
   }
 
   int _preferredIndex(String key) {
@@ -90,7 +87,7 @@ class YamlWriter {
   String _formatScalar(dynamic value) {
     if (value is String) {
       if (_needsQuoting(value)) {
-        final escaped = value.replaceAll('"', '\\"');
+        final escaped = value.replaceAll('"', r'\"');
         return '"$escaped"';
       }
       return value;
