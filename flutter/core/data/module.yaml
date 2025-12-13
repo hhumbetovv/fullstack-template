@@ -19,3 +19,5 @@ dev_dependencies:
   - json_serializable
   - retrofit_generator
 
+build:
+  manual: true

@@ -7,3 +7,5 @@ dependencies:
   - flutter
 dev_dependencies: []
 
+build:
+  manual: true

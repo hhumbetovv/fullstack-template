@@ -4,3 +4,6 @@ dev_modules: []
 dependencies:
   - path
 dev_dependencies: []
+
+build:
+  manual: true

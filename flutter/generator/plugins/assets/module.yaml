@@ -11,3 +11,5 @@ dependencies:
   - path
 dev_dependencies: []
 
+build:
+  manual: true

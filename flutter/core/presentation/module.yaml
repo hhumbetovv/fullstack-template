@@ -13,3 +13,5 @@ dependencies:
   - provider
 dev_dependencies: []
 
+build:
+  manual: true

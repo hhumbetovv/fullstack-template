@@ -15,3 +15,6 @@ flutter:
     - family: icon_font_generator Icons
       fonts:
         - asset: assets/fonts/icons.otf
+
+build:
+  manual: true

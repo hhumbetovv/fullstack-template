@@ -11,3 +11,5 @@ dependencies:
   - source_gen
 dev_dependencies: []
 
+build:
+  manual: true
