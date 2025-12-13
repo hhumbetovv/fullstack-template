@@ -12,6 +12,7 @@ class ModuleSelector {
     'domain',
     'presentation',
     'data_api',
+    'domain_api',
     'presentation_api',
   ];
 
