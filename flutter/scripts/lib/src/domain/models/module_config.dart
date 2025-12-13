@@ -22,6 +22,7 @@ class ModuleSpec {
     required this.devDependencies,
     required this.modules,
     required this.devModules,
+    this.buildConfig,
     this.additionalFields = const <String, dynamic>{},
   });
 
@@ -31,10 +32,12 @@ class ModuleSpec {
   final List<String> devDependencies;
   final List<String> modules;
   final List<String> devModules;
+  final dynamic buildConfig;
   final Map<String, dynamic> additionalFields;
 
   File get moduleConfigFile => File(p.join(directory.path, 'module.yaml'));
   File get pubspecFile => File(p.join(directory.path, 'pubspec.yaml'));
+  File get buildFile => File(p.join(directory.path, 'build.yaml'));
 }
 
 class ModuleSyncOptions {
@@ -46,6 +49,7 @@ class ModuleSyncOptions {
     this.generateLockFile = false,
     this.generateReport = false,
     this.reverse = false,
+    this.forceAll = false,
   });
 
   final List<String> targets;
@@ -55,6 +59,7 @@ class ModuleSyncOptions {
   final bool generateLockFile;
   final bool generateReport;
   final bool reverse;
+  final bool forceAll;
 
   bool get hasTargetFilters => targets.isNotEmpty;
   bool get hasPackageFilters => packageFilters.isNotEmpty;
@@ -92,6 +97,22 @@ class ModulePubspecChange {
   final bool hadExistingFile;
 }
 
+class ModuleBuildChange {
+  ModuleBuildChange({
+    required this.moduleName,
+    required this.directoryPath,
+    required this.buildFilePath,
+    required this.previousContent,
+    required this.hadExistingFile,
+  });
+
+  final String moduleName;
+  final String directoryPath;
+  final String buildFilePath;
+  final String? previousContent;
+  final bool hadExistingFile;
+}
+
 class ModuleSyncSummary {
   ModuleSyncSummary({
     required this.changed,
@@ -104,6 +125,7 @@ class ModuleSyncSummary {
     required this.workspaceConfigChanged,
     required this.workspaceConfigPath,
     required this.pubspecChanges,
+    required this.buildChanges,
   });
 
   final List<String> changed;
@@ -116,6 +138,7 @@ class ModuleSyncSummary {
   final bool workspaceConfigChanged;
   final String? workspaceConfigPath;
   final List<ModulePubspecChange> pubspecChanges;
+  final List<ModuleBuildChange> buildChanges;
 
   bool get hasFailures => failures.isNotEmpty;
   bool get hasChanges => changed.isNotEmpty || workspaceConfigChanged;

@@ -19,7 +19,8 @@ class ModuleConfigCommand extends ScriptsCommand {
         'modules',
         abbr: 'm',
         valueHelp: 'module',
-        help: 'Optional module names or paths to limit the sync. Defaults to all workspace modules.',
+        help:
+            'Optional module names or paths to limit the sync. Defaults to all workspace modules.',
       )
       ..addMultiOption(
         'packages',
@@ -35,22 +36,32 @@ class ModuleConfigCommand extends ScriptsCommand {
       ..addFlag(
         'format',
         negatable: false,
-        help: 'Format module.yaml files and enforce sorted lists before syncing.',
+        help:
+            'Format module.yaml files and enforce sorted lists before syncing.',
       )
       ..addFlag(
         'lock',
         negatable: false,
-        help: "Emit build_info/modules_lock.yaml with every module's resolved package versions.",
+        help:
+            "Emit build_info/modules_lock.yaml with every module's resolved package versions.",
       )
       ..addFlag(
         'report',
         negatable: false,
-        help: 'Emit build_info/dependencies.md with a Markdown dependency report.',
+        help:
+            'Emit build_info/dependencies.md with a Markdown dependency report.',
       )
       ..addFlag(
         'reverse',
         negatable: false,
-        help: 'Generate module.yaml files from the current pubspec.yaml definitions instead of syncing pubspecs.',
+        help:
+            'Generate module.yaml files from the current pubspec.yaml definitions instead of syncing pubspecs.',
+      )
+      ..addFlag(
+        'force-all',
+        negatable: false,
+        help:
+            'Rewrite every target pubspec.yaml and build.yaml even if they are already in sync.',
       );
   }
 
@@ -69,6 +80,7 @@ class ModuleConfigCommand extends ScriptsCommand {
     final generateLock = argResults?['lock'] as bool? ?? false;
     final generateReport = argResults?['report'] as bool? ?? false;
     final reverse = argResults?['reverse'] as bool? ?? false;
+    final forceAll = argResults?['force-all'] as bool? ?? false;
 
     if (checkOnly && (formatSpecs || generateLock || generateReport)) {
       throw UsageException(
@@ -92,6 +104,7 @@ class ModuleConfigCommand extends ScriptsCommand {
       generateLockFile: generateLock,
       generateReport: generateReport,
       reverse: reverse,
+      forceAll: forceAll,
     );
 
     final result = await getDependency<ModuleConfigExecutor>().run(

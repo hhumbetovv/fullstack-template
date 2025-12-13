@@ -6,26 +6,45 @@ import 'package:scripts/src/domain/models/module_config.dart';
 import 'package:scripts/src/infrastructure/module_config/module_config_service.dart';
 
 class ModuleConfigExecutor {
-  ModuleConfigExecutor({required ModuleConfigService service}) : _service = service;
+  ModuleConfigExecutor({required ModuleConfigService service})
+    : _service = service;
 
   final ModuleConfigService _service;
 
   Future<int> run({required ModuleSyncOptions options}) async {
     Console.write('=====================================');
-    final headline = options.reverse ? '    Module module.yaml sync' : '    Module pubspec sync';
+    final headline = options.reverse
+        ? '    Module module.yaml sync'
+        : '    Module pubspec sync';
     Console.write(headline);
     Console.write('=====================================');
 
     final summary = await _service.syncModules(options: options);
 
     if (summary.changed.isNotEmpty) {
+      final pubspecModules = summary.pubspecChanges
+          .map((change) => change.moduleName)
+          .toSet();
+      final buildModules = summary.buildChanges
+          .map((change) => change.moduleName)
+          .toSet();
       for (final module in summary.changed) {
         final prefix = summary.checkMode ? 'Would update' : 'Updated';
-        Console.success('✓ $prefix $module');
+        final changes = <String>[];
+        if (pubspecModules.contains(module)) {
+          changes.add('pubspec');
+        }
+        if (buildModules.contains(module)) {
+          changes.add('build.yaml');
+        }
+        final suffix = changes.isEmpty ? '' : ' (${changes.join(' + ')})';
+        Console.success('✓ $prefix $module$suffix');
       }
     } else {
       Console.warning(
-        summary.checkMode ? 'No pubspec changes detected.' : 'No modules needed updates.',
+        summary.checkMode
+            ? 'No pubspec changes detected.'
+            : 'No modules needed updates.',
       );
     }
 
@@ -73,12 +92,14 @@ class ModuleConfigExecutor {
         await _runPubGet(summary.pubspecChanges);
       } on CommandError catch (error) {
         _revertPubspecChanges(summary.pubspecChanges);
+        _revertBuildChanges(summary.buildChanges);
         Console.error(
           'flutter pub get failed: ${error.message}. Changes have been reverted.',
         );
         return 1;
       } on ProcessException catch (error) {
         _revertPubspecChanges(summary.pubspecChanges);
+        _revertBuildChanges(summary.buildChanges);
         Console.error(
           'Failed to start flutter pub get (${error.message}). Changes have been reverted.',
         );
@@ -91,11 +112,15 @@ class ModuleConfigExecutor {
   }
 
   bool _shouldRunPubGet(ModuleSyncOptions options, ModuleSyncSummary summary) {
-    return !options.checkOnly && !summary.hasFailures && summary.pubspecChanges.isNotEmpty;
+    return !options.checkOnly &&
+        !summary.hasFailures &&
+        summary.pubspecChanges.isNotEmpty;
   }
 
   Future<void> _runPubGet(List<ModulePubspecChange> modules) async {
-    final moduleSummary = modules.length == 1 ? modules.first.moduleName : '${modules.length} modules';
+    final moduleSummary = modules.length == 1
+        ? modules.first.moduleName
+        : '${modules.length} modules';
     Console.info(
       'Running flutter pub get at workspace root after updating $moduleSummary...',
     );
@@ -117,6 +142,21 @@ class ModuleConfigExecutor {
   void _revertPubspecChanges(List<ModulePubspecChange> modules) {
     for (final change in modules) {
       final file = File(change.pubspecPath);
+      if (!change.hadExistingFile) {
+        if (file.existsSync()) {
+          file.deleteSync();
+        }
+        continue;
+      }
+      file
+        ..createSync(recursive: true)
+        ..writeAsStringSync(change.previousContent ?? '');
+    }
+  }
+
+  void _revertBuildChanges(List<ModuleBuildChange> modules) {
+    for (final change in modules) {
+      final file = File(change.buildFilePath);
       if (!change.hadExistingFile) {
         if (file.existsSync()) {
           file.deleteSync();

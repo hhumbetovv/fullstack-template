@@ -69,7 +69,38 @@ _All commands support `--help` for detailed flags._
 `pub-sync` keeps all `pubspec.yaml` files aligned with two lightweight configuration layers:
 
 1. `workspace_modules.yaml` (repo root) stores the canonical Dart SDK constraint plus a `packages:` map of package → version.
-2. Each workspace module owns a `module.yaml` with its `name`, `modules`/`dev_modules` (internal workspace dependencies), and `dependencies`/`dev_dependencies` (third-party package names without versions).
+2. Each workspace module owns a `module.yaml` with its `name`, `modules`/`dev_modules` (internal workspace dependencies), and `dependencies`/`dev_dependencies` (third-party package names without versions). Optional extras such as `publish_to`, `flutter`, etc. live in the same file.
+
+Modules can also manage their `build.yaml` definitions from `module.yaml` by adding a `build` section. Inline configs are written verbatim as YAML objects:
+
+```yaml
+build:
+  targets:
+    $default:
+      builders:
+        injectable_generator|injectable_builder:
+          enabled: true
+```
+
+To avoid duplicating shared templates, any map that contains only `include` (plus an optional `raw` flag) is treated as a YAML include directive. The example below copies `scripts/templates/builds/presentation_build.yaml` into the module before syncing:
+
+```yaml
+build:
+  include: scripts/templates/builds/presentation_build.yaml
+```
+
+Add `raw: true` to copy the file byte-for-byte (preserving comments and formatting). Without `raw`, the included YAML is parsed and re-serialized when `build.yaml` is generated. Include directives are available anywhere inside `module.yaml`—for example a dependency list entry can expand from another file.
+
+Need to manage a module manually? Set:
+
+```yaml
+build:
+  manual: true
+```
+
+or `build: { manual: true }`, and `pub-sync` will leave that module’s `build.yaml` untouched—even when `--force-all` is specified.
+
+`pub-sync` now tracks build file updates separately. Modules that only change `build.yaml` won’t trigger `flutter pub get`, while modules with `pubspec.yaml` edits still run a single workspace `pub get` after syncing.
 
 Running `fvms pub-sync` applies the central versions to every module, then regenerates the module graph outputs. Pass module names or paths to limit the update set: `fvms pub-sync --modules core_data feature/demo/presentation`. Modules that only contain `module.yaml` are automatically bootstrapped with a fresh `pubspec.yaml`. Add `--reverse` to derive minimal `module.yaml` specs from the current `pubspec.yaml` contents (useful after manual pubspec edits); if `workspace_modules.yaml` is missing it will be bootstrapped from the discovered third-party versions.
 
@@ -79,7 +110,8 @@ Additional flags help during maintenance:
 - `--packages dio retrofit`: only touch modules that depend on the listed packages.
 - `--format`: sort & rewrite every `module.yaml` (dedupe lists, lint field order) before syncing.
 - `--reverse`: write `module.yaml` files based on the current pubspec dependencies (incompatible with `--format`, `--lock`, and `--report`).
-- `--lock`: emit `build_info/modules_lock.yaml` summarising every module’s resolved third-party package versions.
+- `--force-all`: rewrite every targeted pubspec/build file even if no diff is detected (helps when you need to normalize formatting or reapply templates).
+- `--lock`: emit `build_info/modules_lock.yaml` summarizing every module’s resolved third-party package versions.
 - `--report`: emit `build_info/dependencies.md` containing a Markdown dependency digest per module.
 
 Flags can be combined: e.g. `fvms pub-sync --packages dio --lock --report` updates just dio consumers, writes new pubspecs, a lock snapshot, the dependency report, and refreshes the graph in one pass.

@@ -1,10 +1,12 @@
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:common_tooling/tooling.dart' show normalizeLineEndings, preferredLineEndingForContent;
+import 'package:common_tooling/tooling.dart'
+    show normalizeLineEndings, preferredLineEndingForContent;
 import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/domain/models/module_config.dart';
+import 'package:scripts/src/domain/models/yaml_include.dart';
 import 'package:scripts/src/services/yaml_service.dart';
 import 'package:scripts/src/utils/yaml_writer.dart';
 import 'package:yaml/yaml.dart';
@@ -17,6 +19,7 @@ const _moduleSpecReservedKeys = <String>{
   'dev_dependencies',
   'environment',
   'resolution',
+  'build',
 };
 
 const _managedPubspecKeys = <String>{
@@ -94,11 +97,13 @@ class ModuleConfigService {
     final formatted = <String>[];
     final snapshots = <ModuleDependencySnapshot>[];
     final pubspecChanges = <ModulePubspecChange>[];
+    final buildChanges = <ModuleBuildChange>[];
 
     for (final module in filtered) {
       final missingModuleDeps = _missingModuleDependencies(module, moduleNames);
       if (missingModuleDeps.isNotEmpty) {
-        failures[module.name] = 'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
+        failures[module.name] =
+            'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
         continue;
       }
 
@@ -117,25 +122,48 @@ class ModuleConfigService {
       }
 
       try {
-        final result = await _processModule(
+        final pubspecResult = await _processModule(
           module: module,
           versions: versions,
           checkOnly: options.checkOnly,
+          forceWrite: options.forceAll,
         );
-        snapshots.add(result.snapshot);
-        if (result.changed) {
+        final buildResult = _processBuildFile(
+          module: module,
+          checkOnly: options.checkOnly,
+          forceWrite: options.forceAll,
+        );
+        snapshots.add(pubspecResult.snapshot);
+
+        final moduleChanged = pubspecResult.changed || buildResult.changed;
+        if (moduleChanged) {
           changed.add(module.name);
+        } else {
+          unchanged.add(module.name);
+        }
+
+        if (pubspecResult.changed) {
           pubspecChanges.add(
             ModulePubspecChange(
               moduleName: module.name,
               directoryPath: module.directory.path,
               pubspecPath: module.pubspecFile.path,
-              previousContent: result.previousContent,
-              hadExistingFile: result.hadExistingPubspec,
+              previousContent: pubspecResult.previousContent,
+              hadExistingFile: pubspecResult.hadExistingPubspec,
             ),
           );
-        } else {
-          unchanged.add(module.name);
+        }
+
+        if (buildResult.changed) {
+          buildChanges.add(
+            ModuleBuildChange(
+              moduleName: module.name,
+              directoryPath: module.directory.path,
+              buildFilePath: module.buildFile.path,
+              previousContent: buildResult.previousContent,
+              hadExistingFile: buildResult.hadExistingBuild,
+            ),
+          );
         }
       } on CommandError catch (error) {
         failures[module.name] = error.message;
@@ -144,8 +172,12 @@ class ModuleConfigService {
       }
     }
 
-    final lockPath = options.generateLockFile ? _writeLockFile(snapshots, versions.dartSdk) : null;
-    final reportPath = options.generateReport ? _writeDependencyReport(snapshots) : null;
+    final lockPath = options.generateLockFile
+        ? _writeLockFile(snapshots, versions.dartSdk)
+        : null;
+    final reportPath = options.generateReport
+        ? _writeDependencyReport(snapshots)
+        : null;
 
     return ModuleSyncSummary(
       changed: changed,
@@ -158,6 +190,7 @@ class ModuleConfigService {
       workspaceConfigChanged: false,
       workspaceConfigPath: null,
       pubspecChanges: pubspecChanges,
+      buildChanges: buildChanges,
     );
   }
 
@@ -192,7 +225,8 @@ class ModuleConfigService {
     for (final module in filtered) {
       final missingModuleDeps = _missingModuleDependencies(module, moduleNames);
       if (missingModuleDeps.isNotEmpty) {
-        failures[module.name] = 'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
+        failures[module.name] =
+            'Unknown modules: ${missingModuleDeps.join(', ')} (add them to the workspace)';
         continue;
       }
 
@@ -218,6 +252,7 @@ class ModuleConfigService {
       workspaceConfigChanged: workspaceResult.changed,
       workspaceConfigPath: workspaceResult.path,
       pubspecChanges: const <ModulePubspecChange>[],
+      buildChanges: const <ModuleBuildChange>[],
     );
   }
 
@@ -254,7 +289,8 @@ class ModuleConfigService {
 
     final dartSdk = await _readRootDartSdkConstraint();
     if (dartSdk == null || dartSdk.isEmpty) {
-      failures[workspaceConfigFile] = 'Cannot infer `dart_sdk` constraint from $rootPubspecFile';
+      failures[workspaceConfigFile] =
+          'Cannot infer `dart_sdk` constraint from $rootPubspecFile';
       return const _WorkspaceConfigResult(changed: false, path: null);
     }
 
@@ -380,11 +416,23 @@ class ModuleConfigService {
         continue;
       }
 
+      dynamic existingBuildConfig;
+      final moduleConfigFile = File(p.join(directory.path, 'module.yaml'));
+      if (moduleConfigFile.existsSync()) {
+        try {
+          final moduleData = _readYaml(moduleConfigFile);
+          existingBuildConfig = moduleData['build'];
+        } on CommandError {
+          existingBuildConfig = null;
+        }
+      }
+
       modules.add(
         _ModulePubspecData(
           name: name,
           directory: directory,
           pubspec: pubspec,
+          buildConfig: existingBuildConfig,
         ),
       );
     }
@@ -416,6 +464,7 @@ class ModuleConfigService {
       devDependencies: devDependencyBreakdown.packages,
       modules: dependencyBreakdown.modules,
       devModules: devDependencyBreakdown.modules,
+      buildConfig: data.buildConfig,
       additionalFields: additionalFields,
     );
   }
@@ -457,6 +506,7 @@ class ModuleConfigService {
       'dev_modules': List<String>.from(module.devModules)..sort(),
       'dependencies': List<String>.from(module.dependencies)..sort(),
       'dev_dependencies': List<String>.from(module.devDependencies)..sort(),
+      if (module.buildConfig != null) 'build': module.buildConfig,
       ...module.additionalFields,
     };
 
@@ -565,7 +615,9 @@ class ModuleConfigService {
     if (trimmed.isEmpty) {
       return null;
     }
-    final absolutePath = p.isAbsolute(trimmed) ? p.normalize(trimmed) : p.normalize(p.join(_root.path, trimmed));
+    final absolutePath = p.isAbsolute(trimmed)
+        ? p.normalize(trimmed)
+        : p.normalize(p.join(_root.path, trimmed));
     final directory = Directory(absolutePath);
     if (!directory.existsSync()) {
       return null;
@@ -586,12 +638,14 @@ class ModuleConfigService {
     if (name == null || name.isEmpty) {
       throw CommandError('`name` missing in ${configFile.path}');
     }
+    final buildConfig = data['build'];
     final additionalFields = Map<String, dynamic>.from(data)
       ..removeWhere((key, _) => _moduleSpecReservedKeys.contains(key));
 
     return ModuleSpec(
       name: name,
       directory: directory,
+      buildConfig: buildConfig,
       additionalFields: additionalFields,
       dependencies: _stringList(
         data['dependencies'],
@@ -613,11 +667,12 @@ class ModuleConfigService {
   }
 
   List<String> _stringList(dynamic value, String file, String field) {
-    if (value == null) return <String>[];
-    if (value is List) {
+    final resolved = _normalizeValue(value);
+    if (resolved == null) return <String>[];
+    if (resolved is List) {
       final result = <String>[];
       final seen = <String>{};
-      for (final item in value) {
+      for (final item in resolved) {
         final entry = item?.toString().trim();
         if (entry == null || entry.isEmpty) continue;
         if (seen.add(entry)) {
@@ -634,7 +689,10 @@ class ModuleConfigService {
     List<String> targets,
     Map<String, String> failures,
   ) {
-    final cleanedTargets = targets.map((target) => target.trim()).where((target) => target.isNotEmpty).toList();
+    final cleanedTargets = targets
+        .map((target) => target.trim())
+        .where((target) => target.isNotEmpty)
+        .toList();
     if (cleanedTargets.isEmpty) {
       return modules;
     }
@@ -664,7 +722,10 @@ class ModuleConfigService {
     List<ModuleSpec> modules,
     List<String> packageFilters,
   ) {
-    final cleaned = packageFilters.map((pkg) => pkg.trim()).where((pkg) => pkg.isNotEmpty).toSet();
+    final cleaned = packageFilters
+        .map((pkg) => pkg.trim())
+        .where((pkg) => pkg.isNotEmpty)
+        .toSet();
     if (cleaned.isEmpty) {
       return modules;
     }
@@ -689,7 +750,9 @@ class ModuleConfigService {
     final normalizedRelative = p.normalize(relative);
     final normalizedTarget = p.normalize(target);
 
-    return normalizedRelative == normalizedTarget || relative == target || p.basename(relative) == target;
+    return normalizedRelative == normalizedTarget ||
+        relative == target ||
+        p.basename(relative) == target;
   }
 
   List<String> _unknownPackages(
@@ -700,7 +763,8 @@ class ModuleConfigService {
     final seen = <String>{};
     void collect(List<String> packages) {
       for (final package in packages) {
-        if (!_isFlutterSdkPackage(package) && versions.versionFor(package) == null) {
+        if (!_isFlutterSdkPackage(package) &&
+            versions.versionFor(package) == null) {
           if (seen.add(package)) {
             unknown.add(package);
           }
@@ -718,7 +782,8 @@ class ModuleConfigService {
     final sortedModules = List<String>.from(module.modules)..sort();
     final sortedDevModules = List<String>.from(module.devModules)..sort();
     final sortedDependencies = List<String>.from(module.dependencies)..sort();
-    final sortedDevDependencies = List<String>.from(module.devDependencies)..sort();
+    final sortedDevDependencies = List<String>.from(module.devDependencies)
+      ..sort();
 
     module.modules
       ..clear()
@@ -739,6 +804,7 @@ class ModuleConfigService {
       'dev_modules': module.devModules,
       'dependencies': module.dependencies,
       'dev_dependencies': module.devDependencies,
+      if (module.buildConfig != null) 'build': module.buildConfig,
       ...module.additionalFields,
     };
 
@@ -762,6 +828,7 @@ class ModuleConfigService {
     required ModuleSpec module,
     required WorkspaceModuleVersions versions,
     required bool checkOnly,
+    required bool forceWrite,
   }) async {
     final pubspecFile = module.pubspecFile;
     final pubspecExists = pubspecFile.existsSync();
@@ -797,7 +864,9 @@ class ModuleConfigService {
 
     const writer = YamlWriter();
     final content = '${writer.convert(_normalizeMap(updated))}\n';
-    final existingContent = pubspecExists ? pubspecFile.readAsStringSync() : null;
+    final existingContent = pubspecExists
+        ? pubspecFile.readAsStringSync()
+        : null;
     final previousContent = existingContent;
 
     // Normalize both contents for comparison to avoid false positives from line ending differences
@@ -812,9 +881,11 @@ class ModuleConfigService {
           )
         : '';
 
-    final changed = normalizedExisting.trimRight() != normalizedContent.trimRight();
+    final hasDiff =
+        normalizedExisting.trimRight() != normalizedContent.trimRight();
+    final shouldWrite = forceWrite || hasDiff;
 
-    if (!checkOnly && changed) {
+    if (!checkOnly && shouldWrite) {
       pubspecFile.parent.createSync(recursive: true);
       pubspecFile.writeAsStringSync(normalizedContent);
     }
@@ -822,9 +893,103 @@ class ModuleConfigService {
     final snapshot = _buildSnapshot(module, versions);
     return _ModuleProcessResult(
       snapshot: snapshot,
-      changed: changed,
+      changed: shouldWrite,
       previousContent: previousContent,
       hadExistingPubspec: pubspecExists,
+    );
+  }
+
+  _BuildFileResult _processBuildFile({
+    required ModuleSpec module,
+    required bool checkOnly,
+    required bool forceWrite,
+  }) {
+    final buildSpec = module.buildConfig;
+    if (buildSpec == null) {
+      return const _BuildFileResult(changed: false);
+    }
+
+    final normalized = _normalizeValue(buildSpec);
+    if (normalized == null) {
+      return const _BuildFileResult(changed: false);
+    }
+
+    if (_isManualBuildConfig(normalized)) {
+      return const _BuildFileResult(changed: false, manual: true);
+    }
+
+    if (normalized is! Map && normalized is! String) {
+      throw CommandError(
+        '`build` must be a map or string in ${module.moduleConfigFile.path}',
+      );
+    }
+
+    final buildFile = module.buildFile;
+    final hadExisting = buildFile.existsSync();
+    final existingContent = hadExisting ? buildFile.readAsStringSync() : null;
+
+    final serialized = _serializeBuildConfig(normalized);
+    final withNewline = serialized.endsWith('\n')
+        ? serialized
+        : '$serialized\n';
+    final normalizedExisting = existingContent != null
+        ? normalizeLineEndings(
+            existingContent,
+            preferredLineEnding: preferredLineEndingForContent(existingContent),
+          )
+        : '';
+    final normalizedNew = normalizeLineEndings(
+      withNewline,
+      preferredLineEnding: preferredLineEndingForContent(existingContent),
+    );
+
+    final hasDiff = normalizedExisting.trimRight() != normalizedNew.trimRight();
+    final shouldWrite = forceWrite || hasDiff;
+
+    if (!checkOnly && shouldWrite) {
+      buildFile.parent.createSync(recursive: true);
+      buildFile.writeAsStringSync(normalizedNew);
+    }
+
+    return _BuildFileResult(
+      changed: shouldWrite,
+      previousContent: existingContent,
+      hadExistingBuild: hadExisting,
+    );
+  }
+
+  bool _isManualBuildConfig(dynamic value) {
+    if (value is Map) {
+      final manual = value['manual'];
+      if (manual is bool) {
+        return manual;
+      }
+      if (manual != null) {
+        final normalized = manual.toString().toLowerCase().trim();
+        return normalized == 'true' || normalized == 'yes';
+      }
+    }
+    return false;
+  }
+
+  String _serializeBuildConfig(dynamic value) {
+    if (value is String) {
+      return value;
+    }
+    if (value is Map<String, dynamic>) {
+      const writer = YamlWriter(preserveInputOrder: true);
+      return writer.convert(value);
+    }
+    if (value is Map) {
+      final converted = <String, dynamic>{};
+      value.forEach((dynamic key, dynamic entryValue) {
+        converted[key.toString()] = entryValue;
+      });
+      const writer = YamlWriter(preserveInputOrder: true);
+      return writer.convert(converted);
+    }
+    throw CommandError(
+      'Unsupported `build` configuration. Expected map or string, got ${value.runtimeType}.',
     );
   }
 
@@ -957,7 +1122,9 @@ class ModuleConfigService {
     final outputPath = p.join(_root.path, lockFilePath);
     _ensureDirectory(outputPath);
     final outputFile = File(outputPath);
-    final existingContent = outputFile.existsSync() ? outputFile.readAsStringSync() : null;
+    final existingContent = outputFile.existsSync()
+        ? outputFile.readAsStringSync()
+        : null;
     final normalized = normalizeLineEndings(
       content,
       preferredLineEnding: preferredLineEndingForContent(existingContent),
@@ -974,7 +1141,8 @@ class ModuleConfigService {
     if (snapshots.isEmpty) {
       buffer.writeln('No modules processed.');
     } else {
-      final sorted = List<ModuleDependencySnapshot>.from(snapshots)..sort((a, b) => a.name.compareTo(b.name));
+      final sorted = List<ModuleDependencySnapshot>.from(snapshots)
+        ..sort((a, b) => a.name.compareTo(b.name));
       for (final snapshot in sorted) {
         buffer
           ..writeln('## ${snapshot.name}')
@@ -997,7 +1165,9 @@ class ModuleConfigService {
     final outputPath = p.join(_root.path, dependencyReportPath);
     _ensureDirectory(outputPath);
     final outputFile = File(outputPath);
-    final existingContent = outputFile.existsSync() ? outputFile.readAsStringSync() : null;
+    final existingContent = outputFile.existsSync()
+        ? outputFile.readAsStringSync()
+        : null;
     final normalized = normalizeLineEndings(
       '${buffer.toString().trim()}\n',
       preferredLineEnding: preferredLineEndingForContent(existingContent),
@@ -1022,7 +1192,9 @@ class ModuleConfigService {
         buffer.writeln('- Modules: ${modules.join(', ')}');
       }
       if (packages.isNotEmpty) {
-        final entries = packages.entries.map((entry) => '${entry.key} (${entry.value})').join(', ');
+        final entries = packages.entries
+            .map((entry) => '${entry.key} (${entry.value})')
+            .join(', ');
         buffer.writeln('- Packages: $entries');
       }
     }
@@ -1031,42 +1203,139 @@ class ModuleConfigService {
 
   Map<String, dynamic> _readYaml(File file) {
     final content = file.readAsStringSync();
-    final data = loadYaml(content);
-    if (data is YamlMap) {
-      return _convertYamlMap(data);
+    final node = loadYamlNode(content, sourceUrl: file.uri);
+    final includeStack = <String>{file.path};
+    final data = _convertYamlNode(node, file, includeStack);
+    if (data is Map<String, dynamic>) {
+      return data;
     }
     if (data is Map) {
       return data.map(
-        (key, dynamic value) => MapEntry(key.toString(), _convertYamlValue(value)),
+        (dynamic key, dynamic value) => MapEntry(key.toString(), value),
       );
     }
     throw CommandError('Invalid YAML format in ${file.path}');
   }
 
-  Map<String, dynamic> _convertYamlMap(YamlMap map) {
-    final result = <String, dynamic>{};
-    for (final entry in map.entries) {
-      result[entry.key.toString()] = _convertYamlValue(entry.value);
+  dynamic _convertYamlNode(
+    YamlNode node,
+    File currentFile,
+    Set<String> includeStack,
+  ) {
+    if (node is YamlScalar) {
+      return node.value;
     }
-    return result;
+
+    if (node is YamlMap) {
+      final result = <String, dynamic>{};
+      node.nodes.forEach((dynamic keyNode, YamlNode valueNode) {
+        final key = _convertYamlNode(
+          keyNode as YamlNode,
+          currentFile,
+          includeStack,
+        )?.toString();
+        if (key == null || key.isEmpty) {
+          return;
+        }
+        result[key] = _convertYamlNode(valueNode, currentFile, includeStack);
+      });
+      return _maybeConvertIncludeDirective(result, currentFile, includeStack);
+    }
+
+    if (node is YamlList) {
+      return node.nodes
+          .map((child) => _convertYamlNode(child, currentFile, includeStack))
+          .toList();
+    }
+
+    return node.value;
   }
 
-  dynamic _convertYamlValue(dynamic value) {
-    if (value is YamlMap) {
-      return _convertYamlMap(value);
+  dynamic _maybeConvertIncludeDirective(
+    Map<String, dynamic> map,
+    File currentFile,
+    Set<String> includeStack,
+  ) {
+    if (!_isIncludeDirective(map)) {
+      return map;
     }
-    if (value is Map) {
-      return value.map(
-        (key, dynamic entryValue) => MapEntry(key.toString(), _convertYamlValue(entryValue)),
+
+    final pathValue = map['include'];
+    final source = pathValue?.toString().trim();
+    if (source == null || source.isEmpty) {
+      throw CommandError('Empty include path in ${currentFile.path}');
+    }
+
+    final raw = _parseRawFlag(map['raw']);
+    final includeFile = _resolveIncludeFile(source, currentFile.parent);
+    if (!includeStack.add(includeFile.path)) {
+      throw CommandError(
+        'Circular include detected for $source in ${currentFile.path}',
       );
     }
-    if (value is YamlList) {
-      return value.map(_convertYamlValue).toList();
+    try {
+      if (raw) {
+        return YamlIncludeNode(
+          source: source,
+          absolutePath: includeFile.path,
+          type: YamlIncludeType.raw,
+          value: includeFile.readAsStringSync(),
+        );
+      }
+      final content = includeFile.readAsStringSync();
+      final node = loadYamlNode(content, sourceUrl: includeFile.uri);
+      final value = _convertYamlNode(node, includeFile, includeStack);
+      return YamlIncludeNode(
+        source: source,
+        absolutePath: includeFile.path,
+        type: YamlIncludeType.yaml,
+        value: value,
+      );
+    } finally {
+      includeStack.remove(includeFile.path);
     }
-    if (value is List) {
-      return value.map(_convertYamlValue).toList();
+  }
+
+  bool _isIncludeDirective(Map<String, dynamic> map) {
+    if (!map.containsKey('include')) {
+      return false;
     }
-    return value;
+    final allowedKeys = {'include', 'raw'};
+    return map.keys.every(allowedKeys.contains);
+  }
+
+  bool _parseRawFlag(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    if (value == null) {
+      return false;
+    }
+    final normalized = value.toString().toLowerCase().trim();
+    return normalized == 'true' || normalized == 'yes';
+  }
+
+  File _resolveIncludeFile(String includePath, Directory relativeTo) {
+    final cleaned = includePath.trim();
+    final candidates = <String>[];
+    if (p.isAbsolute(cleaned)) {
+      candidates.add(p.normalize(cleaned));
+    } else {
+      candidates
+        ..add(p.normalize(p.join(relativeTo.path, cleaned)))
+        ..add(p.normalize(p.join(_root.path, cleaned)));
+    }
+
+    for (final candidate in candidates) {
+      final file = File(candidate);
+      if (file.existsSync()) {
+        return file;
+      }
+    }
+
+    throw CommandError(
+      'Include target $includePath not found for ${relativeTo.path}',
+    );
   }
 
   Map<String, dynamic> _normalizeMap(Map<String, dynamic> map) {
@@ -1078,6 +1347,9 @@ class ModuleConfigService {
   }
 
   dynamic _normalizeValue(dynamic value) {
+    if (value is YamlIncludeNode) {
+      return _normalizeValue(value.value);
+    }
     if (value is Map) {
       final normalizedEntries = <String, dynamic>{};
       value.forEach((key, dynamic entryValue) {
@@ -1105,6 +1377,7 @@ class ModuleConfigService {
       'dev_modules',
       'dependencies',
       'dev_dependencies',
+      'build',
     ];
     final order = <String>[...baseOrder];
     final seen = order.toSet();
@@ -1132,16 +1405,32 @@ class _ModuleProcessResult {
   final bool hadExistingPubspec;
 }
 
+class _BuildFileResult {
+  const _BuildFileResult({
+    required this.changed,
+    this.previousContent,
+    this.hadExistingBuild = false,
+    this.manual = false,
+  });
+
+  final bool changed;
+  final String? previousContent;
+  final bool hadExistingBuild;
+  final bool manual;
+}
+
 class _ModulePubspecData {
   _ModulePubspecData({
     required this.name,
     required this.directory,
     required this.pubspec,
+    this.buildConfig,
   });
 
   final String name;
   final Directory directory;
   final Map<String, dynamic> pubspec;
+  final dynamic buildConfig;
 }
 
 class _DependencyBreakdown {

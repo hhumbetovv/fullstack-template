@@ -21,3 +21,7 @@ dev_dependencies:
   - retrofit_generator
   # Dependency Injection
   - injectable_generator
+
+build:
+  include: scripts/templates/builds/data_build.yaml
+  raw: true

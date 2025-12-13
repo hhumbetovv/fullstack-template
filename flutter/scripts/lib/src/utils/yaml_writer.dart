@@ -1,5 +1,10 @@
+import 'package:scripts/src/domain/models/yaml_include.dart';
+
 class YamlWriter {
-  const YamlWriter({List<String>? preferredOrder}) : _preferredOrder = preferredOrder ?? _defaultPreferredOrder;
+  const YamlWriter({
+    List<String>? preferredOrder,
+    this.preserveInputOrder = false,
+  }) : _preferredOrder = preferredOrder ?? _defaultPreferredOrder;
 
   static const List<String> _defaultPreferredOrder = <String>[
     'name',
@@ -16,6 +21,7 @@ class YamlWriter {
   ];
 
   final List<String> _preferredOrder;
+  final bool preserveInputOrder;
 
   String convert(Map<String, dynamic> input) {
     final buffer = StringBuffer();
@@ -30,7 +36,10 @@ class YamlWriter {
       if (value == null) continue;
       final indentation = ' ' * indent;
       buffer.write('$indentation$key:');
-      if (value is Map<String, dynamic>) {
+      if (value is YamlIncludeNode) {
+        buffer.writeln();
+        _writeInclude(buffer, value, indent + 2);
+      } else if (value is Map<String, dynamic>) {
         if (value.isEmpty) {
           buffer.writeln(' {}');
         } else {
@@ -53,7 +62,10 @@ class YamlWriter {
   void _writeList(StringBuffer buffer, List<dynamic> list, int indent) {
     for (final item in list) {
       final indentation = ' ' * indent;
-      if (item is Map<String, dynamic>) {
+      if (item is YamlIncludeNode) {
+        buffer.writeln('$indentation-');
+        _writeInclude(buffer, item, indent + 2);
+      } else if (item is Map<String, dynamic>) {
         buffer.writeln('$indentation-');
         _writeMap(buffer, item, indent + 2);
       } else if (item is List) {
@@ -66,7 +78,11 @@ class YamlWriter {
   }
 
   List<String> _orderedKeys(Map<String, dynamic> map) {
-    return map.keys.whereType<String>().toList()..sort((a, b) {
+    final keys = map.keys.whereType<String>().toList();
+    if (preserveInputOrder) {
+      return keys;
+    }
+    return keys..sort((a, b) {
       final aIndex = _preferredIndex(a);
       final bIndex = _preferredIndex(b);
       if (aIndex != bIndex) {
@@ -107,5 +123,13 @@ class YamlWriter {
     if (value.contains("'")) return true;
     if (value.startsWith('~')) return true;
     return false;
+  }
+
+  void _writeInclude(StringBuffer buffer, YamlIncludeNode node, int indent) {
+    final indentation = ' ' * indent;
+    buffer.writeln('${indentation}include: ${_formatScalar(node.source)}');
+    if (node.type == YamlIncludeType.raw) {
+      buffer.writeln('${indentation}raw: true');
+    }
   }
 }

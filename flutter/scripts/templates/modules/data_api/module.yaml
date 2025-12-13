@@ -12,3 +12,7 @@ dev_dependencies:
   - build_runner
   # Serialization
   - json_serializable
+
+build:
+  include: scripts/templates/builds/data_api_build.yaml
+  raw: true
