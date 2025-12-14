@@ -31,34 +31,9 @@ class DependencyAnalyzer {
       );
       final fullDependencies = dependencySets.moduleDependencies;
       state.allModuleDependencies[moduleName] = fullDependencies;
-      state.modulePackageDependencies[moduleName] =
-          dependencySets.packageDependencies;
+      state.modulePackageDependencies[moduleName] = dependencySets.packageDependencies;
 
-      if (state.modulePaths.containsKey(moduleName)) {
-        final buildDependencies = fullDependencies
-            .where(state.modulePaths.containsKey)
-            .toSet();
-        state.moduleDependencies[moduleName] = buildDependencies;
-
-        if (buildDependencies.isNotEmpty) {
-          Logger.info(
-            '   📦 $moduleName depends on: ${buildDependencies.join(', ')}',
-          );
-        } else {
-          Logger.verbose(
-            '   📦 $moduleName has no internal build_runner dependencies',
-          );
-        }
-
-        if (state.verbose) {
-          final additionalDeps = fullDependencies.difference(buildDependencies);
-          if (additionalDeps.isNotEmpty) {
-            Logger.verbose(
-              '   ↳ Additional non-build_runner deps: ${additionalDeps.join(', ')}',
-            );
-          }
-        }
-      } else if (state.verbose) {
+      if (!state.modulePaths.containsKey(moduleName) && state.verbose) {
         if (fullDependencies.isNotEmpty) {
           Logger.verbose(
             '   🧩 $moduleName (graph) depends on: ${fullDependencies.join(', ')}',
@@ -70,6 +45,8 @@ class DependencyAnalyzer {
         }
       }
     }
+
+    _populateBuildDependencies(state);
 
     if (state.verbose) {
       Logger.info('📊 Dependency Summary:');
@@ -90,10 +67,10 @@ class DependencyAnalyzer {
     for (final entry in state.allModuleDependencies.entries) {
       final moduleName = entry.key;
       final declaredDeps = entry.value;
-      final declaredPackages =
-          state.modulePackageDependencies[moduleName] ?? <String>{};
+      final filteredDeclaredDeps = declaredDeps.where((dep) => !shouldIgnoreModule(dep)).toSet();
+      final declaredPackages = state.modulePackageDependencies[moduleName] ?? <String>{};
 
-      if (declaredDeps.isEmpty && declaredPackages.isEmpty) {
+      if (filteredDeclaredDeps.isEmpty && declaredPackages.isEmpty) {
         continue;
       }
 
@@ -101,7 +78,7 @@ class DependencyAnalyzer {
         state,
         moduleName,
       );
-      final unused = declaredDeps.difference(importedPackages);
+      final unused = filteredDeclaredDeps.difference(importedPackages);
       final unusedPackages = declaredPackages.difference(importedPackages);
 
       if (unused.isNotEmpty) {
@@ -144,6 +121,8 @@ class DependencyAnalyzer {
       }
 
       final deps = pubspec['dependencies'] as Map<String, dynamic>?;
+      final devDeps = pubspec['dev_dependencies'] as Map<String, dynamic>?;
+      final overrideDeps = pubspec['dependency_overrides'] as Map<String, dynamic>?;
 
       void processDeps(Map<String, dynamic>? depsMap) {
         if (depsMap == null) return;
@@ -152,10 +131,6 @@ class DependencyAnalyzer {
           final depName = key;
 
           if (knownModules.containsKey(depName)) {
-            if (shouldIgnoreModule(depName)) {
-              return;
-            }
-
             dependencies.add(depName);
             Logger.debug('   Found module dependency: $moduleName → $depName');
             return;
@@ -167,6 +142,8 @@ class DependencyAnalyzer {
       }
 
       processDeps(deps);
+      processDeps(devDeps);
+      processDeps(overrideDeps);
     } on Object catch (e) {
       Logger.error('Error parsing dependencies from $pubspecPath: $e');
     }
@@ -226,6 +203,73 @@ class DependencyAnalyzer {
     }
 
     return collected;
+  }
+
+  void _populateBuildDependencies(BuildState state) {
+    for (final moduleName in state.modulePaths.keys) {
+      final fullDependencies = state.allModuleDependencies[moduleName] ?? const <String>{};
+      final buildDependencies = _flattenToBuildModules(
+        state,
+        moduleName,
+        fullDependencies,
+      );
+      state.moduleDependencies[moduleName] = buildDependencies;
+
+      if (buildDependencies.isNotEmpty) {
+        Logger.info(
+          '   📦 $moduleName depends on: ${buildDependencies.join(', ')}',
+        );
+      } else {
+        Logger.verbose(
+          '   📦 $moduleName has no internal build_runner dependencies',
+        );
+      }
+
+      if (state.verbose) {
+        final additionalDeps = fullDependencies.where((dep) => !state.modulePaths.containsKey(dep)).toSet();
+        if (additionalDeps.isNotEmpty) {
+          Logger.verbose(
+            '   ↳ Additional non-build_runner deps: '
+            '${additionalDeps.join(', ')}',
+          );
+        }
+      }
+    }
+  }
+
+  Set<String> _flattenToBuildModules(
+    BuildState state,
+    String moduleName,
+    Set<String> directDependencies,
+  ) {
+    final resolved = <String>{};
+    final visited = <String>{moduleName};
+
+    void visit(String dep) {
+      if (!visited.add(dep)) {
+        return;
+      }
+
+      if (state.modulePaths.containsKey(dep)) {
+        resolved.add(dep);
+        return;
+      }
+
+      final transitive = state.allModuleDependencies[dep];
+      if (transitive == null || transitive.isEmpty) {
+        return;
+      }
+
+      for (final nested in transitive) {
+        visit(nested);
+      }
+    }
+
+    for (final dep in directDependencies) {
+      visit(dep);
+    }
+
+    return resolved;
   }
 }
 

@@ -63,16 +63,23 @@ class WorkspaceStateLoader {
         continue;
       }
 
-      if (shouldIgnoreModule(actualModuleName)) {
-        Logger.debug(
-          '   ⏭️  Skipped (generator module): '
-          '$actualModuleName → $workspacePath',
-        );
-        continue;
-      }
-
       final wasKnownModule = state.allModulePaths.containsKey(actualModuleName);
       final usesBuildRunner = hasBuildRunner(modulePubspec);
+
+      if (shouldIgnoreModule(actualModuleName)) {
+        state.allModulePaths[actualModuleName] = cleanPath;
+        Logger.debug(
+          '   ⏭️  Skipped (generator module build): '
+          '$actualModuleName → $workspacePath',
+        );
+        if (state.verbose && !wasKnownModule) {
+          Logger.verbose(
+            'ℹ️  Retained for dependency graph: '
+            '$actualModuleName → $workspacePath',
+          );
+        }
+        continue;
+      }
 
       _registerModule(
         state: state,
@@ -99,8 +106,7 @@ class WorkspaceStateLoader {
     Map<String, dynamic> rootPubspec,
   ) async {
     final dependencies = rootPubspec['dependencies'] as Map<String, dynamic>?;
-    final devDependencies =
-        rootPubspec['dev_dependencies'] as Map<String, dynamic>?;
+    final devDependencies = rootPubspec['dev_dependencies'] as Map<String, dynamic>?;
 
     if (dependencies == null && devDependencies == null) {
       Logger.warning('No dependencies found in root pubspec.yaml');
@@ -118,8 +124,7 @@ class WorkspaceStateLoader {
       final depConfig = entry.value;
       Logger.debug('Analyzing dependency: $depName');
 
-      if (depConfig is! Map<String, dynamic> ||
-          !depConfig.containsKey('path')) {
+      if (depConfig is! Map<String, dynamic> || !depConfig.containsKey('path')) {
         Logger.debug('   ⏭️  Skipped (not a path dependency): $depName');
         continue;
       }
@@ -146,16 +151,23 @@ class WorkspaceStateLoader {
         continue;
       }
 
-      if (shouldIgnoreModule(actualModuleName)) {
-        Logger.debug(
-          '   ⏭️  Skipped (generator module): '
-          '$actualModuleName → $depPath',
-        );
-        continue;
-      }
-
       final wasKnownModule = state.allModulePaths.containsKey(actualModuleName);
       final usesBuildRunner = hasBuildRunner(modulePubspec);
+
+      if (shouldIgnoreModule(actualModuleName)) {
+        state.allModulePaths[actualModuleName] = cleanPath;
+        Logger.debug(
+          '   ⏭️  Skipped (generator module build): '
+          '$actualModuleName → $depPath',
+        );
+        if (state.verbose && !wasKnownModule) {
+          Logger.verbose(
+            'ℹ️  Retained for dependency graph: '
+            '$actualModuleName → $depPath',
+          );
+        }
+        continue;
+      }
 
       _registerModule(
         state: state,
