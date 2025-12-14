@@ -13,7 +13,7 @@
     "**/*.gr.dart": true,
     "**/*.config.dart": true,
     "**/*.module.dart": true,
-    "**/build/": false,
+    "**/build/": true,
     "**/.dart_tool": true
   },
   "files.associations": {

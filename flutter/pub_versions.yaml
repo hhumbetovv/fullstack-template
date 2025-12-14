@@ -9,6 +9,8 @@ packages:
   collection: ^1.18.0
   dart_style: ^3.1.0
   dio: ^5.8.0+1
+  firebase_core: ^4.2.1
+  firebase_remote_config: ^6.1.2
   flutter_dotenv: ^5.2.1
   flutter_secure_storage: ^9.2.4
   flutter_svg: ^2.2.1

@@ -1,6 +1,8 @@
-import 'package:app/config/router.dart';
-import 'package:app/root.dart';
+import 'package:app/app/root.dart';
+import 'package:app/navigation/route_logger.dart';
+import 'package:app/navigation/router.dart';
 import 'package:common_presentation/public.dart';
+import 'package:common_shared/public.dart';
 import 'package:flutter/material.dart';
 import 'package:ui_foundation/public.dart';
 
@@ -33,7 +35,7 @@ final class App extends StatelessWidget {
       themeAnimationCurve: const AppCurves.fastInFastOut(),
       routerConfig: AppRouter.instance.config(
         navigatorObservers: () => [
-          // if (Console.isEnabled) RouteLogger(),
+          if (Console.isEnabled) RouteLogger(),
           HeroController(),
         ],
       ),

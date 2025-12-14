@@ -3,6 +3,7 @@ environment:
   sdk: ^3.10.1
 resolution: workspace
 dependencies:
+  firebase_remote_config: ^6.1.2
   flutter_dotenv: ^5.2.1
   intl: ^0.20.2
 dev_dependencies:

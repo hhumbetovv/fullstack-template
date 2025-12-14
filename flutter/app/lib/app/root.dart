@@ -1,4 +1,4 @@
-import 'package:app/config/router.dart';
+import 'package:app/navigation/router.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:common_shared/public.dart';
 import 'package:core_navigation/public.dart';
