@@ -26,29 +26,47 @@ class BuildCacheService<Config> {
     );
   }
 
-  Config? read(AssetId inputId, int expectedHash) {
+  CacheHit<Config>? read(AssetId inputId, int expectedHash) {
     final file = _fileFor(inputId);
     if (!file.existsSync()) return null;
     try {
       final decoded = jsonDecode(file.readAsStringSync());
-      if (decoded is Map<String, dynamic>) {
-        final cached = fromJson(decoded);
-        if (cached.hashCode == expectedHash) {
-          return cached;
-        }
+      if (decoded is! Map<String, dynamic>) {
+        return null;
       }
+      final storedHash = decoded['hash'] as int?;
+      if (storedHash == null || storedHash != expectedHash) {
+        return null;
+      }
+      final rawConfig = decoded['config'];
+      if (rawConfig is Map<String, dynamic>) {
+        return CacheHit(hash: storedHash, config: fromJson(rawConfig));
+      }
+      return CacheHit(hash: storedHash);
     } on Object {
       return null;
     }
-    return null;
   }
 
-  void write(AssetId inputId, Config? config) {
+  void write(AssetId inputId, int hash, Config? config) {
     final file = _fileFor(inputId);
     if (!file.existsSync()) {
       file.createSync(recursive: true);
     }
-    final payload = jsonEncode(toJson(config));
-    file.writeAsStringSync(payload);
+    final payload = <String, dynamic>{
+      'hash': hash,
+      'config': toJson(config),
+    };
+    file.writeAsStringSync(jsonEncode(payload));
   }
+}
+
+class CacheHit<Config> {
+  const CacheHit({
+    required this.hash,
+    this.config,
+  });
+
+  final int hash;
+  final Config? config;
 }

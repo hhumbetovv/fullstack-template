@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:common_tooling/tooling.dart';
 import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/core/logging/logging.dart';
@@ -20,7 +18,7 @@ class EnvironmentService {
     Logger.debug('Environment validation passed');
   }
 
-  void cleanup(BuildState state) {
+  Future<void> cleanup(BuildState state) async {
     Logger.warning('🛑 Interrupt received, cleaning up...');
 
     for (final entry in state.modulePids.entries) {
@@ -35,6 +33,5 @@ class EnvironmentService {
     }
 
     Logger.info('Cleanup completed');
-    exit(130);
   }
 }

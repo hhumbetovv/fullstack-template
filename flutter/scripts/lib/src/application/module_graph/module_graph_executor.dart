@@ -51,7 +51,10 @@ class ModuleGraphExecutor {
 
       final sigintSub = listenForSignal(
         ProcessSignal.sigint,
-        (_) => _environmentService.cleanup(state),
+        (_) async {
+          await _environmentService.cleanup(state);
+          exit(130);
+        },
       );
       if (sigintSub != null) {
         subscriptions.add(sigintSub);
@@ -59,7 +62,10 @@ class ModuleGraphExecutor {
 
       final sigtermSub = listenForSignal(
         ProcessSignal.sigterm,
-        (_) => _environmentService.cleanup(state),
+        (_) async {
+          await _environmentService.cleanup(state);
+          exit(130);
+        },
       );
       if (sigtermSub != null) {
         subscriptions.add(sigtermSub);

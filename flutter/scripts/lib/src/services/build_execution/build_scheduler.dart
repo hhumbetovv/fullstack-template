@@ -65,12 +65,21 @@ class BuildScheduler {
           )
           .toList();
 
+      var availableSlots = state.maxParallelBuilds - state.currentlyBuilding.length;
+      if (availableSlots < 0) {
+        availableSlots = 0;
+      } else if (availableSlots > state.maxParallelBuilds) {
+        availableSlots = state.maxParallelBuilds;
+      }
+      final scheduledModules =
+          availableSlots == 0 ? <String>[] : buildsInWave.take(availableSlots).toList();
+
       if (state.currentlyBuilding.isEmpty && buildsInWave.isEmpty) {
         _logBuildStall(state);
         return false;
       }
 
-      if (buildsInWave.isEmpty) {
+      if (scheduledModules.isEmpty) {
         await Future.delayed(const Duration(milliseconds: 500));
         continue;
       }
@@ -81,7 +90,7 @@ class BuildScheduler {
       Logger.info('================================');
 
       await Future.wait(
-        buildsInWave.map((module) => _moduleBuilder.run(state, module)),
+        scheduledModules.map((module) => _moduleBuilder.run(state, module)),
       );
 
       completed = 0;

@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:build/build.dart';
 import 'package:dart_style/dart_style.dart';
+import 'package:path/path.dart' as p;
 
 import 'generator_context.dart';
 
@@ -29,10 +28,8 @@ class GeneratedOutputService {
       content: content,
     );
 
-    await _writePartFile(context.partFileBasePath, scaffolded);
-
     var output = scaffolded;
-    if (context.primaryOutput.extension.endsWith('.dart')) {
+    if (_isDartOutput(context.primaryOutput)) {
       output = _formatOrFallback(context, output);
     }
 
@@ -58,14 +55,6 @@ $content
 ''';
   }
 
-  Future<void> _writePartFile(String basePath, String content) async {
-    final partFile = File('$basePath.g.dart');
-    if (!partFile.existsSync()) {
-      await partFile.create(recursive: true);
-    }
-    await partFile.writeAsString(content);
-  }
-
   String _formatOrFallback(GeneratorContext context, String code) {
     try {
       return _formatter.format('$_dartFormatWidth\n$code');
@@ -84,4 +73,6 @@ source formatter.''',
       return code;
     }
   }
+
+  bool _isDartOutput(AssetId asset) => p.extension(asset.path) == '.dart';
 }

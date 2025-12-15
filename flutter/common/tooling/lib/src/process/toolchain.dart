@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 class ToolchainException implements Exception {
@@ -22,6 +23,30 @@ class _ResolvedCommand {
     ...args,
   ];
 }
+
+@immutable
+class _ToolchainCacheKey {
+  const _ToolchainCacheKey({
+    required this.root,
+    required this.hasLocalFvm,
+  });
+
+  final String root;
+  final bool hasLocalFvm;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is _ToolchainCacheKey &&
+        other.root == root &&
+        other.hasLocalFvm == hasLocalFvm;
+  }
+
+  @override
+  int get hashCode => Object.hash(root, hasLocalFvm);
+}
+
+final Map<_ToolchainCacheKey, _ResolvedCommand> _commandCache = {};
 
 Future<void> ensureDartOrFvm({
   String? workingDirectory,
@@ -72,6 +97,18 @@ Future<Process> startDartCommand(
 Future<_ResolvedCommand> _resolveDartCommand(String? workingDirectory) async {
   final root = workingDirectory ?? Directory.current.path;
   final hasLocalFvm = Directory(p.join(root, '.fvm')).existsSync();
+  final key = _ToolchainCacheKey(root: root, hasLocalFvm: hasLocalFvm);
+  final cached = _commandCache[key];
+  if (cached != null) {
+    return cached;
+  }
+
+  final resolved = await _probeToolchain(hasLocalFvm: hasLocalFvm);
+  _commandCache[key] = resolved;
+  return resolved;
+}
+
+Future<_ResolvedCommand> _probeToolchain({required bool hasLocalFvm}) async {
   final hasFvm = await _hasCommand('fvm');
   final hasDart = await _hasCommand('dart');
 

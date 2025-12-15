@@ -8,5 +8,5 @@ dependencies:
   code_builder: ^4.10.1
   common_tooling: any
   dart_style: ^3.1.0
+  path: ^1.9.0
   source_gen: ^3.0.0
-
