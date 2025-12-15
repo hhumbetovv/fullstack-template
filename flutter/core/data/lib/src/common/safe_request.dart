@@ -30,11 +30,19 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
     );
     try {
       final data = dioError.response?.data;
-      if (data != null && data is Map<String, dynamic>) {
+      final isServerError = (dioError.response?.statusCode ?? 0) >= 500;
+
+      if (data != null && data is Map<String, dynamic> && !isServerError) {
         final json = data;
         return NetworkResponse.fromJson(json, (_) => null);
       } else {
-        return NetworkResponse(isSuccess: false, message: dioError.error.toString());
+        final String message;
+        if (isServerError) {
+          message = 'Unknown Error occurred';
+        } else {
+          message = dioError.error.toString();
+        }
+        return NetworkResponse(isSuccess: false, message: message);
       }
     } on Object catch (error) {
       Console.firebaseRecordError(
