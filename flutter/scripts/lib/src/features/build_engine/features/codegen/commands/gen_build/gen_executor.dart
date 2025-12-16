@@ -1,12 +1,12 @@
-import 'package:scripts/src/core/logging/console.dart';
+import 'package:scripts/src/features/build_engine/domain/ports/module_discovery_port.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/smart_build_options.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/ports/build_runner_port.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/gen/helpers/module_selector.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/gen/helpers/worker_config.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/gen/workflows/build_runner_workflow.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/gen/workflows/clean_queue.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/gen/workflows/watch_runner.dart';
-import 'package:scripts/src/features/build_engine/module_discovery_port.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/domain/ports/build_runner_port.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/pipelines/gen_pipelines.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/module_selector.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/worker_config.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/workflows/build_runner_workflow.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/workflows/clean_queue.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/workflows/watch_runner.dart';
 
 typedef SmartBuildRunner = Future<int> Function(SmartBuildOptions options);
 
@@ -30,49 +30,28 @@ class GenExecutor {
   final SmartBuildRunner _smartBuildRunner;
 
   Future<int> runBuild(Iterable<String> filters) async {
-    final targets = await _moduleSelector.selectForBuild(filters);
-    if (targets.isEmpty) {
-      return filters.isEmpty ? 1 : 0;
-    }
-    return _buildWorkflow.execute(targets);
+    return GenBuildPipeline(
+      selector: _moduleSelector,
+      workflow: _buildWorkflow,
+    ).run(filters);
   }
 
   Future<int> runClean(String workerOption) async {
-    final modules = await _moduleSelector.selectForClean();
-    if (modules.isEmpty) {
-      Console.warning('No modules with build_runner were found.');
-      return 0;
-    }
-
-    final workers = _workerConfig.resolve(workerOption, modules.length);
-    return _cleanWorkflow.execute(workerCount: workers, modules: modules);
+    return GenCleanPipeline(
+      selector: _moduleSelector,
+      workerConfig: _workerConfig,
+      workflow: _cleanWorkflow,
+    ).run(workerOption);
   }
 
   Future<int> runWatch({
     required bool preBuild,
     required Iterable<String> filters,
   }) async {
-    final modules = await _moduleSelector.selectForWatch(filters);
-    if (modules.isEmpty) {
-      return 0;
-    }
-
-    if (preBuild) {
-      Console.info('Running smart-build before starting watchers...');
-      final exitCode = await _smartBuildRunner(
-        const SmartBuildOptions(
-          verbose: false,
-          dryRun: false,
-          maxParallelBuilds: 4,
-        ),
-      );
-      if (exitCode != 0) {
-        Console.error(
-          'smart-build failed (exit code $exitCode). Continuing watchers.',
-        );
-      }
-    }
-
-    return _watchWorkflow.execute(modules);
+    return GenWatchPipeline(
+      selector: _moduleSelector,
+      workflow: _watchWorkflow,
+      smartBuildRunner: _smartBuildRunner,
+    ).run(preBuild: preBuild, filters: filters);
   }
 }

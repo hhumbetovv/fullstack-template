@@ -1,32 +1,34 @@
+import 'dart:io';
+
 import 'package:get_it/get_it.dart';
-import 'package:scripts/src/features/build_engine/environment_service.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/adapters/build/android_builder.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/adapters/build/ios_builder.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/adapters/build/keystore_manager.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/adapters/build_runner/build_runner_service.dart';
+import 'package:scripts/src/features/build_engine/domain/adapters/workspace_discovery_adapter.dart';
+import 'package:scripts/src/features/build_engine/domain/ports/module_discovery_port.dart';
+import 'package:scripts/src/features/build_engine/domain/ports/module_graph_port.dart';
+import 'package:scripts/src/features/build_engine/engine/services/environment_service.dart';
+import 'package:scripts/src/features/build_engine/engine/services/workspace_state_loader.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/build/build_executor.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/gen_build/gen_executor.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/smart_build/smart_build_executor.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/ports/build_runner_port.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/build_execution/build_execution_service.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/build_execution/build_scheduler.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/build_execution/log_manager.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/build_execution/module_builder.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/domain/adapters/build/android_builder.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/domain/adapters/build/ios_builder.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/domain/adapters/build/keystore_manager.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/domain/adapters/build_runner/build_runner_service.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/domain/ports/build_runner_port.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/build_execution_service.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/build_scheduler.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/log_manager.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/module_builder.dart';
 import 'package:scripts/src/features/build_engine/features/module_graph/commands/module_graph/module_graph_executor.dart';
-import 'package:scripts/src/features/build_engine/features/module_graph/services/module_graph_service.dart';
-import 'package:scripts/src/features/build_engine/module_discovery_port.dart';
-import 'package:scripts/src/features/build_engine/module_graph_port.dart';
-import 'package:scripts/src/features/build_engine/services/build_plan_builder.dart';
-import 'package:scripts/src/features/build_engine/services/dependency_analyzer.dart';
-import 'package:scripts/src/features/build_engine/services/graph_generator.dart';
-import 'package:scripts/src/features/build_engine/services/workspace_state_loader.dart';
-import 'package:scripts/src/features/build_engine/workspace_discovery_service.dart';
-import 'package:scripts/src/features/links/adapters/link_creator.dart';
+import 'package:scripts/src/features/build_engine/features/module_graph/engine/services/build_plan_builder.dart';
+import 'package:scripts/src/features/build_engine/features/module_graph/engine/services/dependency_analyzer.dart';
+import 'package:scripts/src/features/build_engine/features/module_graph/engine/services/graph_generator.dart';
+import 'package:scripts/src/features/build_engine/features/module_graph/engine/services/module_graph_service.dart';
 import 'package:scripts/src/features/links/commands/links_executor.dart';
+import 'package:scripts/src/features/links/domain/adapters/link_creator.dart';
 import 'package:scripts/src/features/locale/commands/locale_executor.dart';
-import 'package:scripts/src/features/scaffolding/adapters/module_config_service.dart';
 import 'package:scripts/src/features/scaffolding/commands/create_module/module_create_executor.dart';
 import 'package:scripts/src/features/scaffolding/commands/pub_sync/pub_sync_executor.dart';
+import 'package:scripts/src/features/scaffolding/domain/adapters/module_config_service.dart';
 
 final GetIt _locator = GetIt.instance;
 bool _configured = false;
@@ -39,7 +41,7 @@ void configureDependencies() {
 
   _locator
     ..registerLazySingleton<ModuleDiscoveryPort>(
-      WorkspaceDiscoveryService.new,
+      WorkspaceDiscoveryAdapter.new,
     )
     ..registerLazySingleton<BuildRunnerPort>(BuildRunnerService.new)
     ..registerLazySingleton<EnvironmentService>(EnvironmentService.new)
@@ -72,7 +74,12 @@ void configureDependencies() {
     ..registerLazySingleton<IosBuildService>(IosBuildService.new)
     ..registerLazySingleton<AndroidKeystoreManager>(AndroidKeystoreManager.new)
     ..registerLazySingleton<LinkCreator>(LinkCreator.new)
-    ..registerLazySingleton<ModuleCreateExecutor>(ModuleCreateExecutor.new)
+    ..registerLazySingleton<ModuleCreateExecutor>(
+      () => ModuleCreateExecutor(
+        moduleConfigService: _locator.get<ModuleConfigService>(),
+        workspaceRoot: Directory.current.path,
+      ),
+    )
     ..registerLazySingleton<ModuleConfigService>(ModuleConfigService.new)
     ..registerLazySingleton<LocaleExecutor>(LocaleExecutor.new)
     ..registerLazySingleton<BuildExecutor>(
@@ -105,7 +112,8 @@ void configureDependencies() {
       () => GenExecutor(
         moduleDiscovery: _locator.get<ModuleDiscoveryPort>(),
         buildRunner: _locator.get<BuildRunnerPort>(),
-        smartBuildRunner: (options) => _locator.get<SmartBuildExecutor>().run(options),
+        smartBuildRunner: (options) =>
+            _locator.get<SmartBuildExecutor>().run(options),
       ),
     );
 }

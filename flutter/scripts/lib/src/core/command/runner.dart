@@ -1,8 +1,8 @@
 import 'package:args/command_runner.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/build/command.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/commands/gen_build/build_command.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/commands/gen_build/clean_command.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/commands/gen_watch/watch_command.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/commands/gen_build/command.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/commands/gen_clean/command.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/commands/gen_watch/command.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/smart_build/command.dart';
 import 'package:scripts/src/features/build_engine/features/module_graph/commands/module_graph/command.dart';
 import 'package:scripts/src/features/links/commands/build_links_command.dart';

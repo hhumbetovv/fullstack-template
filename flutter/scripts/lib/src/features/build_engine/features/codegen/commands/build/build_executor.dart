@@ -4,10 +4,10 @@ import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/core/logging/console.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/adapters/build/android_builder.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/adapters/build/ios_builder.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/adapters/build/keystore_manager.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/build/options.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/domain/adapters/build/android_builder.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/domain/adapters/build/ios_builder.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/domain/adapters/build/keystore_manager.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/build_spec.dart';
 
 class BuildExecutor {

@@ -10,14 +10,14 @@ import 'package:scripts/src/features/build_engine/domain/models/build_state.dart
 import 'package:scripts/src/features/build_engine/domain/models/dependency_report.dart';
 import 'package:scripts/src/features/build_engine/domain/models/graph_report.dart';
 import 'package:scripts/src/features/build_engine/domain/models/module_graph_options.dart';
-import 'package:scripts/src/features/build_engine/environment_service.dart';
+import 'package:scripts/src/features/build_engine/domain/ports/module_graph_port.dart';
+import 'package:scripts/src/features/build_engine/engine/services/environment_service.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/analyze_dependencies_stage.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/build_plan_stage.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/discover_modules_stage.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/generate_graph_stage.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/validate_env_stage.dart';
 import 'package:scripts/src/features/build_engine/features/module_graph/commands/module_graph/module_graph_context.dart';
-import 'package:scripts/src/features/build_engine/module_graph_port.dart';
-import 'package:scripts/src/features/build_engine/stages/analyze_dependencies_stage.dart';
-import 'package:scripts/src/features/build_engine/stages/build_plan_stage.dart';
-import 'package:scripts/src/features/build_engine/stages/discover_modules_stage.dart';
-import 'package:scripts/src/features/build_engine/stages/generate_graph_stage.dart';
-import 'package:scripts/src/features/build_engine/stages/validate_env_stage.dart';
 import 'package:scripts/src/features/build_engine/utils/signal_utils.dart';
 
 class ModuleGraphExecutor {
@@ -76,20 +76,21 @@ class ModuleGraphExecutor {
         subscriptions.add(sigtermSub);
       }
 
-      final context = await StageRunner<ModuleGraphContext>(
-        stages: <Stage<ModuleGraphContext>>[
-          ValidateEnvStage<ModuleGraphContext>(_environmentService),
-          DiscoverModulesStage<ModuleGraphContext>(_moduleGraphPort),
-          AnalyzeDependenciesStage<ModuleGraphContext>(_moduleGraphPort),
-          BuildPlanStage<ModuleGraphContext>(_moduleGraphPort),
-          GenerateGraphStage<ModuleGraphContext>(_moduleGraphPort),
-        ],
-      ).run(
-        ModuleGraphContext(
-          state: state,
-          options: options,
-        ),
-      );
+      final context =
+          await StageRunner<ModuleGraphContext>(
+            stages: <Stage<ModuleGraphContext>>[
+              ValidateEnvStage<ModuleGraphContext>(_environmentService),
+              DiscoverModulesStage<ModuleGraphContext>(_moduleGraphPort),
+              AnalyzeDependenciesStage<ModuleGraphContext>(_moduleGraphPort),
+              BuildPlanStage<ModuleGraphContext>(_moduleGraphPort),
+              GenerateGraphStage<ModuleGraphContext>(_moduleGraphPort),
+            ],
+          ).run(
+            ModuleGraphContext(
+              state: state,
+              options: options,
+            ),
+          );
 
       if (context.state.modulePaths.isEmpty) {
         throw const CommandError(

@@ -9,17 +9,17 @@ import 'package:scripts/src/features/build_engine/domain/models/build_plan.dart'
 import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
 import 'package:scripts/src/features/build_engine/domain/models/dependency_report.dart';
 import 'package:scripts/src/features/build_engine/domain/models/graph_report.dart';
-import 'package:scripts/src/features/build_engine/environment_service.dart';
+import 'package:scripts/src/features/build_engine/domain/ports/module_graph_port.dart';
+import 'package:scripts/src/features/build_engine/engine/services/environment_service.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/analyze_dependencies_stage.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/build_plan_stage.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/discover_modules_stage.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/generate_graph_stage.dart';
+import 'package:scripts/src/features/build_engine/engine/stages/validate_env_stage.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/smart_build/smart_build_context.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/smart_build_options.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/services/build_execution/build_execution_service.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/stages/retain_target_module_stage.dart';
-import 'package:scripts/src/features/build_engine/module_graph_port.dart';
-import 'package:scripts/src/features/build_engine/stages/analyze_dependencies_stage.dart';
-import 'package:scripts/src/features/build_engine/stages/build_plan_stage.dart';
-import 'package:scripts/src/features/build_engine/stages/discover_modules_stage.dart';
-import 'package:scripts/src/features/build_engine/stages/generate_graph_stage.dart';
-import 'package:scripts/src/features/build_engine/stages/validate_env_stage.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/build_execution_service.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/stages/retain_target_module_stage.dart';
 import 'package:scripts/src/features/build_engine/utils/signal_utils.dart';
 
 class SmartBuildExecutor {

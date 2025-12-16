@@ -1,54 +1,50 @@
 import 'package:scripts/src/core/logging/console.dart';
-import 'package:scripts/src/features/links/adapters/link_creator.dart';
+import 'package:scripts/src/features/links/domain/adapters/link_creator.dart';
+import 'package:scripts/src/features/links/engine/pipelines/link_pipeline.dart';
 
 class LinksExecutor {
   LinksExecutor({required LinkCreator linkCreator})
-    : _linkCreator = linkCreator;
+    : _pipeline = LinkPipeline(linkCreator);
 
-  final LinkCreator _linkCreator;
+  final LinkPipeline _pipeline;
 
   Future<int> runBuildLinks() async {
     _printHeader('Build Symlinks Creator');
 
-    final summary = await _linkCreator.create(
-      fileName: 'build.yaml',
-      outputDir: 'yaml/builds',
+    final context = await _pipeline.run(
+      LinkContext(fileName: 'build.yaml', outputDir: 'yaml/builds'),
     );
-
-    _reportSummary(summary);
-    return summary.failed > 0 ? 1 : 0;
+    _reportSummary(context.summary!);
+    return context.exitCode;
   }
 
   Future<int> runPubspecLinks() async {
     _printHeader('Pubspec Symlinks Creator');
 
-    final summary = await _linkCreator.create(
-      fileName: 'pubspec.yaml',
-      outputDir: 'yaml/pubspecs',
+    final context = await _pipeline.run(
+      LinkContext(fileName: 'pubspec.yaml', outputDir: 'yaml/pubspecs'),
     );
-
-    _reportSummary(summary);
-    return summary.failed > 0 ? 1 : 0;
+    _reportSummary(context.summary!);
+    return context.exitCode;
   }
 
   Future<int> runYamlLinks() async {
     Console.write('=== Pubspec Symlinks ===');
-    final pubspecSummary = await _linkCreator.create(
-      fileName: 'pubspec.yaml',
-      outputDir: 'yaml/pubspecs',
+    final pubspecContext = await _pipeline.run(
+      LinkContext(fileName: 'pubspec.yaml', outputDir: 'yaml/pubspecs'),
     );
 
     Console.write('\n=== Build Symlinks ===');
-    final buildSummary = await _linkCreator.create(
-      fileName: 'build.yaml',
-      outputDir: 'yaml/builds',
+    final buildContext = await _pipeline.run(
+      LinkContext(fileName: 'build.yaml', outputDir: 'yaml/builds'),
     );
 
     Console.write('\n=====================================');
     Console.success(
-      '✓ Pubspec symlinks: ${pubspecSummary.created}, build symlinks: ${buildSummary.created}',
+      '✓ Pubspec symlinks: ${pubspecContext.summary?.created ?? 0}, build symlinks: ${buildContext.summary?.created ?? 0}',
     );
-    final failures = pubspecSummary.failed + buildSummary.failed;
+    final failures = (pubspecContext.summary?.failed ?? 0) +
+        (buildContext.summary?.failed ?? 0);
     if (failures > 0) {
       Console.error('✗ Failures encountered: $failures');
     }
