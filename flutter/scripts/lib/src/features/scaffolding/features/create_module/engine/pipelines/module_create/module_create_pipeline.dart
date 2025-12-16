@@ -1,11 +1,11 @@
 import 'package:scripts/src/core/stage/runner.dart';
 import 'package:scripts/src/features/scaffolding/domain/adapters/module_config_service.dart';
-import 'package:scripts/src/features/scaffolding/engine/pipelines/module_create/module_create_context.dart';
-import 'package:scripts/src/features/scaffolding/engine/stages/module_create/bootstrap_pubspec_stage.dart';
-import 'package:scripts/src/features/scaffolding/engine/stages/module_create/copy_template_stage.dart';
-import 'package:scripts/src/features/scaffolding/engine/stages/module_create/register_workspace_stage.dart';
-import 'package:scripts/src/features/scaffolding/engine/stages/module_create/resolve_template_stage.dart';
-import 'package:scripts/src/features/scaffolding/engine/stages/module_create/validate_input_stage.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/pipelines/module_create/module_create_context.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/stages/module_create/bootstrap_pubspec_stage.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/stages/module_create/copy_template_stage.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/stages/module_create/register_workspace_stage.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/stages/module_create/resolve_template_stage.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/stages/module_create/validate_input_stage.dart';
 
 class ModuleCreatePipeline {
   ModuleCreatePipeline({

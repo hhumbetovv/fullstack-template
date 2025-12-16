@@ -1,14 +1,12 @@
 import 'package:scripts/src/features/build_engine/domain/ports/module_discovery_port.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/domain/models/smart_build_options.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/ports/build_runner_port.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/pipelines/gen/gen_context.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/pipelines/gen_pipelines.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/module_selector.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/worker_config.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/workflows/build_runner_workflow.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/workflows/clean_queue.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/gen/workflows/watch_runner.dart';
-
-typedef SmartBuildRunner = Future<int> Function(SmartBuildOptions options);
 
 class GenExecutor {
   GenExecutor({

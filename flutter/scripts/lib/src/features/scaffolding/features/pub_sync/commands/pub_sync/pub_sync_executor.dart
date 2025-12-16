@@ -1,6 +1,7 @@
 import 'package:scripts/src/features/scaffolding/domain/adapters/module_config_service.dart';
 import 'package:scripts/src/features/scaffolding/domain/models/module_config.dart';
-import 'package:scripts/src/features/scaffolding/engine/pipelines/pub_sync_pipeline.dart';
+import 'package:scripts/src/features/scaffolding/features/pub_sync/engine/pipelines/pub_sync/pub_sync_context.dart';
+import 'package:scripts/src/features/scaffolding/features/pub_sync/engine/pipelines/pub_sync_pipeline.dart';
 
 class PubSyncExecutor {
   PubSyncExecutor({required ModuleConfigService service}) : _service = service;

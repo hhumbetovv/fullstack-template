@@ -26,9 +26,9 @@ import 'package:scripts/src/features/build_engine/features/module_graph/engine/s
 import 'package:scripts/src/features/links/commands/links_executor.dart';
 import 'package:scripts/src/features/links/domain/adapters/link_creator.dart';
 import 'package:scripts/src/features/locale/commands/locale_executor.dart';
-import 'package:scripts/src/features/scaffolding/commands/create_module/module_create_executor.dart';
-import 'package:scripts/src/features/scaffolding/commands/pub_sync/pub_sync_executor.dart';
 import 'package:scripts/src/features/scaffolding/domain/adapters/module_config_service.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/commands/create_module/module_create_executor.dart';
+import 'package:scripts/src/features/scaffolding/features/pub_sync/commands/pub_sync/pub_sync_executor.dart';
 
 final GetIt _locator = GetIt.instance;
 bool _configured = false;

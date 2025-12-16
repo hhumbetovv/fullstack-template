@@ -3,7 +3,7 @@ import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/core/stage/runner.dart';
 import 'package:scripts/src/features/scaffolding/domain/adapters/module_config_service.dart';
 import 'package:scripts/src/features/scaffolding/domain/models/module_config.dart';
-import 'package:scripts/src/features/scaffolding/engine/pipelines/module_create/module_create_context.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/pipelines/module_create/module_create_context.dart';
 
 class BootstrapPubspecStage implements Stage<ModuleCreateContext> {
   BootstrapPubspecStage(this._moduleConfigService);

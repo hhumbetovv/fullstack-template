@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:scripts/src/features/scaffolding/domain/adapters/module_config_service.dart';
-import 'package:scripts/src/features/scaffolding/engine/pipelines/module_create/module_create_context.dart';
-import 'package:scripts/src/features/scaffolding/engine/pipelines/module_create/module_create_pipeline.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/pipelines/module_create/module_create_context.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/pipelines/module_create/module_create_pipeline.dart';
 
 class ModuleCreateExecutor {
   ModuleCreateExecutor({

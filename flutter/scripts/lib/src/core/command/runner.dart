@@ -9,8 +9,8 @@ import 'package:scripts/src/features/links/commands/build_links_command.dart';
 import 'package:scripts/src/features/links/commands/pubspec_links_command.dart';
 import 'package:scripts/src/features/links/commands/yaml_links_command.dart';
 import 'package:scripts/src/features/locale/commands/command.dart';
-import 'package:scripts/src/features/scaffolding/commands/create_module/command.dart';
-import 'package:scripts/src/features/scaffolding/commands/pub_sync/command.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/commands/create_module/command.dart';
+import 'package:scripts/src/features/scaffolding/features/pub_sync/commands/pub_sync/command.dart';
 
 typedef CommandFactory = Command<int> Function();
 

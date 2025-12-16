@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/core/stage/runner.dart';
-import 'package:scripts/src/features/scaffolding/engine/pipelines/module_create/module_create_context.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/engine/pipelines/module_create/module_create_context.dart';
 
 class ResolveTemplateStage implements Stage<ModuleCreateContext> {
   ResolveTemplateStage(this.workspaceRoot);

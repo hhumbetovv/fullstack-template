@@ -2,7 +2,7 @@ import 'package:args/command_runner.dart';
 import 'package:scripts/src/core/command/base_command.dart';
 import 'package:scripts/src/core/di/dependency_setup.dart';
 import 'package:scripts/src/core/logging/console.dart';
-import 'package:scripts/src/features/scaffolding/commands/create_module/module_create_executor.dart';
+import 'package:scripts/src/features/scaffolding/features/create_module/commands/create_module/module_create_executor.dart';
 
 class CreateModuleCommand extends ScriptsCommand {
   CreateModuleCommand()

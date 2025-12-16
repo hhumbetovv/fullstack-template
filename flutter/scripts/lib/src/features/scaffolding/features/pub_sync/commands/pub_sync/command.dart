@@ -4,8 +4,8 @@ import 'package:scripts/src/core/di/dependency_setup.dart';
 import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/features/build_engine/domain/models/module_graph_options.dart';
 import 'package:scripts/src/features/build_engine/features/module_graph/commands/module_graph/module_graph_executor.dart';
-import 'package:scripts/src/features/scaffolding/commands/pub_sync/pub_sync_executor.dart';
 import 'package:scripts/src/features/scaffolding/domain/models/module_config.dart';
+import 'package:scripts/src/features/scaffolding/features/pub_sync/commands/pub_sync/pub_sync_executor.dart';
 
 class PubSyncCommand extends ScriptsCommand {
   PubSyncCommand()
