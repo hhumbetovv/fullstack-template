@@ -28,18 +28,47 @@ Each command exposes `--help`. Shortcut entrypoints (`scripts:<command>`) are av
 
 ```
 scripts/lib/src/
-├── cli/                # Thin CommandRunner wrappers (build, gen-*, smart_build …)
-├── application/        # Orchestrators & workflows per vertical (build, gen, module_graph, links, locale, smart_build)
-├── domain/             # DTOs and port interfaces shared across features
-├── infrastructure/     # Port implementations (build_runner, workspace discovery, graph generation, build tooling, links)
-└── core/               # Cross-cutting pieces (commands base class, DI setup, logging, state)
+├── core/                          # Base command/runner, logging, DI setup
+├── shared/                        # Only truly cross-feature utils/adapters (e.g., workspace discovery)
+└── features/
+    ├── codegen/                   # build_runner & build commands (smart-build, gen-*, build)
+    ├── module_graph/              # Dependency graph generation
+    ├── links/                     # build/pubspec/yaml symlink commands
+    ├── locale/                    # Locale key generation
+    └── scaffolding/               # module scaffolding / pub-sync
 ```
 
-- **CLI** (`cli/`): parse flags/options, call `configureDependencies()`, then resolve an executor with `getDependency<T>()` and delegate work.
-- **Application**: orchestrators (e.g. `build_executor.dart`, `gen_executor.dart`, `module_graph_executor.dart`) combine workflows/helpers into higher-level operations.
-- **Domain**: simple models (`BuildSpec`, `SmartBuildOptions`, `ModuleGraphOptions`, `ModuleDescriptor`, `BuildPlan`, `DependencyReport`, `GraphReport`) and port abstractions (`BuildRunnerPort`, `ModuleDiscoveryPort`, `ModuleGraphPort`).
-- **Infrastructure**: adapters for file system/process/network concerns (Android/iOS builders, link creator, workspace scanner, build_runner service, module graph generation helpers).
-- **Core**: `CommandError` handling, console logging, BuildState store, and GetIt DI under `core/di`.
+- **Core**: `CommandError`, console/logging, command runner, GetIt DI at `core/di`.
+- **Shared**: only truly cross-feature pieces (e.g., workspace discovery adapter); keep everything else inside its feature.
+- **Features/**: each feature owns its domain models + adapters/services + commands; codegen/build-runner lives under `features/codegen`, command-specific files live under `features/<feature>/commands/<command>/`.
+
+### Adding a new feature/command
+- Create `features/<new_feature>/`:
+  - `domain/models/` → feature-specific DTOs.
+  - `adapters/` → IO/FS/process/builder adapters.
+  - `services/` → stateless services/workflows.
+  - `stages/` and/or `pipelines/` → if you wire commands via StageRunner.
+  - `commands/<command>/` → CLI entry (command.dart) plus command-specific context/stage/pipeline/logic.
+- Don’t put code in `shared/` unless it’s truly cross-feature; keep shared stages/services inside the feature first, promote to `shared/` only if multiple features depend on it.
+- Register the new command in `core/command/runner.dart`, and add DI bindings in `core/di/dependency_setup.dart` as needed.
+- Run `fvm dart analyze` to verify; update this README with the new command summary.
+
+### Flow Architecture overview
+
+```mermaid
+flowchart LR
+  CLI[CLI Command] --> Registry[Command Runner]
+  Registry --> DI[GetIt configureDependencies]
+  DI --> Orchestrator[Executor / Command Handler]
+  Orchestrator --> StageRunner[StageRunner]
+  StageRunner --> Services[Feature Services]
+  StageRunner --> Adapters[Feature Adapters]
+  Services --> Ports[Ports]
+  Adapters --> IO[Filesystem & Process]
+```
+
+When using StageRunner (smart-build/module-graph pipelines), stages typically flow as:
+`ValidateEnv → DiscoverModules → AnalyzeDependencies → BuildPlan → (RunBuild | GenerateGraph)`.
 
 ## Dependency injection
 

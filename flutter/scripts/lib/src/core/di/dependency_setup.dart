@@ -1,32 +1,32 @@
 import 'package:get_it/get_it.dart';
-import 'package:scripts/src/application/build/build_executor.dart';
-import 'package:scripts/src/application/gen/gen_executor.dart';
-import 'package:scripts/src/application/links/links_executor.dart';
-import 'package:scripts/src/application/locale/locale_executor.dart';
-import 'package:scripts/src/application/module_config/module_config_executor.dart';
-import 'package:scripts/src/application/module_create/module_create_executor.dart';
-import 'package:scripts/src/application/module_graph/module_graph_executor.dart';
-import 'package:scripts/src/application/module_graph/module_graph_service.dart';
-import 'package:scripts/src/application/module_graph/workflows/build_plan_builder.dart';
-import 'package:scripts/src/application/module_graph/workflows/dependency_analyzer.dart';
-import 'package:scripts/src/application/module_graph/workflows/graph_generator.dart';
-import 'package:scripts/src/application/smart_build/smart_build_executor.dart';
-import 'package:scripts/src/application/workspace/workspace_state_loader.dart';
-import 'package:scripts/src/domain/ports/build_runner_port.dart';
-import 'package:scripts/src/domain/ports/module_discovery_port.dart';
-import 'package:scripts/src/domain/ports/module_graph_port.dart';
-import 'package:scripts/src/infrastructure/build/android_builder.dart';
-import 'package:scripts/src/infrastructure/build/ios_builder.dart';
-import 'package:scripts/src/infrastructure/build/keystore_manager.dart';
-import 'package:scripts/src/infrastructure/build_runner/build_runner_service.dart';
-import 'package:scripts/src/infrastructure/links/link_creator.dart';
-import 'package:scripts/src/infrastructure/module_config/module_config_service.dart';
-import 'package:scripts/src/infrastructure/workspace/workspace_discovery_service.dart';
-import 'package:scripts/src/services/build_execution/build_scheduler.dart';
-import 'package:scripts/src/services/build_execution/log_manager.dart';
-import 'package:scripts/src/services/build_execution/module_builder.dart';
-import 'package:scripts/src/services/build_execution_service.dart';
-import 'package:scripts/src/services/environment_service.dart';
+import 'package:scripts/src/features/codegen/adapters/build/android_builder.dart';
+import 'package:scripts/src/features/codegen/adapters/build/ios_builder.dart';
+import 'package:scripts/src/features/codegen/adapters/build/keystore_manager.dart';
+import 'package:scripts/src/features/codegen/adapters/build_runner/build_runner_service.dart';
+import 'package:scripts/src/features/codegen/commands/build/build_executor.dart';
+import 'package:scripts/src/features/codegen/commands/gen_build/gen_executor.dart';
+import 'package:scripts/src/features/codegen/commands/smart_build/smart_build_executor.dart';
+import 'package:scripts/src/features/codegen/services/build_execution/build_execution_service.dart';
+import 'package:scripts/src/features/codegen/services/build_execution/build_scheduler.dart';
+import 'package:scripts/src/features/codegen/services/build_execution/log_manager.dart';
+import 'package:scripts/src/features/codegen/services/build_execution/module_builder.dart';
+import 'package:scripts/src/features/links/adapters/link_creator.dart';
+import 'package:scripts/src/features/links/commands/links_executor.dart';
+import 'package:scripts/src/features/locale/commands/locale_executor.dart';
+import 'package:scripts/src/features/module_graph/commands/module_graph/module_graph_executor.dart';
+import 'package:scripts/src/features/module_graph/services/build_plan_builder.dart';
+import 'package:scripts/src/features/module_graph/services/dependency_analyzer.dart';
+import 'package:scripts/src/features/module_graph/services/graph_generator.dart';
+import 'package:scripts/src/features/module_graph/services/module_graph_service.dart';
+import 'package:scripts/src/features/scaffolding/adapters/module_config_service.dart';
+import 'package:scripts/src/features/scaffolding/commands/create_module/module_create_executor.dart';
+import 'package:scripts/src/features/scaffolding/commands/module_config/module_config_executor.dart';
+import 'package:scripts/src/shared/adapters/workspace_discovery_service.dart';
+import 'package:scripts/src/shared/ports/build_runner_port.dart';
+import 'package:scripts/src/shared/ports/module_discovery_port.dart';
+import 'package:scripts/src/shared/ports/module_graph_port.dart';
+import 'package:scripts/src/shared/services/environment_service.dart';
+import 'package:scripts/src/shared/services/workspace_state_loader.dart';
 
 final GetIt _locator = GetIt.instance;
 bool _configured = false;
@@ -92,7 +92,6 @@ void configureDependencies() {
       () => SmartBuildExecutor(
         moduleGraphPort: _locator.get<ModuleGraphPort>(),
         environmentService: _locator.get<EnvironmentService>(),
-        workspaceStateLoader: _locator.get<WorkspaceStateLoader>(),
         buildExecutionService: _locator.get<BuildExecutionService>(),
       ),
     )
@@ -106,8 +105,7 @@ void configureDependencies() {
       () => GenExecutor(
         moduleDiscovery: _locator.get<ModuleDiscoveryPort>(),
         buildRunner: _locator.get<BuildRunnerPort>(),
-        smartBuildRunner: (options) =>
-            _locator.get<SmartBuildExecutor>().run(options),
+        smartBuildRunner: (options) => _locator.get<SmartBuildExecutor>().run(options),
       ),
     );
 }
