@@ -5,6 +5,7 @@ import 'package:common_tooling/tooling.dart'
     show normalizeLineEndings, preferredLineEndingForContent;
 import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/features/scaffolding/domain/models/module_config.dart';
 import 'package:scripts/src/features/scaffolding/domain/models/yaml_include.dart';
 import 'package:scripts/src/features/scaffolding/engine/services/yaml_service.dart';
@@ -32,11 +33,17 @@ const _managedPubspecKeys = <String>{
 
 class ModuleConfigService {
   ModuleConfigService({
-    this.workspaceConfigFile = 'pub_versions.yaml',
-    this.rootPubspecFile = 'pubspec.yaml',
-    this.lockFilePath = 'build_info/modules_lock.yaml',
-    this.dependencyReportPath = 'build_info/dependencies.md',
-  });
+    String? workspaceConfigFile,
+    String? rootPubspecFile,
+    String? lockFilePath,
+    String? dependencyReportPath,
+  })  : workspaceConfigFile =
+           workspaceConfigFile ?? ScaffoldingConfig.workspaceConfigFile,
+       rootPubspecFile =
+           rootPubspecFile ?? ScaffoldingConfig.rootPubspecFile,
+       lockFilePath = lockFilePath ?? ScaffoldingConfig.lockFilePath,
+       dependencyReportPath =
+           dependencyReportPath ?? ScaffoldingConfig.dependencyReportPath;
 
   final String workspaceConfigFile;
   final String rootPubspecFile;

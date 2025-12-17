@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/core/stage/runner.dart';
@@ -135,8 +136,9 @@ class SmartBuildExecutor {
       Logger.success('🏁 Smart build process completed!');
       log('');
 
-      if (!state.dryRun && File('overview.md').existsSync()) {
-        Logger.info('📊 View dependency graph: overview.md');
+      const graphOverview = ModuleGraphConfig.overviewFile;
+      if (!state.dryRun && File(graphOverview).existsSync()) {
+        Logger.info('📊 View dependency graph: $graphOverview');
       }
       if (!state.dryRun && Directory(state.buildLogsDir).existsSync()) {
         Logger.info('📁 Build logs available in: ${state.buildLogsDir}/');

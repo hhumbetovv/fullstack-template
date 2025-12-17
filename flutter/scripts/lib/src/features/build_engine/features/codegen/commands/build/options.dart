@@ -1,4 +1,5 @@
 import 'package:args/args.dart';
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/build_spec.dart';
 
 class BuildCommandOptions {
@@ -42,17 +43,19 @@ BuildCommandOptions parseBuildCommandArgs(ArgResults? argResults) {
   final requestIosApp = argResults?['ios-app'] as bool? ?? false;
   final includeRelease = argResults?['release'] as bool? ?? false;
   final includeDebug = argResults?['debug'] as bool? ?? false;
-  final obfuscateAndroid = argResults?['obfuscate'] as bool? ?? true;
-  final splitDebugInfo = argResults?['split-debug-info'] as bool? ?? true;
+  final obfuscateAndroid =
+      argResults?['obfuscate'] as bool? ?? CodegenBuildConfig.obfuscateAndroid;
+  final splitDebugInfo =
+      argResults?['split-debug-info'] as bool? ?? CodegenBuildConfig.splitDebugInfo;
   final splitDebugInfoPathRaw =
       (argResults?['split-debug-info-path'] as String? ??
-              './android/app/release')
+              CodegenBuildConfig.splitDebugInfoPath)
           .trim();
   final applyTargetPlatform =
-      argResults?['apply-target-platform'] as bool? ?? true;
+      argResults?['apply-target-platform'] as bool? ??
+          CodegenBuildConfig.applyTargetPlatform;
   final targetPlatformRaw =
-      (argResults?['target-platform'] as String? ??
-              'android-arm,android-arm64,android-x64')
+      (argResults?['target-platform'] as String? ?? CodegenBuildConfig.targetPlatform)
           .trim();
   final flavorArgs =
       argResults?['flavor'] as List<String>? ?? const <String>[];

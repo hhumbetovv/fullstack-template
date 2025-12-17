@@ -1,4 +1,5 @@
 import 'package:scripts/src/core/command/base_command.dart';
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/core/di/dependency_setup.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/build/build_executor.dart';
 
@@ -61,29 +62,29 @@ class BuildCommand extends ScriptsCommand {
       ..addFlag(
         'obfuscate',
         help: 'Add --obfuscate to Android release builds.',
-        defaultsTo: true,
+        defaultsTo: CodegenBuildConfig.obfuscateAndroid,
       )
       ..addFlag(
         'split-debug-info',
         help: 'Add --split-debug-info to Android release builds.',
-        defaultsTo: true,
+        defaultsTo: CodegenBuildConfig.splitDebugInfo,
       )
       ..addOption(
         'split-debug-info-path',
         help: 'Directory used when --split-debug-info is enabled.',
         valueHelp: 'dir',
-        defaultsTo: './android/app/release',
+        defaultsTo: CodegenBuildConfig.splitDebugInfoPath,
       )
       ..addFlag(
         'apply-target-platform',
         help: 'Add --target-platform for Android builds.',
-        defaultsTo: true,
+        defaultsTo: CodegenBuildConfig.applyTargetPlatform,
       )
       ..addOption(
         'target-platform',
         help: 'Value used for --target-platform when applied.',
         valueHelp: 'platforms',
-        defaultsTo: 'android-arm,android-arm64,android-x64',
+        defaultsTo: CodegenBuildConfig.targetPlatform,
       );
   }
 

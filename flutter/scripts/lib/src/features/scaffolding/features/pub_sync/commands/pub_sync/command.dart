@@ -2,6 +2,7 @@ import 'package:args/command_runner.dart';
 import 'package:scripts/src/core/command/base_command.dart';
 import 'package:scripts/src/core/di/dependency_setup.dart';
 import 'package:scripts/src/core/logging/console.dart';
+import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
 import 'package:scripts/src/features/build_engine/domain/models/module_graph_options.dart';
 import 'package:scripts/src/features/build_engine/features/module_graph/commands/module_graph/module_graph_executor.dart';
 import 'package:scripts/src/features/scaffolding/domain/models/module_config.dart';
@@ -116,7 +117,10 @@ class PubSyncCommand extends ScriptsCommand {
 
     Console.info('Regenerating module graph...');
     final graphResult = await getDependency<ModuleGraphExecutor>().run(
-      const ModuleGraphOptions(verbose: false, maxParallelBuilds: 4),
+      ModuleGraphOptions(
+        verbose: false,
+        maxParallelBuilds: BuildState.maxParallelBuildsDefault,
+      ),
     );
     if (graphResult == 0) {
       Console.success('Module graph updated.');

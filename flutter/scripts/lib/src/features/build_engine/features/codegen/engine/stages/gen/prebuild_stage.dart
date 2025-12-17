@@ -1,5 +1,6 @@
 import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/core/stage/runner.dart';
+import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/smart_build_options.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/pipelines/gen/gen_context.dart';
 
@@ -17,10 +18,10 @@ class PrebuildStage implements Stage<GenWatchContext> {
       return context;
     }
     final exitCode = await _smartBuildRunner(
-      const SmartBuildOptions(
+      SmartBuildOptions(
         verbose: false,
         dryRun: false,
-        maxParallelBuilds: 4,
+        maxParallelBuilds: BuildState.maxParallelBuildsDefault,
       ),
     );
     if (exitCode != 0) {

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/build/options.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/adapters/build/android_builder.dart';
@@ -82,7 +83,7 @@ class BuildExecutor {
           spec.mode == BuildMode.release,
     );
 
-    final artifactsRoot = Directory('.misc/artifacts');
+    final artifactsRoot = Directory(CodegenBuildConfig.artifactsDir);
     if (!artifactsRoot.existsSync()) {
       artifactsRoot.createSync(recursive: true);
     }

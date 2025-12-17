@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:common_tooling/tooling.dart' show normalizeLineEndings, preferredLineEndingForContent;
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
 import 'package:scripts/src/features/build_engine/domain/models/graph_config.dart' show classifyModule;
@@ -12,7 +13,9 @@ class GraphGenerator {
   const GraphGenerator();
 
   Future<GraphReport> generate(BuildState state) async {
-    Logger.info('📊 Generating dependency graph (overview.md)...');
+    const moduleGraphFile = ModuleGraphConfig.moduleGraphFile;
+    const overviewFile = ModuleGraphConfig.overviewFile;
+    Logger.info('📊 Generating dependency graph ($overviewFile)...');
 
     final modulesWithUnusedDeps = state.moduleUnusedDependencies.keys.toSet();
     final modulesWithUnusedPackages = state.moduleUnusedPackages.keys.toSet();
@@ -36,10 +39,13 @@ class GraphGenerator {
       _buildLayerGroupedSection(state, modulesWithUnusedDeps),
     ];
 
-    await _writeCombinedGraphFile(sections);
+    await _writeCombinedGraphFile(
+      sections,
+      moduleGraphFile,
+    );
 
     final outputs = <GraphFile>[
-      const GraphFile(path: 'module_graph.md', title: 'Module Graphs'),
+      const GraphFile(path: moduleGraphFile, title: 'Module Graphs'),
     ];
 
     await _writeBuildGraphOverview(
@@ -49,11 +55,13 @@ class GraphGenerator {
       modulesWithUnusedPackages: modulesWithUnusedPackages,
       maxWave: maxWave,
       sections: sections,
+      overviewPath: overviewFile,
+      moduleGraphPath: moduleGraphFile,
     );
 
     outputs.add(
       const GraphFile(
-        path: 'overview.md',
+        path: overviewFile,
         title: 'Workspace Build Overview',
       ),
     );
@@ -246,6 +254,8 @@ Future<void> _writeBuildGraphOverview({
   required Set<String> modulesWithUnusedPackages,
   required int maxWave,
   required List<_GraphSection> sections,
+  required String overviewPath,
+  required String moduleGraphPath,
 }) async {
   final totalModules = state.allModulePaths.length;
   final buildRunnerModules = state.modulePaths.length;
@@ -272,7 +282,7 @@ Future<void> _writeBuildGraphOverview({
     ..writeln('')
     ..writeln('## Graph Index')
     ..writeln('')
-    ..write(_graphIndexSection(sections))
+    ..write(_graphIndexSection(sections, moduleGraphPath))
     ..writeln('')
     ..writeln('## Build Waves')
     ..writeln('')
@@ -287,11 +297,12 @@ Future<void> _writeBuildGraphOverview({
     ..write(_unusedPackagesSection(state, modulesWithUnusedPackages))
     ..writeln('')
     ..writeln(
-      '_Detailed graphs are available in `module_graph.md`._',
+      '_Detailed graphs are available in `$moduleGraphPath`._',
     )
     ..writeln('');
-
-  await File('overview.md').writeAsString(buffer.toString());
+  final file = File(overviewPath);
+  file.parent.createSync(recursive: true);
+  await file.writeAsString(buffer.toString());
 }
 
 String _waveNarrative(BuildState state, List<_WaveDetail> waves) {
@@ -510,7 +521,10 @@ const Map<String, String> _sectionDescriptions = <String, String>{
   'layers.md': 'Clusters modules by architectural tier and feature area',
 };
 
-Future<void> _writeCombinedGraphFile(List<_GraphSection> sections) async {
+Future<void> _writeCombinedGraphFile(
+  List<_GraphSection> sections,
+  String outputPath,
+) async {
   final buffer = StringBuffer()
     ..writeln('# Module Graphs')
     ..writeln('');
@@ -525,7 +539,8 @@ Future<void> _writeCombinedGraphFile(List<_GraphSection> sections) async {
   }
 
   final content = buffer.toString().trimRight();
-  final file = File('module_graph.md');
+  final file = File(outputPath);
+  file.parent.createSync(recursive: true);
   String? existing;
   if (file.existsSync()) {
     existing = await file.readAsString();
@@ -644,14 +659,14 @@ void _writeClassDefinitions(StringBuffer buffer, _GraphStyleTracker tracker) {
   }
 }
 
-String _graphIndexSection(List<_GraphSection> sections) {
+String _graphIndexSection(List<_GraphSection> sections, String moduleGraphPath) {
   final buffer = StringBuffer();
   for (final section in sections) {
     final description = _sectionDescriptions[section.title];
     if (description == null) continue;
     final anchor = _anchorForSection(section.title);
     buffer..writeln(
-      '- [${section.title}](module_graph.md#$anchor) — $description.',
+      '- [${section.title}]($moduleGraphPath#$anchor) — $description.',
     );
   }
   return buffer.toString();

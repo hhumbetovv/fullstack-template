@@ -1,5 +1,6 @@
 import 'package:scripts/src/core/command/base_command.dart';
 import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/smart_build/run.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/smart_build_options.dart';
 
@@ -7,8 +8,7 @@ class SmartBuildCommand extends ScriptsCommand {
   SmartBuildCommand()
     : super(
         commandName: 'smart-build',
-        commandDescription:
-            'Build module graph intelligently using build_runner.',
+        commandDescription: 'Build module graph intelligently using build_runner.',
       ) {
     argParser
       ..addFlag(
@@ -27,7 +27,7 @@ class SmartBuildCommand extends ScriptsCommand {
         abbr: 'p',
         help: 'Set the maximum number of modules built in parallel.',
         valueHelp: 'count',
-        defaultsTo: '4',
+        defaultsTo: BuildState.maxParallelBuildsDefault.toString(),
       );
   }
 
@@ -41,9 +41,9 @@ class SmartBuildCommand extends ScriptsCommand {
       );
     }
 
-    final parallelRaw = argResults?['parallel'] as String? ?? '4';
-    final parallel = int.tryParse(parallelRaw);
-    if (parallel == null || parallel <= 0) {
+    final parallelRaw = argResults?['parallel'] as String?;
+    final parallel = int.tryParse(parallelRaw ?? '') ?? BuildState.maxParallelBuildsDefault;
+    if (parallel <= 0) {
       throw const CommandError(
         '`--parallel` must be a positive integer.',
         exitCode: 64,

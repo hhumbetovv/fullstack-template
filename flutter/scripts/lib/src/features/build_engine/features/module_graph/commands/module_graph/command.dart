@@ -1,6 +1,7 @@
 import 'package:scripts/src/core/command/base_command.dart';
 import 'package:scripts/src/core/command/errors.dart';
 import 'package:scripts/src/core/di/dependency_setup.dart';
+import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
 import 'package:scripts/src/features/build_engine/domain/models/module_graph_options.dart';
 import 'package:scripts/src/features/build_engine/features/module_graph/commands/module_graph/module_graph_executor.dart';
 
@@ -22,13 +23,14 @@ class ModuleGraphCommand extends ScriptsCommand {
         abbr: 'p',
         help: 'Set the max parallel value used in stats.',
         valueHelp: 'count',
-        defaultsTo: '4',
+        defaultsTo: BuildState.maxParallelBuildsDefault.toString(),
       );
   }
 
   @override
   Future<int> runCommand() async {
-    final parallelRaw = argResults?['parallel'] as String? ?? '4';
+    final parallelRaw = argResults?['parallel'] as String? ??
+        BuildState.maxParallelBuildsDefault.toString();
     final parallel = int.tryParse(parallelRaw);
     if (parallel == null || parallel <= 0) {
       throw const CommandError(

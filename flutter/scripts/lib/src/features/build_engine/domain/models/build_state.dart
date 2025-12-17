@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/features/build_engine/domain/models/execution_tracker.dart';
 import 'package:scripts/src/features/build_engine/domain/models/workspace_graph.dart';
 import 'package:scripts/src/features/build_engine/domain/models/workspace_snapshot.dart';
@@ -14,27 +15,23 @@ class BuildState {
   final ExecutionTracker execution = ExecutionTracker();
   WorkspaceSnapshot? _workspaceSnapshot;
 
-  int maxParallelBuilds = 8;
+  static int get maxParallelBuildsDefault => BuildEngineConfig.maxParallelBuilds;
+  static String get buildLogsDirDefault => BuildEngineConfig.buildLogsDir;
+  int maxParallelBuilds = maxParallelBuildsDefault;
   bool verbose = false;
   bool dryRun = false;
-  String buildLogsDir = 'build_logs';
+  String buildLogsDir = buildLogsDirDefault;
   String? targetModule;
 
   Map<String, String> get modulePaths => workspace.modulePaths;
   Map<String, String> get allModulePaths => workspace.allModulePaths;
-  Map<String, Set<String>> get moduleDependencies =>
-      workspace.moduleDependencies;
-  Map<String, Set<String>> get allModuleDependencies =>
-      workspace.allModuleDependencies;
-  Map<String, Set<String>> get moduleUnusedDependencies =>
-      workspace.moduleUnusedDependencies;
-  Map<String, Set<String>> get modulePackageDependencies =>
-      workspace.modulePackageDependencies;
-  Map<String, Set<String>> get moduleUnusedPackages =>
-      workspace.moduleUnusedPackages;
+  Map<String, Set<String>> get moduleDependencies => workspace.moduleDependencies;
+  Map<String, Set<String>> get allModuleDependencies => workspace.allModuleDependencies;
+  Map<String, Set<String>> get moduleUnusedDependencies => workspace.moduleUnusedDependencies;
+  Map<String, Set<String>> get modulePackageDependencies => workspace.modulePackageDependencies;
+  Map<String, Set<String>> get moduleUnusedPackages => workspace.moduleUnusedPackages;
 
-  WorkspaceSnapshot get workspaceSnapshot =>
-      _workspaceSnapshot ??= WorkspaceSnapshot.fromGraph(workspace);
+  WorkspaceSnapshot get workspaceSnapshot => _workspaceSnapshot ??= WorkspaceSnapshot.fromGraph(workspace);
 
   Map<String, BuildStatus> get moduleBuildStatus => execution.moduleBuildStatus;
   Map<String, Process> get modulePids => execution.modulePids;
@@ -69,12 +66,12 @@ class BuildStateStore {
   BuildState configure({
     bool verbose = false,
     bool dryRun = false,
-    int maxParallelBuilds = 4,
+    int? maxParallelBuilds,
     String? targetModule,
   }) => _state = BuildState()
     ..verbose = verbose
     ..dryRun = dryRun
-    ..maxParallelBuilds = maxParallelBuilds
+    ..maxParallelBuilds = maxParallelBuilds ?? BuildState.maxParallelBuildsDefault
     ..targetModule = targetModule;
 
   void reset() {

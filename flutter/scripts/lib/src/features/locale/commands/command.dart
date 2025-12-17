@@ -1,4 +1,5 @@
 import 'package:scripts/src/core/command/base_command.dart';
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/core/di/dependency_setup.dart';
 import 'package:scripts/src/features/locale/commands/locale_executor.dart';
 
@@ -12,12 +13,12 @@ class LocaleCommand extends ScriptsCommand {
     argParser
       ..addOption(
         'input',
-        defaultsTo: 'app/assets/translations',
+        defaultsTo: LocaleConfig.inputPath,
         help: 'Directory containing translation JSON files.',
       )
       ..addOption(
         'output',
-        defaultsTo: 'common/lib/src/constants/locale_keys.dart',
+        defaultsTo: LocaleConfig.outputPath,
         help: 'Path for the generated Dart file.',
       );
   }
@@ -25,10 +26,9 @@ class LocaleCommand extends ScriptsCommand {
   @override
   Future<int> runCommand() async {
     final inputPath =
-        argResults?['input'] as String? ?? 'app/assets/translations';
+        argResults?['input'] as String? ?? LocaleConfig.inputPath;
     final outputPath =
-        argResults?['output'] as String? ??
-        'common/lib/src/constants/locale_keys.dart';
+        argResults?['output'] as String? ?? LocaleConfig.outputPath;
     configureDependencies();
     return getDependency<LocaleExecutor>().run(
       inputPath: inputPath,
