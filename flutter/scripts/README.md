@@ -94,12 +94,12 @@ Typical flow: `Command -> Executor -> Pipeline -> Stage(s) -> Services -> Ports/
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `create-module <feature-path> <module-type>`                     | Scaffold a module from `scripts/templates/modules/<module-type>`, bootstrap pubspec, register in `workspace_modules.yaml`.          |
 | `pub-sync [--modules <name\|path>…] [module…]`                   | Sync all `pubspec.yaml` files from `module.yaml` + `workspace_modules.yaml`; can reverse, format, lock, or report; refreshes graph. |
-| `build`                                                          | Mobile build matrix (Android/iOS × mode × flavor); handles keystore and artifact paths.                                             |
-| `gen-build [modules…]`                                           | `build_runner build -d` across workspace modules or filtered set (supports `<feature>_feature` shortcuts).                          |
+| `build`                                                          | Mobile build matrix (Android/iOS × mode × flavor); supports `--keep-key-properties`, artifact filters (`--android-aab`/`--android-apk`/`--ios-ipa`/`--ios-app`), and obfuscation/split-debug-info/target-platform defaults. |
+| `gen-build [modules…]`                                           | `build_runner build -d` across workspace modules or filtered set (supports `<feature>_feature` shortcuts expanding to data/domain/presentation/data_api/domain_api/presentation_api). |
 | `gen-clean [--workers <n>]`                                      | Clean generated files and run `build_runner clean` (multi-worker).                                                                  |
 | `gen-watch [modules…] [--pre-build]`                             | `build_runner watch -d`, optionally run `smart-build` first.                                                                        |
 | `smart-build [module?] [--dry-run] [--parallel <n>] [--verbose]` | Dependency-aware incremental build with mermaid output.                                                                             |
-| `module-graph [--parallel <n>] [--verbose]`                      | Generate dependency graphs and stats without running builds.                                                                        |
+| `module-graph [--parallel <n>] [--verbose]`                      | Generate dependency graphs and stats without running builds; writes `module_graph.md` and `overview.md`.                            |
 | `build-links` / `pubspec-links` / `yaml-links`                   | Symlink build.yaml / pubspec.yaml / both into `yaml/` for inspection.                                                               |
 | `locale [--input dir] [--output file]`                           | Emit a `LocaleKeys` class from translation JSON.                                                                                    |
 
@@ -111,6 +111,7 @@ Typical flow: `Command -> Executor -> Pipeline -> Stage(s) -> Services -> Ports/
   - Optional `build:` section. `build.manual: true` skips writing `build.yaml`. Any map containing only `include` (+ optional `raw`) is treated as a YAML include.
 - `pub-sync` writes `pubspec.yaml` and, if present, `build.yaml`. Modules with only build changes skip `flutter pub get`; pubspec changes trigger a single workspace `pub get`.
 - Useful flags: `--check` (dry-run), `--packages <pkg>…`, `--format`, `--reverse`, `--force-all`, `--lock`, `--report`.
+  - `--lock` writes `.misc/build_info/modules_lock.yaml`; `--report` writes `.misc/build_info/dependencies.md`.
 
 ## Add a new command/feature
 
