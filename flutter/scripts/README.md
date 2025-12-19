@@ -92,7 +92,7 @@ Typical flow: `Command -> Executor -> Pipeline -> Stage(s) -> Services -> Ports/
 
 | Command                                                          | Description                                                                                                                         |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `create-module <feature-path> <module-type>`                     | Scaffold a module from `scripts/templates/modules/<module-type>`, bootstrap pubspec, register in `workspace_modules.yaml`.          |
+| `create-module <feature-path> <module-type>`                     | Scaffold a module from `scripts/templates/modules/<module-type>`, bootstrap pubspec, register in the root `pubspec.yaml` workspace. |
 | `pub-sync [--modules <name\|path>…] [module…]`                   | Sync all `pubspec.yaml` files from `module.yaml` + `workspace_modules.yaml`; can reverse, format, lock, or report; refreshes graph. |
 | `build`                                                          | Mobile build matrix (Android/iOS × mode × flavor); supports `--keep-key-properties`, artifact filters (`--android-aab`/`--android-apk`/`--ios-ipa`/`--ios-app`), and obfuscation/split-debug-info/target-platform defaults. |
 | `gen-build [modules…]`                                           | `build_runner build -d` across workspace modules or filtered set (supports `<feature>_feature` shortcuts expanding to data/domain/presentation/data_api/domain_api/presentation_api). |

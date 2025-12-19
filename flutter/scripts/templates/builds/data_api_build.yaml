@@ -2,6 +2,13 @@ targets:
   $default:
     auto_apply_builders: false
     builders:
+      #! Project Generators
+      gen_exporter|exporter:
+        enabled: true
+        options:
+          folders:
+            - mapper
+            - model
       #! Package Generators
       json_serializable|json_serializable:
         enabled: true
