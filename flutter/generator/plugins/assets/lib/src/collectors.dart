@@ -10,6 +10,7 @@ import 'naming.dart';
 import 'paths.dart';
 
 const _supportedImageExtensions = {'png', 'jpg', 'jpeg', 'svg'};
+const _supportedLottieExtensions = {'json'};
 
 Future<AssetCollections> collectAssets(
   BuildStep buildStep,
@@ -17,10 +18,12 @@ Future<AssetCollections> collectAssets(
 ) async {
   final icons = await _collectIcons(buildStep, paths);
   final images = await _collectImages(buildStep, paths);
+  final lotties = await _collectLotties(buildStep, paths);
 
   return AssetCollections(
     icons: icons,
     images: images,
+    lotties: lotties,
   );
 }
 
@@ -108,6 +111,51 @@ Future<List<ImageEntry>> _collectImages(
     );
 
     return ImageEntry(
+      enumName: enumName,
+      assetName: base,
+    );
+  }).toList();
+}
+
+Future<List<LottieEntry>> _collectLotties(
+  BuildStep buildStep,
+  AssetPaths paths,
+) async {
+  final glob = Glob('${paths.lottieDir}/**');
+  final lotties = <String>{};
+
+  await for (final asset in buildStep.findAssets(glob)) {
+    final exists = await buildStep.canRead(asset);
+    if (!exists) {
+      continue;
+    }
+
+    final extension = p.posix
+        .extension(asset.path)
+        .replaceFirst('.', '')
+        .toLowerCase();
+    if (!_supportedLottieExtensions.contains(extension)) {
+      continue;
+    }
+
+    final relative = p.posix.relative(asset.path, from: paths.lottieDir);
+    if (relative.startsWith('..') || relative.isEmpty) {
+      continue;
+    }
+
+    final base = p.posix.withoutExtension(relative);
+    lotties.add(base);
+  }
+
+  final registry = NameRegistry();
+
+  return lotties.sorted((a, b) => a.compareTo(b)).map((base) {
+    final enumName = registry.allocate(
+      toLowerCamel(base),
+      prefix: 'lottie',
+    );
+
+    return LottieEntry(
       enumName: enumName,
       assetName: base,
     );

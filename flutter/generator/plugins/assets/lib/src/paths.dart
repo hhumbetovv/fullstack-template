@@ -21,7 +21,7 @@ class AssetPaths {
       (options.config['input'] as String?) ?? assetsDir,
     );
     final rawOutput = normalizePosix(
-      (options.config['output_dir'] as String?) ?? 'lib/src/constants',
+      (options.config['output_dir'] as String?) ?? 'lib/src/assets',
     );
 
     var outputRelative = rawOutput;
@@ -65,17 +65,22 @@ class AssetPaths {
 
   String get iconsDir => p.posix.join(assetsDir, 'icons');
   String get imagesDir => p.posix.join(assetsDir, 'images');
+  String get lottieDir => p.posix.join(assetsDir, 'lottie');
 
   String get iconsInputDir => p.posix.join(inputDir, 'icons');
   String get fontsDir => p.posix.join(inputDir, 'fonts');
 
   String get imagesOutputAbsolute =>
       p.posix.join(_outputAbsolute, 'images.dart');
+  String get lottiesOutputAbsolute =>
+      p.posix.join(_outputAbsolute, 'lotties.dart');
   String get iconFontClassOutputAbsolute =>
       p.posix.join(_outputAbsolute, iconClassFileName);
 
   String get imagesOutputRelative =>
       p.posix.join(outputRelative, 'images.dart');
+  String get lottiesOutputRelative =>
+      p.posix.join(outputRelative, 'lotties.dart');
   String get iconFontClassOutputRelative =>
       p.posix.join(outputRelative, iconClassFileName);
 

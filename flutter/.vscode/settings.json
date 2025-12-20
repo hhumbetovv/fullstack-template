@@ -34,9 +34,10 @@
   "explorer.fileNesting.patterns": {
     "*.dart": "${capture}.freezed.dart, ${capture}.g.dart, ${capture}.gr.dart, ${capture}.config.dart",
     ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap",
-    "module.yaml": "pubspec.yaml, pubspec.lock, pubspec_overrides.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata, analysis_options.yaml, build.yaml",
-    "pubspec.yaml": "pubspec.lock, pubspec_overrides.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata, analysis_options.yaml, build.yaml",
-    "readme.*": "authors, backers.md, changelog, citation"
+    "module.yaml": "pubspec.yaml, pubspec.lock, *.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata",
+    "pubspec.yaml": "pubspec.lock, pub_versions.yaml, analysis_options.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata",
+    "readme.*": "authors, backers.md, changelog, citation",
+    "README.md": "*.md",
   },
   "git.ignoreLimitWarning": true,
   "mobileEmulator.androidSDKPath": "/Users/humbthumbtov/Library/Android/sdk",

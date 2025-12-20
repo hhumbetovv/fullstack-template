@@ -12,7 +12,7 @@ targets:
         enabled: true
         options:
           assets_dir: "assets"
-          output_dir: "lib/src/constants"
+          output_dir: "lib/src/assets"
 
 global_options:
   gen_assets|assets:

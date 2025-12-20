@@ -38,6 +38,7 @@ class AssetsBuilder implements Builder {
     r'$lib$': [
       paths.iconFontClassOutputRelative,
       paths.imagesOutputRelative,
+      paths.lottiesOutputRelative,
     ],
   };
 
@@ -85,6 +86,11 @@ class AssetsBuilder implements Builder {
     await buildStep.writeAsString(
       AssetId(packageName, paths.imagesOutputAbsolute),
       formatter.format(outputs.imageContent),
+    );
+
+    await buildStep.writeAsString(
+      AssetId(packageName, paths.lottiesOutputAbsolute),
+      formatter.format(outputs.lottieContent),
     );
   }
 
