@@ -38,11 +38,13 @@ class SmartBuildExecutor {
 
   Future<int> run(SmartBuildOptions options) async {
     final store = BuildStateStore();
+    final stopwatch = Stopwatch()..start();
     final state = store.configure(
       verbose: options.verbose,
       dryRun: options.dryRun,
       maxParallelBuilds: options.maxParallelBuilds,
       targetModule: options.targetModule,
+      optimized: options.optimized,
     );
     Logger.configure(LoggerConfig(verbose: options.verbose));
 
@@ -60,6 +62,9 @@ class SmartBuildExecutor {
         Logger.debug('   Dry Run: ${state.dryRun}');
         Logger.debug('   Max Parallel: ${state.maxParallelBuilds}');
         Logger.debug('   Target Module: ${state.targetModule ?? 'all'}');
+        Logger.debug(
+          '   Scheduler: ${state.optimized ? 'optimized' : 'classic'}',
+        );
         Logger.debug('   Working Directory: ${Directory.current.path}');
         log('');
       }
@@ -122,7 +127,10 @@ class SmartBuildExecutor {
       }
 
       if (!state.dryRun) {
-        await _buildExecutionService.execute(state);
+        await _buildExecutionService.execute(
+          state,
+          optimized: options.optimized,
+        );
       }
 
       if (!state.dryRun && state.targetModule == null) {
@@ -160,6 +168,10 @@ class SmartBuildExecutor {
       for (final subscription in subscriptions) {
         await subscription.cancel();
       }
+      stopwatch.stop();
+      Logger.info(
+        '⏱ Total elapsed time: ${_formatDuration(stopwatch.elapsed)}',
+      );
     }
   }
 
@@ -194,5 +206,21 @@ class SmartBuildExecutor {
     for (final entry in report.unusedDependencies.entries) {
       Console.warning('  ${entry.key}: ${entry.value.join(', ')}');
     }
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    final milliseconds = duration.inMilliseconds % 1000;
+
+    final buffer = StringBuffer();
+    if (minutes > 0) {
+      buffer.write('${minutes}m ');
+    }
+    buffer.write('${seconds}s');
+    if (minutes == 0 && milliseconds > 0) {
+      buffer.write(' ${milliseconds}ms');
+    }
+    return buffer.toString().trim();
   }
 }

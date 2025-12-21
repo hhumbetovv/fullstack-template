@@ -4,10 +4,12 @@ class SmartBuildOptions {
     required this.dryRun,
     required this.maxParallelBuilds,
     this.targetModule,
+    this.optimized = false,
   });
 
   final bool verbose;
   final bool dryRun;
   final int maxParallelBuilds;
   final String? targetModule;
+  final bool optimized;
 }

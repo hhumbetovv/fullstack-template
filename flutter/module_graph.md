@@ -19,6 +19,14 @@ graph LR
     core_navigation:::core
     core_presentation["core_presentation"]
     core_presentation:::core
+    gen_assets["gen_assets"]
+    gen_core["gen_core"]
+    gen_core:::core
+    gen_data["gen_data"]
+    gen_data:::data
+    gen_exporter["gen_exporter"]
+    gen_palette["gen_palette"]
+    gen_view_kit["gen_view_kit"]
     processor["processor"]
     scripts["scripts"]
     ui_components["ui_components"]
@@ -36,20 +44,41 @@ graph LR
     core_presentation --> app
     ui_components --> app
     ui_foundation --> app
+    gen_exporter --> processor
+    common_tooling --> gen_core
+    common_tooling --> gen_assets
+    gen_core --> gen_data
+    processor --> gen_data
+    gen_core --> gen_palette
+    gen_data --> gen_palette
+    processor --> gen_palette
+    common_tooling --> gen_view_kit
+    gen_core --> gen_view_kit
+    processor --> gen_view_kit
+    gen_exporter --> common_shared
     common_shared --> common_presentation
+    gen_exporter --> common_presentation
     common_presentation --> core_presentation
     common_shared --> core_presentation
     core_domain --> core_presentation
     processor --> core_presentation
     ui_foundation --> core_navigation
+    gen_exporter --> core_navigation
     common_shared --> core_data
     core_domain --> core_data
+    gen_exporter --> core_data
     common_shared --> core_domain
     processor --> core_domain
+    gen_data --> core_domain
+    gen_exporter --> core_domain
+    gen_assets --> ui_foundation
+    gen_exporter --> ui_foundation
     common_presentation --> ui_components
     common_shared --> ui_components
     processor --> ui_components
     ui_foundation --> ui_components
+    gen_exporter --> ui_components
+    gen_palette --> ui_components
     ui_components --> ui_previews
     ui_foundation --> ui_previews
     features["Features"]
@@ -60,11 +89,15 @@ graph LR
     core_domain --> features
     core_navigation --> features
     core_presentation --> features
+    gen_data --> features
+    gen_exporter --> features
+    gen_view_kit --> features
     processor --> features
     ui_components --> features
     ui_foundation --> features
     features --> app
 
+    classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000;
     classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000;
     classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000;
     classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000;
@@ -168,18 +201,25 @@ graph LR
     class group_Common_Layer common
     group_UI_Layer["UI Layer"]
     class group_UI_Layer ui
+    group_Data_Layer["Data Layer"]
+    class group_Data_Layer data
     group_Feature__Console["Feature: Console"]
     class group_Feature__Console feature
     group_Feature__Demo["Feature: Demo"]
     class group_Feature__Demo feature
     group_Common_Layer --> group_Core_Layer
+    group_Core_Layer --> group_Data_Layer
     group_UI_Layer --> group_Core_Layer
+    group_Data_Layer --> group_Core_Layer
     group_Common_Layer --> group_UI_Layer
     group_Common_Layer --> group_Feature__Console
     group_Core_Layer --> group_Feature__Console
     group_UI_Layer --> group_Feature__Console
+    group_Data_Layer --> group_Feature__Console
     group_Core_Layer --> group_Feature__Demo
+    group_Data_Layer --> group_Feature__Demo
 
+    classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000;
     classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000;
     classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000;
     classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000;

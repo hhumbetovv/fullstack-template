@@ -8,28 +8,6 @@ import 'package:scripts/src/features/build_engine/domain/models/build_state.dart
 class ModuleBuildRunner {
   const ModuleBuildRunner();
 
-  bool canBuild(BuildState state, String moduleName) {
-    Logger.debug('Checking if $moduleName can be built...');
-
-    final dependencies = state.moduleDependencies[moduleName] ?? <String>{};
-    if (dependencies.isEmpty) {
-      Logger.debug('   $moduleName has no dependencies, can build');
-      return true;
-    }
-
-    for (final dep in dependencies) {
-      if (state.moduleBuildStatus[dep] != BuildStatus.completed) {
-        Logger.debug(
-          '   $moduleName waiting for $dep (status: ${state.moduleBuildStatus[dep]})',
-        );
-        return false;
-      }
-    }
-
-    Logger.debug('   $moduleName all dependencies satisfied, can build');
-    return true;
-  }
-
   Future<ModuleBuildResult> run(BuildState state, String moduleName) async {
     final modulePath = state.workspaceSnapshot.modulePaths[moduleName]!;
     final logFile = '${state.buildLogsDir}/build_$moduleName.log';

@@ -60,6 +60,8 @@ void configureDependencies() {
     ..registerLazySingleton<BuildExecutionService>(
       () => BuildExecutionService(
         scheduler: _locator.get<BuildScheduler>(),
+        logManager: _locator.get<BuildLogManager>(),
+        moduleBuilder: _locator.get<ModuleBuildRunner>(),
       ),
     )
     ..registerLazySingleton<ModuleGraphPort>(

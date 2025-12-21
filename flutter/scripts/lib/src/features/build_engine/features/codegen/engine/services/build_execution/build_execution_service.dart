@@ -8,14 +8,21 @@ class BuildExecutionService {
     BuildScheduler? scheduler,
     BuildLogManager? logManager,
     ModuleBuildRunner? moduleBuilder,
-  }) : _scheduler =
-           scheduler ??
-           BuildScheduler(
-             logManager: logManager ?? const BuildLogManager(),
-             moduleBuilder: moduleBuilder ?? const ModuleBuildRunner(),
-           );
+  }) : _logManager = logManager ?? const BuildLogManager(),
+       _moduleBuilder = moduleBuilder ?? const ModuleBuildRunner(),
+       _legacySchedulerOverride = scheduler;
 
-  final BuildScheduler _scheduler;
+  final BuildLogManager _logManager;
+  final ModuleBuildRunner _moduleBuilder;
+  final BuildScheduler? _legacySchedulerOverride;
 
-  Future<bool> execute(BuildState state) => _scheduler.execute(state);
+  late final BuildScheduler _scheduler =
+      _legacySchedulerOverride ??
+      BuildScheduler(
+        logManager: _logManager,
+        moduleBuilder: _moduleBuilder,
+      );
+
+  Future<bool> execute(BuildState state, {required bool optimized}) =>
+      _scheduler.execute(state);
 }
