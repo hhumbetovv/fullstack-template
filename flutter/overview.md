@@ -8,7 +8,7 @@
 - **Total Dependencies**: 68
 - **Average Dependencies**: 2.96
 - **Peak Concurrent Modules**: 3
-- **Configured Parallel Limit**: 9
+- **Configured Parallel Limit**: 8
 
 ## Graph Index
 
@@ -58,21 +58,13 @@
 
 ## Unused Packages
 
-- **app** → build_runner, injectable_generator
-- **common_presentation** → build_runner
-- **common_shared** → build_runner
-- **console_presentation** → build_runner, get_it, injectable, injectable_generator
-- **core_data** → build_runner, flutter, injectable_generator, json_serializable, retrofit_generator
-- **core_domain** → build_runner
-- **core_navigation** → build_runner
+- **console_presentation** → get_it, injectable
+- **core_data** → flutter
 - **core_presentation** → auto_route, get_it
-- **demo_data** → build_runner, get_it, injectable_generator
-- **demo_domain** → build_runner, get_it, injectable_generator
-- **demo_presentation** → build_runner, get_it, injectable_generator
+- **demo_data** → get_it
+- **demo_domain** → get_it
+- **demo_presentation** → get_it
 - **gen_exporter** → source_gen
-- **processor** → build_runner, json_serializable
-- **ui_components** → build_runner
-- **ui_foundation** → build_runner
 
 _Detailed graphs are available in `module_graph.md`._
 

@@ -31,7 +31,8 @@ class DependencyAnalyzer {
       );
       final fullDependencies = dependencySets.moduleDependencies;
       state.allModuleDependencies[moduleName] = fullDependencies;
-      state.modulePackageDependencies[moduleName] = dependencySets.packageDependencies;
+      state.modulePackageDependencies[moduleName] =
+          dependencySets.packageDependencies;
 
       if (!state.modulePaths.containsKey(moduleName) && state.verbose) {
         if (fullDependencies.isNotEmpty) {
@@ -67,8 +68,11 @@ class DependencyAnalyzer {
     for (final entry in state.allModuleDependencies.entries) {
       final moduleName = entry.key;
       final declaredDeps = entry.value;
-      final filteredDeclaredDeps = declaredDeps.where((dep) => !shouldIgnoreModule(dep)).toSet();
-      final declaredPackages = state.modulePackageDependencies[moduleName] ?? <String>{};
+      final filteredDeclaredDeps = declaredDeps
+          .where((dep) => !shouldIgnoreModule(dep))
+          .toSet();
+      final declaredPackages =
+          state.modulePackageDependencies[moduleName] ?? <String>{};
 
       if (filteredDeclaredDeps.isEmpty && declaredPackages.isEmpty) {
         continue;
@@ -122,9 +126,13 @@ class DependencyAnalyzer {
 
       final deps = pubspec['dependencies'] as Map<String, dynamic>?;
       final devDeps = pubspec['dev_dependencies'] as Map<String, dynamic>?;
-      final overrideDeps = pubspec['dependency_overrides'] as Map<String, dynamic>?;
+      final overrideDeps =
+          pubspec['dependency_overrides'] as Map<String, dynamic>?;
 
-      void processDeps(Map<String, dynamic>? depsMap) {
+      void processDeps(
+        Map<String, dynamic>? depsMap, {
+        bool includePackages = true,
+      }) {
         if (depsMap == null) return;
 
         depsMap.forEach((key, value) {
@@ -136,13 +144,17 @@ class DependencyAnalyzer {
             return;
           }
 
-          packages.add(depName);
-          Logger.debug('   Found external dependency: $moduleName → $depName');
+          if (includePackages) {
+            packages.add(depName);
+            Logger.debug(
+              '   Found external dependency: $moduleName → $depName',
+            );
+          }
         });
       }
 
       processDeps(deps);
-      processDeps(devDeps);
+      processDeps(devDeps, includePackages: false);
       processDeps(overrideDeps);
     } on Object catch (e) {
       Logger.error('Error parsing dependencies from $pubspecPath: $e');
@@ -207,7 +219,8 @@ class DependencyAnalyzer {
 
   void _populateBuildDependencies(BuildState state) {
     for (final moduleName in state.modulePaths.keys) {
-      final fullDependencies = state.allModuleDependencies[moduleName] ?? const <String>{};
+      final fullDependencies =
+          state.allModuleDependencies[moduleName] ?? const <String>{};
       final buildDependencies = _flattenToBuildModules(
         state,
         moduleName,
@@ -226,7 +239,9 @@ class DependencyAnalyzer {
       }
 
       if (state.verbose) {
-        final additionalDeps = fullDependencies.where((dep) => !state.modulePaths.containsKey(dep)).toSet();
+        final additionalDeps = fullDependencies
+            .where((dep) => !state.modulePaths.containsKey(dep))
+            .toSet();
         if (additionalDeps.isNotEmpty) {
           Logger.verbose(
             '   ↳ Additional non-build_runner deps: '
