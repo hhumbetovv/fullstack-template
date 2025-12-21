@@ -3,6 +3,7 @@ modules: []
 dev_modules: []
 dependencies:
   - path
+  - meta
 dev_dependencies: []
 
 build:
