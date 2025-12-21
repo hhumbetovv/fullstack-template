@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:developer' as developer;
 
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/log_manager.dart';
@@ -27,8 +28,10 @@ class BuildScheduler {
     await _logManager.prepareLogs(state);
 
     final totalModules = state.buildOrder.length;
-    var completed = 0;
+    var resolved = 0;
+    var successfulModules = 0;
     var failed = 0;
+    var skipped = 0;
 
     Logger.info('Total modules to build: $totalModules');
     Logger.info('Max parallel builds: ${state.maxParallelBuilds}');
@@ -43,14 +46,17 @@ class BuildScheduler {
     }
 
     final dependencyTracker = _DependencyTracker.build(state);
-    final readyQueue = <_ReadyModule>[];
+    final waveQueues = <int, _WaveBucket>{};
+    final waveOrder = ListQueue<_WaveBucket>();
+    final moduleWeights = <String, int>{};
     final readySet = <String>{};
     final runningModules = <String>{};
     final waveAnnouncements = <int>{};
     final completionEvents = ListQueue<_BuildCompletion>();
+    final parallelController = _ParallelController(state);
     Completer<void>? completionSignal;
 
-    void _notifyCompletion(_BuildCompletion completion) {
+    void notifyCompletion(_BuildCompletion completion) {
       completionEvents.addLast(completion);
       if (completionSignal != null && !completionSignal!.isCompleted) {
         completionSignal!.complete();
@@ -58,7 +64,7 @@ class BuildScheduler {
       completionSignal = null;
     }
 
-    Future<_BuildCompletion> _waitForNextCompletion() async {
+    Future<_BuildCompletion> waitForNextCompletion() async {
       if (completionEvents.isEmpty) {
         completionSignal ??= Completer<void>();
         await completionSignal!.future;
@@ -66,7 +72,7 @@ class BuildScheduler {
       return completionEvents.removeFirst();
     }
 
-    void _enqueueReadyModule(String moduleName, {String? reason}) {
+    void enqueueReadyModule(String moduleName, {String? reason}) {
       if (state.moduleBuildStatus[moduleName] != BuildStatus.pending) {
         return;
       }
@@ -78,45 +84,69 @@ class BuildScheduler {
       }
 
       final wave = state.moduleBuildLevel[moduleName] ?? 0;
-      readyQueue
-        ..add(_ReadyModule(moduleName, wave))
-        ..sort();
+      final bucket = waveQueues.putIfAbsent(wave, () => _WaveBucket(wave));
+      final weight = moduleWeights[moduleName] ??= _computeModuleWeight(
+        state,
+        moduleName,
+      );
+      bucket.add(moduleName, weight);
+      if (!bucket.inRotation) {
+        _insertWaveBucket(waveOrder, bucket);
+      }
 
-      if (reason != null) {
-        Logger.info('🔓 $moduleName is now ready (unblocked by $reason).');
+      if (reason != null && state.verbose) {
+        Logger.debug('🔓 $moduleName is now ready (unblocked by $reason).');
       } else if (state.verbose) {
         Logger.debug('Ready: $moduleName (wave $wave)');
       }
     }
 
-    void _scheduleModule(_ReadyModule readyModule) {
-      readySet.remove(readyModule.name);
-      runningModules.add(readyModule.name);
+    _ReadyModule? takeNextReadyModule() {
+      while (waveOrder.isNotEmpty) {
+        final bucket = waveOrder.removeFirst();
+        final entry = bucket.takeNext();
+        if (entry == null) {
+          bucket.inRotation = false;
+          waveQueues.remove(bucket.wave);
+          continue;
+        }
+        if (bucket.modules.isNotEmpty) {
+          waveOrder.addLast(bucket);
+        } else {
+          bucket.inRotation = false;
+          waveQueues.remove(bucket.wave);
+        }
+        readySet.remove(entry.name);
+        return _ReadyModule(entry.name, bucket.wave, entry.weight);
+      }
+      return null;
+    }
 
-      if (waveAnnouncements.add(readyModule.wave)) {
+    void scheduleModule(_ReadyModule readyModule) {
+      runningModules.add(readyModule.name);
+      parallelController.recordStart(readyModule.name);
+
+      if (waveAnnouncements.add(readyModule.wave) && state.verbose) {
         _blankLine();
         Logger.info('🌊 Activating Wave ${readyModule.wave} (overlap enabled)');
         Logger.info('--------------------------------');
       }
 
-      final dependencies =
-          (state.moduleDependencies[readyModule.name] ?? <String>{}).toList()
-            ..sort();
-      final depDescription = dependencies.isEmpty
-          ? 'no deps'
-          : 'deps: ${dependencies.join(', ')}';
-      Logger.info(
-        '⚙️ Launching ${readyModule.name} (wave ${readyModule.wave}) | $depDescription',
-      );
+      if (state.verbose) {
+        final dependencies = (state.moduleDependencies[readyModule.name] ?? <String>{}).toList()..sort();
+        final depDescription = dependencies.isEmpty ? 'no deps' : 'deps: ${dependencies.join(', ')}';
+        Logger.info(
+          '⚙️ Launching ${readyModule.name} (wave ${readyModule.wave}) | $depDescription',
+        );
+      }
 
       try {
-        final future = _moduleBuilder
+        _moduleBuilder
             .run(state, readyModule.name)
             .then(
-              (result) =>
-                  _BuildCompletion(readyModule.name, readyModule.wave, result),
-            );
-        future.then(_notifyCompletion);
+              (result) => _BuildCompletion(readyModule.name, readyModule.wave, result),
+            )
+            .then(notifyCompletion);
       } on Object catch (error, stackTrace) {
         Logger.error(
           'Build task crashed before starting for ${readyModule.name}: $error',
@@ -126,9 +156,8 @@ class BuildScheduler {
         }
         state.moduleBuildStatus[readyModule.name] = BuildStatus.failed;
         runningModules.remove(readyModule.name);
-        final fallbackLog =
-            '${state.buildLogsDir}/build_${readyModule.name}.log';
-        _notifyCompletion(
+        final fallbackLog = '${state.buildLogsDir}/build_${readyModule.name}.log';
+        notifyCompletion(
           _BuildCompletion(
             readyModule.name,
             readyModule.wave,
@@ -139,60 +168,65 @@ class BuildScheduler {
     }
 
     for (final module in state.buildOrder) {
-      _enqueueReadyModule(module);
+      enqueueReadyModule(module);
     }
 
-    while (completed < totalModules) {
-      while (runningModules.length < state.maxParallelBuilds &&
-          readyQueue.isNotEmpty) {
-        final readyModule = readyQueue.removeAt(0);
-        _scheduleModule(readyModule);
+    while (resolved < totalModules) {
+      while (runningModules.length < parallelController.limit) {
+        final readyModule = takeNextReadyModule();
+        if (readyModule == null) {
+          break;
+        }
+        scheduleModule(readyModule);
       }
 
       if (runningModules.isEmpty) {
-        if (readyQueue.isEmpty) {
+        if (waveOrder.isEmpty) {
           _logBuildStall(state, dependencyTracker.blockedByFailure);
           return false;
         }
         continue;
       }
 
-      final completion = await _waitForNextCompletion();
+      final completion = await waitForNextCompletion();
       runningModules.remove(completion.moduleName);
+      parallelController.recordCompletion(completion.moduleName);
 
-      final succeeded = completion.result.succeeded;
-      if (succeeded) {
-        completed++;
-        Logger.success('✅ ${completion.moduleName} finished');
+      if (completion.result.succeeded) {
+        resolved++;
+        successfulModules++;
         for (final dependent in dependencyTracker.dependentsOf(
           completion.moduleName,
         )) {
+          if (state.moduleBuildStatus[dependent] == BuildStatus.blocked) {
+            continue;
+          }
           final remaining = dependencyTracker.decrementDependency(dependent);
           if (remaining <= 0) {
-            _enqueueReadyModule(dependent, reason: completion.moduleName);
+            enqueueReadyModule(dependent, reason: completion.moduleName);
           } else if (state.verbose) {
             Logger.debug('   $dependent awaiting $remaining more dependencies');
           }
         }
       } else {
         failed++;
-        completed++;
-        Logger.error('❌ ${completion.moduleName} failed');
-        for (final dependent in dependencyTracker.dependentsOf(
+        resolved++;
+        final newlySkipped = _blockDependents(
+          state,
+          dependencyTracker,
           completion.moduleName,
-        )) {
-          dependencyTracker.markBlockedByFailure(
-            dependent,
-            completion.moduleName,
-          );
-        }
+        );
+        skipped += newlySkipped;
+        resolved += newlySkipped;
       }
 
-      final inProgress = runningModules.length;
-      final pending = totalModules - completed;
-      Logger.info(
-        '📊 Progress: Completed: ${completed - failed}/$totalModules | Failed: $failed | In Progress: $inProgress | Pending: $pending',
-      );
+      if (state.verbose) {
+        final inProgress = runningModules.length;
+        final pending = totalModules - resolved;
+        Logger.info(
+          '📊 Progress: Successful: $successfulModules/$totalModules | Failed: $failed | Skipped: $skipped | In Progress: $inProgress | Pending: $pending | Slots: ${parallelController.limit}',
+        );
+      }
     }
 
     _blankLine();
@@ -201,9 +235,10 @@ class BuildScheduler {
     Logger.info('════════════════════════════════════');
     _blankLine();
 
-    final successful = completed - failed;
+    final successful = successfulModules;
     Logger.info('   ✅ Successful: $successful');
     Logger.info('   ❌ Failed: $failed');
+    Logger.info('   ⚠️ Skipped: $skipped');
     Logger.info('   📦 Total: $totalModules');
 
     if (failed > 0) {
@@ -218,6 +253,16 @@ class BuildScheduler {
       }
     }
 
+    if (skipped > 0) {
+      _blankLine();
+      Logger.warning('Modules skipped due to failed dependencies:');
+      for (final entry in dependencyTracker.blockedByFailure.entries) {
+        if (state.moduleBuildStatus[entry.key] == BuildStatus.blocked) {
+          Logger.warning('   • ${entry.key} ← ${entry.value.join(', ')}');
+        }
+      }
+    }
+
     _blankLine();
     if (failed == 0) {
       Logger.success('🎉 All builds completed successfully!');
@@ -228,6 +273,26 @@ class BuildScheduler {
       '💥 Some builds failed. Check individual log files in ${state.buildLogsDir}/',
     );
     return false;
+  }
+
+  int _blockDependents(
+    BuildState state,
+    _DependencyTracker dependencyTracker,
+    String failedModule,
+  ) {
+    var skipped = 0;
+    for (final dependent in dependencyTracker.dependentsOf(failedModule)) {
+      dependencyTracker.markBlockedByFailure(
+        dependent,
+        failedModule,
+      );
+      if (state.moduleBuildStatus[dependent] == BuildStatus.pending) {
+        state.moduleBuildStatus[dependent] = BuildStatus.blocked;
+        skipped++;
+        Logger.warning('⚠️ Skipping $dependent (blocked by $failedModule)');
+      }
+    }
+    return skipped;
   }
 
   void _logBuildStall(
@@ -264,20 +329,12 @@ class BuildScheduler {
   void _blankLine() => developer.log('');
 }
 
-class _ReadyModule implements Comparable<_ReadyModule> {
-  const _ReadyModule(this.name, this.wave);
+class _ReadyModule {
+  const _ReadyModule(this.name, this.wave, this.weight);
 
   final String name;
   final int wave;
-
-  @override
-  int compareTo(_ReadyModule other) {
-    final waveComparison = wave.compareTo(other.wave);
-    if (waveComparison != 0) {
-      return waveComparison;
-    }
-    return name.compareTo(other.name);
-  }
+  final int weight;
 }
 
 class _BuildCompletion {
@@ -288,17 +345,74 @@ class _BuildCompletion {
   final ModuleBuildResult result;
 }
 
+class _WaveBucket {
+  _WaveBucket(this.wave);
+
+  final int wave;
+  final List<_ReadyEntry> modules = <_ReadyEntry>[];
+  bool inRotation = false;
+
+  void add(String name, int weight) {
+    final entry = _ReadyEntry(name, weight);
+    var index = 0;
+    while (index < modules.length && weight <= modules[index].weight) {
+      index++;
+    }
+    modules.insert(index, entry);
+  }
+
+  _ReadyEntry? takeNext() {
+    if (modules.isEmpty) {
+      return null;
+    }
+    return modules.removeAt(0);
+  }
+}
+
+class _ReadyEntry {
+  _ReadyEntry(this.name, this.weight);
+
+  final String name;
+  final int weight;
+}
+
+void _insertWaveBucket(ListQueue<_WaveBucket> order, _WaveBucket bucket) {
+  bucket.inRotation = true;
+  if (order.isEmpty) {
+    order.add(bucket);
+    return;
+  }
+  final temp = List<_WaveBucket>.from(order);
+  order.clear();
+  var inserted = false;
+  for (final existing in temp) {
+    if (!inserted && bucket.wave < existing.wave) {
+      order.add(bucket);
+      inserted = true;
+    }
+    order.add(existing);
+  }
+  if (!inserted) {
+    order.add(bucket);
+  }
+}
+
+int _computeModuleWeight(BuildState state, String moduleName) {
+  final depCount = state.moduleDependencies[moduleName]?.length ?? 0;
+  final packageCount = state.modulePackageDependencies[moduleName]?.length ?? 0;
+  final wave = state.moduleBuildLevel[moduleName] ?? 0;
+  final path = state.workspaceSnapshot.modulePaths[moduleName] ?? moduleName;
+  final pathDepth = '/'.allMatches(path).length + 1;
+  return depCount * 5 + packageCount * 2 + (100 - wave) + pathDepth;
+}
+
 class _DependencyTracker {
   _DependencyTracker({
     required this.remainingDependencies,
     required this.dependents,
   });
 
-  final Map<String, int> remainingDependencies;
-  final Map<String, List<String>> dependents;
-  final Map<String, Set<String>> blockedByFailure = <String, Set<String>>{};
-
-  static _DependencyTracker build(BuildState state) {
+  factory _DependencyTracker.build(BuildState state) {
     final modules = state.buildOrder.toSet();
     final remaining = <String, int>{};
     final dependents = <String, List<String>>{};
@@ -318,8 +432,11 @@ class _DependencyTracker {
     );
   }
 
-  List<String> dependentsOf(String module) =>
-      dependents[module] ?? const <String>[];
+  final Map<String, int> remainingDependencies;
+  final Map<String, List<String>> dependents;
+  final Map<String, Set<String>> blockedByFailure = <String, Set<String>>{};
+
+  List<String> dependentsOf(String module) => dependents[module] ?? const <String>[];
 
   int decrementDependency(String module) {
     final current = remainingDependencies[module];
@@ -331,12 +448,62 @@ class _DependencyTracker {
     return next;
   }
 
-  bool hasPendingDependencies(String module) =>
-      (remainingDependencies[module] ?? 0) > 0;
+  bool hasPendingDependencies(String module) => (remainingDependencies[module] ?? 0) > 0;
 
   void markBlockedByFailure(String module, String failedDependency) {
-    blockedByFailure
-        .putIfAbsent(module, () => <String>{})
-        .add(failedDependency);
+    blockedByFailure.putIfAbsent(module, () => <String>{}).add(failedDependency);
+  }
+}
+
+class _ParallelController {
+  _ParallelController(this.state) : _limit = state.maxParallelBuilds;
+
+  final BuildState state;
+  int _limit;
+  final Map<String, DateTime> _startTimes = <String, DateTime>{};
+  final ListQueue<Duration> _recentDurations = ListQueue<Duration>();
+  static const int _historySize = 6;
+  static const Duration _fastThreshold = Duration(seconds: 20);
+  static const Duration _slowThreshold = Duration(seconds: 90);
+
+  int get limit => state.autoParallel ? _limit : state.maxParallelBuilds;
+
+  void recordStart(String module) {
+    if (!state.autoParallel) {
+      return;
+    }
+    _startTimes[module] = DateTime.now();
+  }
+
+  void recordCompletion(String module) {
+    if (!state.autoParallel) {
+      return;
+    }
+    final start = _startTimes.remove(module);
+    if (start == null) {
+      return;
+    }
+    final duration = DateTime.now().difference(start);
+    _recentDurations.addLast(duration);
+    if (_recentDurations.length > _historySize) {
+      _recentDurations.removeFirst();
+    }
+    _adjustLimit();
+  }
+
+  void _adjustLimit() {
+    if (_recentDurations.isEmpty) {
+      return;
+    }
+    final totalMillis = _recentDurations.fold<int>(
+      0,
+      (sum, item) => sum + item.inMilliseconds,
+    );
+    final avg = Duration(milliseconds: totalMillis ~/ _recentDurations.length);
+    if (avg <= _fastThreshold && _limit < BuildEngineConfig.maxParallelAutoCeiling) {
+      _limit++;
+    } else if (avg >= _slowThreshold && _limit > BuildEngineConfig.maxParallelAutoFloor) {
+      _limit--;
+    }
   }
 }

@@ -15,8 +15,7 @@ class BuildState {
   final ExecutionTracker execution = ExecutionTracker();
   WorkspaceSnapshot? _workspaceSnapshot;
 
-  static int get maxParallelBuildsDefault =>
-      BuildEngineConfig.maxParallelBuilds;
+  static int get maxParallelBuildsDefault => BuildEngineConfig.maxParallelBuilds;
   static String get buildLogsDirDefault => BuildEngineConfig.buildLogsDir;
   int maxParallelBuilds = maxParallelBuildsDefault;
   bool verbose = false;
@@ -24,22 +23,17 @@ class BuildState {
   String buildLogsDir = buildLogsDirDefault;
   String? targetModule;
   bool optimized = false;
+  bool autoParallel = false;
 
   Map<String, String> get modulePaths => workspace.modulePaths;
   Map<String, String> get allModulePaths => workspace.allModulePaths;
-  Map<String, Set<String>> get moduleDependencies =>
-      workspace.moduleDependencies;
-  Map<String, Set<String>> get allModuleDependencies =>
-      workspace.allModuleDependencies;
-  Map<String, Set<String>> get moduleUnusedDependencies =>
-      workspace.moduleUnusedDependencies;
-  Map<String, Set<String>> get modulePackageDependencies =>
-      workspace.modulePackageDependencies;
-  Map<String, Set<String>> get moduleUnusedPackages =>
-      workspace.moduleUnusedPackages;
+  Map<String, Set<String>> get moduleDependencies => workspace.moduleDependencies;
+  Map<String, Set<String>> get allModuleDependencies => workspace.allModuleDependencies;
+  Map<String, Set<String>> get moduleUnusedDependencies => workspace.moduleUnusedDependencies;
+  Map<String, Set<String>> get modulePackageDependencies => workspace.modulePackageDependencies;
+  Map<String, Set<String>> get moduleUnusedPackages => workspace.moduleUnusedPackages;
 
-  WorkspaceSnapshot get workspaceSnapshot =>
-      _workspaceSnapshot ??= WorkspaceSnapshot.fromGraph(workspace);
+  WorkspaceSnapshot get workspaceSnapshot => _workspaceSnapshot ??= WorkspaceSnapshot.fromGraph(workspace);
 
   Map<String, BuildStatus> get moduleBuildStatus => execution.moduleBuildStatus;
   Map<String, Process> get modulePids => execution.modulePids;
@@ -52,6 +46,18 @@ class BuildState {
   }
 
   Set<String> get currentlyBuilding => execution.currentlyBuilding;
+
+  static int computeAutoParallelism() {
+    final cpuCount = Platform.numberOfProcessors;
+    if (cpuCount <= 0) {
+      return maxParallelBuildsDefault;
+    }
+    final target = cpuCount <= 4 ? cpuCount : cpuCount - 1;
+    const min = BuildEngineConfig.maxParallelAutoFloor;
+    const max = BuildEngineConfig.maxParallelAutoCeiling;
+    final clamped = target.clamp(min, max);
+    return clamped;
+  }
 
   void resetWorkspace() {
     workspace.reset();
@@ -77,13 +83,14 @@ class BuildStateStore {
     int? maxParallelBuilds,
     String? targetModule,
     bool optimized = false,
+    bool autoParallel = false,
   }) => _state = BuildState()
     ..verbose = verbose
     ..dryRun = dryRun
-    ..maxParallelBuilds =
-        maxParallelBuilds ?? BuildState.maxParallelBuildsDefault
+    ..maxParallelBuilds = maxParallelBuilds ?? BuildState.maxParallelBuildsDefault
     ..targetModule = targetModule
-    ..optimized = optimized;
+    ..optimized = optimized
+    ..autoParallel = autoParallel;
 
   void reset() {
     _state = BuildState();

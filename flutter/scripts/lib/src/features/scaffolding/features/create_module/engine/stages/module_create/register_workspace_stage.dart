@@ -27,7 +27,7 @@ class RegisterWorkspaceStage implements Stage<ModuleCreateContext> {
       context.moduleDir.path,
       from: context.workspaceRoot,
     );
-    final normalizedPath = relativePath.replaceAll('\\', '/');
+    final normalizedPath = relativePath.replaceAll(r'\', '/');
     final moduleEntry = '- $normalizedPath';
 
     final originalContent = pubspecFile.readAsStringSync();
@@ -62,16 +62,14 @@ class RegisterWorkspaceStage implements Stage<ModuleCreateContext> {
       final current = lines[insertIndex];
       final trimmedLeft = current.trimLeft();
       final indent = current.length - trimmedLeft.length;
-      final isTopLevelKey =
-          trimmedLeft.isNotEmpty && indent == 0 && !trimmedLeft.startsWith('#');
+      final isTopLevelKey = trimmedLeft.isNotEmpty && indent == 0 && !trimmedLeft.startsWith('#');
       if (isTopLevelKey) {
         break;
       }
       insertIndex++;
     }
 
-    while (insertIndex > workspaceIndex + 1 &&
-        lines[insertIndex - 1].trim().isEmpty) {
+    while (insertIndex > workspaceIndex + 1 && lines[insertIndex - 1].trim().isEmpty) {
       insertIndex--;
     }
 

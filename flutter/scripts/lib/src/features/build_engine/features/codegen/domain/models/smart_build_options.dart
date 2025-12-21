@@ -5,6 +5,7 @@ class SmartBuildOptions {
     required this.maxParallelBuilds,
     this.targetModule,
     this.optimized = false,
+    this.autoParallel = false,
   });
 
   final bool verbose;
@@ -12,4 +13,5 @@ class SmartBuildOptions {
   final int maxParallelBuilds;
   final String? targetModule;
   final bool optimized;
+  final bool autoParallel;
 }

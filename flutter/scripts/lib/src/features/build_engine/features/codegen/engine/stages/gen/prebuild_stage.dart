@@ -22,6 +22,7 @@ class PrebuildStage implements Stage<GenWatchContext> {
         verbose: false,
         dryRun: false,
         maxParallelBuilds: BuildState.maxParallelBuildsDefault,
+        autoParallel: false,
       ),
     );
     if (exitCode != 0) {

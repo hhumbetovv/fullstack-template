@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:common_tooling/tooling.dart';
 import 'package:scripts/src/core/logging/logging.dart';
@@ -12,11 +14,9 @@ class ModuleBuildRunner {
     final modulePath = state.workspaceSnapshot.modulePaths[moduleName]!;
     final logFile = '${state.buildLogsDir}/build_$moduleName.log';
 
-    Logger.building('Building $moduleName ($modulePath)...');
     state.moduleBuildStatus[moduleName] = BuildStatus.building;
 
     if (state.dryRun) {
-      Logger.info('[DRY RUN] Would build: $moduleName');
       state.moduleBuildStatus[moduleName] = BuildStatus.completed;
       return const ModuleBuildResult.success();
     }
@@ -30,7 +30,7 @@ class ModuleBuildRunner {
       '--build-filter=assets/**',
     ];
 
-    final logSink = File(logFile).openWrite()
+    final logWriter = await _BufferedLogWriter.create(logFile)
       ..writeln('=== Build started at ${DateTime.now().toIso8601String()} ===')
       ..writeln('Module: $moduleName')
       ..writeln('Path: $modulePath')
@@ -45,27 +45,38 @@ class ModuleBuildRunner {
     state.modulePids[moduleName] = buildProcess;
     state.currentlyBuilding.add(moduleName);
 
-    buildProcess.stdout.transform(utf8.decoder).listen(logSink.write);
-    buildProcess.stderr.transform(utf8.decoder).listen(logSink.write);
+    final subscriptions = <StreamSubscription<List<int>>>[];
+    void capture(Stream<List<int>> source) {
+      final subscription = source.listen(logWriter.add);
+      subscriptions.add(subscription);
+    }
 
-    final exitCode = await buildProcess.exitCode;
+    capture(buildProcess.stdout);
+    capture(buildProcess.stderr);
 
-    logSink.writeln(
-      '\n=== Build finished at ${DateTime.now().toIso8601String()} ===',
-    );
-    await logSink.close();
+    late final int exitCode;
+    try {
+      exitCode = await buildProcess.exitCode;
+    } finally {
+      for (final subscription in subscriptions) {
+        await subscription.cancel();
+      }
+      logWriter.writeln(
+        '\n=== Build finished at ${DateTime.now().toIso8601String()} ===',
+      );
+      await logWriter.close();
+    }
 
     state.modulePids.remove(moduleName);
     state.currentlyBuilding.remove(moduleName);
 
     if (exitCode == 0) {
       state.moduleBuildStatus[moduleName] = BuildStatus.completed;
-      Logger.success('✅ $moduleName build completed');
       return const ModuleBuildResult.success();
     }
 
     state.moduleBuildStatus[moduleName] = BuildStatus.failed;
-    Logger.error('❌ $moduleName build failed (check $logFile)');
+    Logger.error('❌ $moduleName failed. See log: $logFile');
 
     if (state.verbose) {
       try {
@@ -84,6 +95,43 @@ class ModuleBuildRunner {
     }
 
     return ModuleBuildResult.failure(logFile: logFile);
+  }
+}
+
+class _BufferedLogWriter {
+  _BufferedLogWriter._(this._sink);
+
+  final IOSink _sink;
+  final _buffer = BytesBuilder(copy: false);
+  static const int _flushThreshold = 16 * 1024;
+
+  static Future<_BufferedLogWriter> create(String path) async {
+    final sink = File(path).openWrite();
+    return _BufferedLogWriter._(sink);
+  }
+
+  void add(List<int> chunk) {
+    _buffer.add(chunk);
+    if (_buffer.length >= _flushThreshold) {
+      _drainBuffer();
+    }
+  }
+
+  void writeString(String data) => add(utf8.encode(data));
+
+  void writeln(String line) => writeString('$line\n');
+
+  void _drainBuffer() {
+    if (_buffer.isEmpty) {
+      return;
+    }
+    _sink.add(_buffer.takeBytes());
+  }
+
+  Future<void> close() async {
+    _drainBuffer();
+    await _sink.flush();
+    await _sink.close();
   }
 }
 

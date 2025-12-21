@@ -27,7 +27,7 @@ class SmartBuildCommand extends ScriptsCommand {
         'parallel',
         abbr: 'p',
         help: 'Set the maximum number of modules built in parallel.',
-        valueHelp: 'count',
+        valueHelp: 'count|auto',
         defaultsTo: BuildState.maxParallelBuildsDefault.toString(),
       )
       ..addFlag(
@@ -48,21 +48,15 @@ class SmartBuildCommand extends ScriptsCommand {
     }
 
     final parallelRaw = argResults?['parallel'] as String?;
-    final parallel =
-        int.tryParse(parallelRaw ?? '') ?? BuildState.maxParallelBuildsDefault;
-    if (parallel <= 0) {
-      throw const CommandError(
-        '`--parallel` must be a positive integer.',
-        exitCode: 64,
-      );
-    }
+    final parsed = _parseParallelOption(parallelRaw);
 
     final options = SmartBuildOptions(
       verbose: argResults?['verbose'] as bool? ?? false,
       dryRun: argResults?['dry-run'] as bool? ?? false,
-      maxParallelBuilds: parallel,
+      maxParallelBuilds: parsed.value,
       targetModule: rest.isEmpty ? null : rest.first,
       optimized: argResults?['optimized'] as bool? ?? false,
+      autoParallel: parsed.isAuto,
     );
 
     return runSmartBuild(options);
@@ -70,4 +64,40 @@ class SmartBuildCommand extends ScriptsCommand {
 
   @override
   bool get showStackTrace => argResults?['verbose'] as bool? ?? false;
+}
+
+_ParallelParseResult _parseParallelOption(String? raw) {
+  if (raw == null) {
+    return _ParallelParseResult(
+      value: BuildState.maxParallelBuildsDefault,
+      isAuto: false,
+    );
+  }
+
+  if (raw.toLowerCase() == 'auto') {
+    return _ParallelParseResult(
+      value: BuildState.computeAutoParallelism(),
+      isAuto: true,
+    );
+  }
+
+  final value = int.tryParse(raw);
+  if (value == null || value <= 0) {
+    throw const CommandError(
+      '`--parallel` must be a positive integer or `auto`.',
+      exitCode: 64,
+    );
+  }
+
+  return _ParallelParseResult(value: value, isAuto: false);
+}
+
+class _ParallelParseResult {
+  const _ParallelParseResult({
+    required this.value,
+    required this.isAuto,
+  });
+
+  final int value;
+  final bool isAuto;
 }

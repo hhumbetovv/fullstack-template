@@ -20,4 +20,4 @@ class ExecutionTracker {
 }
 
 /// Build status per module.
-enum BuildStatus { pending, building, completed, failed }
+enum BuildStatus { pending, building, completed, failed, blocked }

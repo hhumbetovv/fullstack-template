@@ -45,6 +45,7 @@ class SmartBuildExecutor {
       maxParallelBuilds: options.maxParallelBuilds,
       targetModule: options.targetModule,
       optimized: options.optimized,
+      autoParallel: options.autoParallel,
     );
     Logger.configure(LoggerConfig(verbose: options.verbose));
 
@@ -60,7 +61,10 @@ class SmartBuildExecutor {
         Logger.debug('Configuration:');
         Logger.debug('   Verbose: ${state.verbose}');
         Logger.debug('   Dry Run: ${state.dryRun}');
-        Logger.debug('   Max Parallel: ${state.maxParallelBuilds}');
+        final parallelLabel = state.autoParallel
+            ? '${state.maxParallelBuilds} (auto)'
+            : '${state.maxParallelBuilds}';
+        Logger.debug('   Max Parallel: $parallelLabel');
         Logger.debug('   Target Module: ${state.targetModule ?? 'all'}');
         Logger.debug(
           '   Scheduler: ${state.optimized ? 'optimized' : 'classic'}',

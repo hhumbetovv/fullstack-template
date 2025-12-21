@@ -1,6 +1,8 @@
 sealed class BuildEngineConfig {
   static const int maxParallelBuilds = 8;
   static const String buildLogsDir = '.misc/build_logs';
+  static const int maxParallelAutoFloor = 4;
+  static const int maxParallelAutoCeiling = 24;
 }
 
 sealed class CodegenBuildConfig {
