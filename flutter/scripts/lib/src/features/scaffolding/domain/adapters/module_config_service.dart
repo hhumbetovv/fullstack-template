@@ -1073,7 +1073,9 @@ class ModuleConfigService {
   }
 
   bool _isFlutterSdkPackage(String packageName) {
-    return packageName == 'flutter' || packageName == 'flutter_test';
+    return packageName == 'flutter' ||
+        packageName == 'flutter_test' ||
+        packageName == 'flutter_localizations';
   }
 
   String? _dependencyVersionString(dynamic spec) {
