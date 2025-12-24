@@ -128,6 +128,42 @@ ensure_pub_cache_bin_on_path() {
   done
 }
 
+resolve_pod_command() {
+  if [ -n "${POD_COMMAND:-}" ] && [ -x "$POD_COMMAND" ]; then
+    printf '%s' "$POD_COMMAND"
+    return 0
+  fi
+
+  local rbenv_pod="$HOME/.rbenv/shims/pod"
+  if [ -x "$rbenv_pod" ]; then
+    POD_COMMAND="$rbenv_pod"
+    printf '%s' "$POD_COMMAND"
+    return 0
+  fi
+
+  if command -v pod >/dev/null 2>&1; then
+    POD_COMMAND="$(command -v pod)"
+    printf '%s' "$POD_COMMAND"
+    return 0
+  fi
+
+  return 1
+}
+
+has_ios_artifacts() {
+  local version="$1"
+  if [ -z "$version" ]; then
+    return 1
+  fi
+
+  local framework_dir=".fvm/versions/$version/bin/cache/artifacts/engine/ios/Flutter.xcframework"
+  if [ -d "$framework_dir" ]; then
+    return 0
+  fi
+
+  return 1
+}
+
 run_step bash scripts/bash/setup.sh
 ensure_pub_cache_bin_on_path
 try_fvm_use_with_elevation || warn "'fvm use' did not complete; continuing."
@@ -147,19 +183,34 @@ run_step fvm flutter clean
 if pushd app >/dev/null 2>&1; then
   run_step fvm flutter clean
   run_step fvm flutter pub get
-  run_step fvm flutter precache --ios
+  skip_ios_bootstrap=0
+  if [ -n "${SKIP_IOS_BOOTSTRAP:-}" ]; then
+    skip_ios_bootstrap=1
+    warn "SKIP_IOS_BOOTSTRAP is set; skipping Flutter iOS precache and CocoaPods steps."
+  fi
 
-  if pushd ios >/dev/null 2>&1; then
-    if command -v pod >/dev/null 2>&1; then
-      run_step pod deintegrate
-      run_step pod repo update
-      run_step pod install
+  if [ $skip_ios_bootstrap -eq 0 ]; then
+    if has_ios_artifacts "$flutter_version"; then
+      printf 'iOS Flutter artifacts already present; skipping precache.\n'
     else
-      warn "CocoaPods (pod) command not found; skipping iOS pod steps."
+      run_step fvm flutter precache --ios
     fi
-    popd >/dev/null 2>&1 || true
+
+    if pushd ios >/dev/null 2>&1; then
+      pod_cmd=""
+      if pod_cmd=$(resolve_pod_command); then
+        run_step "$pod_cmd" deintegrate
+        run_step "$pod_cmd" repo update
+        run_step "$pod_cmd" install
+      else
+        warn "CocoaPods (pod) command not found; skipping iOS pod steps."
+      fi
+      popd >/dev/null 2>&1 || true
+    else
+      warn "Unable to enter app/ios directory; skipping CocoaPods steps."
+    fi
   else
-    warn "Unable to enter app/ios directory; skipping CocoaPods steps."
+    printf 'Skipping Flutter iOS precache and CocoaPods steps; SKIP_IOS_BOOTSTRAP is set.\n'
   fi
 
   popd >/dev/null 2>&1 || true
