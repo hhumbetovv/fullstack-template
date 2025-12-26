@@ -1,5 +1,6 @@
 import 'package:scripts/src/core/command/base_command.dart';
 import 'package:scripts/src/core/command/errors.dart';
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/commands/smart_build/run.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/smart_build_options.dart';
@@ -21,6 +22,29 @@ class SmartBuildCommand extends ScriptsCommand {
       ..addFlag(
         'dry-run',
         help: 'Show the build plan without executing build_runner.',
+        negatable: false,
+      )
+      ..addOption(
+        'mode',
+        help: 'Filtering mode: error (default), git-change, or all.',
+        defaultsTo: SmartBuildConfig.defaultMode,
+        allowed: const ['error', 'git-change', 'all'],
+        allowedHelp: const {
+          'error':
+              'Rebuild modules that failed or have invalid exporter setups.',
+          'git-change':
+              'Rebuild modules with git changes since their last build.',
+          'all': 'Skip filtering and rebuild all modules.',
+        },
+      )
+      ..addFlag(
+        'git-changes',
+        help: 'Shorthand for --mode=git-change.',
+        negatable: false,
+      )
+      ..addFlag(
+        'all',
+        help: 'Shorthand for --mode=all to rebuild every module.',
         negatable: false,
       )
       ..addOption(
@@ -54,6 +78,7 @@ class SmartBuildCommand extends ScriptsCommand {
       verbose: argResults?['verbose'] as bool? ?? false,
       dryRun: argResults?['dry-run'] as bool? ?? false,
       maxParallelBuilds: parsed.value,
+      mode: _resolveMode(),
       targetModule: rest.isEmpty ? null : rest.first,
       optimized: argResults?['optimized'] as bool? ?? false,
       autoParallel: parsed.isAuto,
@@ -64,6 +89,29 @@ class SmartBuildCommand extends ScriptsCommand {
 
   @override
   bool get showStackTrace => argResults?['verbose'] as bool? ?? false;
+
+  SmartBuildMode _resolveMode() {
+    final allFlag = argResults?['all'] as bool? ?? false;
+    final gitFlag = argResults?['git-changes'] as bool? ?? false;
+
+    if (allFlag) {
+      return SmartBuildMode.all;
+    }
+    if (gitFlag) {
+      return SmartBuildMode.gitChange;
+    }
+
+    final raw = argResults?['mode'] as String? ?? SmartBuildConfig.defaultMode;
+    try {
+      return parseSmartBuildMode(raw);
+    } on FormatException {
+      throw CommandError(
+        'Unsupported smart-build mode "$raw". '
+        'Use error, git-change, or all.',
+        exitCode: 64,
+      );
+    }
+  }
 }
 
 _ParallelParseResult _parseParallelOption(String? raw) {

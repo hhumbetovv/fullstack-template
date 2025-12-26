@@ -5,6 +5,12 @@ sealed class BuildEngineConfig {
   static const int maxParallelAutoCeiling = 24;
 }
 
+sealed class SmartBuildConfig {
+  /// Default module filtering mode. `error` mode rebuilds modules that failed
+  /// previously or have known exporter issues.
+  static const String defaultMode = 'error';
+}
+
 sealed class CodegenBuildConfig {
   static const bool obfuscateAndroid = true;
   static const bool splitDebugInfo = true;

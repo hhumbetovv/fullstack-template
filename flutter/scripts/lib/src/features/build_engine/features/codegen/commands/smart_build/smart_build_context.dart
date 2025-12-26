@@ -8,4 +8,6 @@ class SmartBuildContext extends PipelineContext {
   });
 
   final SmartBuildOptions options;
+  bool skipBuild = false;
+  String? skipReason;
 }

@@ -20,6 +20,10 @@ import 'package:scripts/src/features/build_engine/engine/stages/validate_env_sta
 import 'package:scripts/src/features/build_engine/features/codegen/commands/smart_build/smart_build_context.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/smart_build_options.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/build_execution_service.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/build_log_reader.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/error_module_analyzer.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/git_change_detector.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/stages/filter_modules_stage.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/stages/retain_target_module_stage.dart';
 import 'package:scripts/src/features/build_engine/utils/signal_utils.dart';
 
@@ -28,13 +32,22 @@ class SmartBuildExecutor {
     required ModuleGraphPort moduleGraphPort,
     required EnvironmentService environmentService,
     required BuildExecutionService buildExecutionService,
+    required BuildLogMetadataReader buildLogReader,
+    required GitChangeDetector gitChangeDetector,
+    required ErrorModuleAnalyzer errorModuleAnalyzer,
   }) : _moduleGraphPort = moduleGraphPort,
        _environmentService = environmentService,
-       _buildExecutionService = buildExecutionService;
+       _buildExecutionService = buildExecutionService,
+       _buildLogReader = buildLogReader,
+       _gitChangeDetector = gitChangeDetector,
+       _errorModuleAnalyzer = errorModuleAnalyzer;
 
   final ModuleGraphPort _moduleGraphPort;
   final EnvironmentService _environmentService;
   final BuildExecutionService _buildExecutionService;
+  final BuildLogMetadataReader _buildLogReader;
+  final GitChangeDetector _gitChangeDetector;
+  final ErrorModuleAnalyzer _errorModuleAnalyzer;
 
   Future<int> run(SmartBuildOptions options) async {
     final store = BuildStateStore();
@@ -69,6 +82,7 @@ class SmartBuildExecutor {
         Logger.debug(
           '   Scheduler: ${state.optimized ? 'optimized' : 'classic'}',
         );
+        Logger.debug('   Mode: ${options.mode.description}');
         Logger.debug('   Working Directory: ${Directory.current.path}');
         log('');
       }
@@ -104,12 +118,25 @@ class SmartBuildExecutor {
           ValidateEnvStage<SmartBuildContext>(_environmentService),
           DiscoverModulesStage<SmartBuildContext>(_moduleGraphPort),
           AnalyzeDependenciesStage<SmartBuildContext>(_moduleGraphPort),
+          FilterModulesStage(
+            logReader: _buildLogReader,
+            gitChangeDetector: _gitChangeDetector,
+            errorModuleAnalyzer: _errorModuleAnalyzer,
+          ),
           const RetainTargetModuleStage(),
           BuildPlanStage<SmartBuildContext>(_moduleGraphPort),
         ],
       );
 
       final context = await pipeline.run(pipelineContext);
+
+      if (context.skipBuild) {
+        if (context.skipReason != null) {
+          Logger.info(context.skipReason!);
+        }
+        Logger.info('🏁 No modules required building. Exiting.');
+        return 0;
+      }
 
       if (context.state.modulePaths.isEmpty) {
         throw const CommandError(

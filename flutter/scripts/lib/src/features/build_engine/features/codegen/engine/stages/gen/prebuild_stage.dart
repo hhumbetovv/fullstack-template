@@ -1,3 +1,4 @@
+import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/core/logging/console.dart';
 import 'package:scripts/src/core/stage/runner.dart';
 import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
@@ -22,6 +23,7 @@ class PrebuildStage implements Stage<GenWatchContext> {
         verbose: false,
         dryRun: false,
         maxParallelBuilds: BuildState.maxParallelBuildsDefault,
+        mode: parseSmartBuildMode(SmartBuildConfig.defaultMode),
         autoParallel: false,
       ),
     );

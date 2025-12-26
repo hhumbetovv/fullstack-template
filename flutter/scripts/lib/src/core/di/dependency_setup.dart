@@ -18,6 +18,9 @@ import 'package:scripts/src/features/build_engine/features/codegen/engine/servic
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/build_scheduler.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/log_manager.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/module_builder.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/build_log_reader.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/error_module_analyzer.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/git_change_detector.dart';
 import 'package:scripts/src/features/build_engine/features/module_graph/commands/module_graph/module_graph_executor.dart';
 import 'package:scripts/src/features/build_engine/features/module_graph/engine/services/build_plan_builder.dart';
 import 'package:scripts/src/features/build_engine/features/module_graph/engine/services/dependency_analyzer.dart';
@@ -51,6 +54,11 @@ void configureDependencies() {
     ..registerLazySingleton<WorkspaceStateLoader>(WorkspaceStateLoader.new)
     ..registerLazySingleton<BuildLogManager>(BuildLogManager.new)
     ..registerLazySingleton<ModuleBuildRunner>(ModuleBuildRunner.new)
+    ..registerLazySingleton<BuildLogMetadataReader>(
+      BuildLogMetadataReader.new,
+    )
+    ..registerLazySingleton<GitChangeDetector>(GitChangeDetector.new)
+    ..registerLazySingleton<ErrorModuleAnalyzer>(ErrorModuleAnalyzer.new)
     ..registerLazySingleton<BuildScheduler>(
       () => BuildScheduler(
         logManager: _locator.get<BuildLogManager>(),
@@ -102,6 +110,9 @@ void configureDependencies() {
         moduleGraphPort: _locator.get<ModuleGraphPort>(),
         environmentService: _locator.get<EnvironmentService>(),
         buildExecutionService: _locator.get<BuildExecutionService>(),
+        buildLogReader: _locator.get<BuildLogMetadataReader>(),
+        gitChangeDetector: _locator.get<GitChangeDetector>(),
+        errorModuleAnalyzer: _locator.get<ErrorModuleAnalyzer>(),
       ),
     )
     ..registerLazySingleton<ModuleGraphExecutor>(

@@ -54,7 +54,7 @@ class ModuleBuildRunner {
     capture(buildProcess.stdout);
     capture(buildProcess.stderr);
 
-    late final int exitCode;
+    var exitCode = 1;
     try {
       exitCode = await buildProcess.exitCode;
     } finally {
@@ -64,6 +64,8 @@ class ModuleBuildRunner {
       logWriter.writeln(
         '\n=== Build finished at ${DateTime.now().toIso8601String()} ===',
       );
+      final statusLabel = exitCode == 0 ? 'success' : 'failure';
+      logWriter.writeln('=== Build status: $statusLabel ===');
       await logWriter.close();
     }
 
