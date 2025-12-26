@@ -2,8 +2,7 @@ name: demo_data
 modules:
   - core_data
   - demo_domain
-dev_modules:
-  - gen_exporter
+dev_modules: []
 dependencies:
   - get_it
   - injectable
