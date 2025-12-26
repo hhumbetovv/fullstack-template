@@ -3,8 +3,7 @@ modules:
   #! Core Modules
   - core_domain
   - core_data
-dev_modules:
-  - gen_exporter
+dev_modules: []
 dependencies:
   # Serialization
   - json_annotation

@@ -8,7 +8,7 @@ sealed class BuildEngineConfig {
 sealed class SmartBuildConfig {
   /// Default module filtering mode. `error` mode rebuilds modules that failed
   /// previously or have known exporter issues.
-  static const String defaultMode = 'error';
+  static const String defaultMode = 'git-change';
 }
 
 sealed class CodegenBuildConfig {

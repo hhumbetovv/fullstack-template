@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:scripts/src/core/command/errors.dart';
@@ -20,6 +21,8 @@ import 'package:scripts/src/features/build_engine/engine/stages/validate_env_sta
 import 'package:scripts/src/features/build_engine/features/codegen/commands/smart_build/smart_build_context.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/smart_build_options.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/build_execution_service.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/log_manager.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/module_builder.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/build_log_reader.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/error_module_analyzer.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/git_change_detector.dart';
@@ -32,12 +35,16 @@ class SmartBuildExecutor {
     required ModuleGraphPort moduleGraphPort,
     required EnvironmentService environmentService,
     required BuildExecutionService buildExecutionService,
+    required BuildLogManager buildLogManager,
+    required ModuleBuildRunner moduleBuilder,
     required BuildLogMetadataReader buildLogReader,
     required GitChangeDetector gitChangeDetector,
     required ErrorModuleAnalyzer errorModuleAnalyzer,
   }) : _moduleGraphPort = moduleGraphPort,
        _environmentService = environmentService,
        _buildExecutionService = buildExecutionService,
+       _logManager = buildLogManager,
+       _moduleBuilder = moduleBuilder,
        _buildLogReader = buildLogReader,
        _gitChangeDetector = gitChangeDetector,
        _errorModuleAnalyzer = errorModuleAnalyzer;
@@ -45,6 +52,8 @@ class SmartBuildExecutor {
   final ModuleGraphPort _moduleGraphPort;
   final EnvironmentService _environmentService;
   final BuildExecutionService _buildExecutionService;
+  final BuildLogManager _logManager;
+  final ModuleBuildRunner _moduleBuilder;
   final BuildLogMetadataReader _buildLogReader;
   final GitChangeDetector _gitChangeDetector;
   final ErrorModuleAnalyzer _errorModuleAnalyzer;
@@ -158,10 +167,14 @@ class SmartBuildExecutor {
       }
 
       if (!state.dryRun) {
-        await _buildExecutionService.execute(
-          state,
-          optimized: options.optimized,
-        );
+        if (options.mode == SmartBuildMode.error) {
+          await _runAdaptiveErrorMode(context);
+        } else {
+          await _buildExecutionService.execute(
+            state,
+            optimized: options.optimized,
+          );
+        }
       }
 
       if (!state.dryRun && state.targetModule == null) {
@@ -202,6 +215,76 @@ class SmartBuildExecutor {
       stopwatch.stop();
       Logger.info(
         '⏱ Total elapsed time: ${_formatDuration(stopwatch.elapsed)}',
+      );
+    }
+  }
+
+  Future<void> _runAdaptiveErrorMode(SmartBuildContext context) async {
+    final state = context.state;
+    await _logManager.prepareLogs(state);
+
+    final ordered = context.buildPlan?.order ?? state.buildOrder;
+    final queue = ListQueue<String>()..addAll(ordered);
+    final planned = ordered.toSet();
+
+    if (planned.isEmpty) {
+      Logger.info('No error modules scheduled. Skipping builds.');
+      return;
+    }
+
+    Logger.info(
+      '🔁 Error mode: sequentially rebuilding up to ${planned.length} module(s).',
+    );
+
+    var outstanding = Set<String>.from(planned);
+    final built = <String>{};
+
+    while (queue.isNotEmpty && outstanding.isNotEmpty) {
+      final module = queue.removeFirst();
+      if (!outstanding.contains(module)) {
+        continue;
+      }
+
+      Logger.info('⚙️  Building $module (error mode)…');
+      final result = await _moduleBuilder.run(state, module);
+      built.add(module);
+
+      if (!result.succeeded) {
+        final logFile = result.logFile;
+        throw CommandError(
+          logFile == null
+              ? '$module failed while resolving error mode.'
+              : '$module failed while resolving error mode. See $logFile.',
+          exitCode: 70,
+        );
+      }
+
+      final refreshedMetadata = await _buildLogReader.read(state.buildLogsDir);
+      final refreshed = await _errorModuleAnalyzer.findProblematicModules(
+        modulePaths: state.modulePaths,
+        logMetadata: refreshedMetadata,
+      );
+      outstanding = refreshed.where(planned.contains).toSet();
+
+      if (outstanding.isEmpty) {
+        Logger.info('✅ Error logs are clean after building $module.');
+        break;
+      }
+
+      for (final candidate in outstanding) {
+        if (built.contains(candidate)) {
+          continue;
+        }
+        if (!queue.contains(candidate)) {
+          queue.addLast(candidate);
+        }
+      }
+    }
+
+    if (outstanding.isNotEmpty) {
+      throw CommandError(
+        'Some modules still report errors: ${outstanding.join(', ')}.',
+        exitCode: 70,
       );
     }
   }

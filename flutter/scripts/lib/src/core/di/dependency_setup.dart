@@ -18,6 +18,7 @@ import 'package:scripts/src/features/build_engine/features/codegen/engine/servic
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/build_scheduler.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/log_manager.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/module_builder.dart';
+import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/analyzer_service.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/build_log_reader.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/error_module_analyzer.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/git_change_detector.dart';
@@ -58,7 +59,12 @@ void configureDependencies() {
       BuildLogMetadataReader.new,
     )
     ..registerLazySingleton<GitChangeDetector>(GitChangeDetector.new)
-    ..registerLazySingleton<ErrorModuleAnalyzer>(ErrorModuleAnalyzer.new)
+    ..registerLazySingleton<AnalyzerService>(AnalyzerService.new)
+    ..registerLazySingleton<ErrorModuleAnalyzer>(
+      () => ErrorModuleAnalyzer(
+        analyzerService: _locator.get<AnalyzerService>(),
+      ),
+    )
     ..registerLazySingleton<BuildScheduler>(
       () => BuildScheduler(
         logManager: _locator.get<BuildLogManager>(),
@@ -110,6 +116,8 @@ void configureDependencies() {
         moduleGraphPort: _locator.get<ModuleGraphPort>(),
         environmentService: _locator.get<EnvironmentService>(),
         buildExecutionService: _locator.get<BuildExecutionService>(),
+        buildLogManager: _locator.get<BuildLogManager>(),
+        moduleBuilder: _locator.get<ModuleBuildRunner>(),
         buildLogReader: _locator.get<BuildLogMetadataReader>(),
         gitChangeDetector: _locator.get<GitChangeDetector>(),
         errorModuleAnalyzer: _locator.get<ErrorModuleAnalyzer>(),
