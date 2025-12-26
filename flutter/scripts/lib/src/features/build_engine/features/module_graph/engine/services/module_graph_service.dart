@@ -30,9 +30,18 @@ class ModuleGraphService implements ModuleGraphPort {
   }
 
   @override
-  Future<DependencyReport> analyzeDependencies(BuildState state) async {
-    await _dependencyAnalyzer.buildDependencyGraph(state);
-    await _dependencyAnalyzer.analyzeUnusedModuleDependencies(state);
+  Future<DependencyReport> analyzeDependencies(
+    BuildState state, {
+    bool quiet = false,
+  }) async {
+    await _dependencyAnalyzer.buildDependencyGraph(
+      state,
+      quiet: quiet,
+    );
+    await _dependencyAnalyzer.analyzeUnusedModuleDependencies(
+      state,
+      quiet: quiet,
+    );
     return DependencyReport(
       moduleDependencies: state.moduleDependencies,
       allDependencies: state.allModuleDependencies,
@@ -46,7 +55,10 @@ class ModuleGraphService implements ModuleGraphPort {
   }
 
   @override
-  Future<GraphReport> generateGraphFiles(BuildState state) async {
-    return _graphGenerator.generate(state);
+  Future<GraphReport> generateGraphFiles(
+    BuildState state, {
+    bool quiet = false,
+  }) async {
+    return _graphGenerator.generate(state, quiet: quiet);
   }
 }

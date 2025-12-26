@@ -15,7 +15,8 @@ class BuildState {
   final ExecutionTracker execution = ExecutionTracker();
   WorkspaceSnapshot? _workspaceSnapshot;
 
-  static int get maxParallelBuildsDefault => BuildEngineConfig.maxParallelBuilds;
+  static int get maxParallelBuildsDefault =>
+      BuildEngineConfig.maxParallelBuilds;
   static String get buildLogsDirDefault => BuildEngineConfig.buildLogsDir;
   int maxParallelBuilds = maxParallelBuildsDefault;
   bool verbose = false;
@@ -27,13 +28,19 @@ class BuildState {
 
   Map<String, String> get modulePaths => workspace.modulePaths;
   Map<String, String> get allModulePaths => workspace.allModulePaths;
-  Map<String, Set<String>> get moduleDependencies => workspace.moduleDependencies;
-  Map<String, Set<String>> get allModuleDependencies => workspace.allModuleDependencies;
-  Map<String, Set<String>> get moduleUnusedDependencies => workspace.moduleUnusedDependencies;
-  Map<String, Set<String>> get modulePackageDependencies => workspace.modulePackageDependencies;
-  Map<String, Set<String>> get moduleUnusedPackages => workspace.moduleUnusedPackages;
+  Map<String, Set<String>> get moduleDependencies =>
+      workspace.moduleDependencies;
+  Map<String, Set<String>> get allModuleDependencies =>
+      workspace.allModuleDependencies;
+  Map<String, Set<String>> get moduleUnusedDependencies =>
+      workspace.moduleUnusedDependencies;
+  Map<String, Set<String>> get modulePackageDependencies =>
+      workspace.modulePackageDependencies;
+  Map<String, Set<String>> get moduleUnusedPackages =>
+      workspace.moduleUnusedPackages;
 
-  WorkspaceSnapshot get workspaceSnapshot => _workspaceSnapshot ??= WorkspaceSnapshot.fromGraph(workspace);
+  WorkspaceSnapshot get workspaceSnapshot =>
+      _workspaceSnapshot ??= WorkspaceSnapshot.fromGraph(workspace);
 
   Map<String, BuildStatus> get moduleBuildStatus => execution.moduleBuildStatus;
   Map<String, Process> get modulePids => execution.modulePids;
@@ -68,6 +75,62 @@ class BuildState {
   void invalidateWorkspaceSnapshot() {
     _workspaceSnapshot = null;
   }
+
+  BuildState clone() {
+    final copy = BuildState()
+      ..maxParallelBuilds = maxParallelBuilds
+      ..verbose = verbose
+      ..dryRun = dryRun
+      ..buildLogsDir = buildLogsDir
+      ..targetModule = targetModule
+      ..optimized = optimized
+      ..autoParallel = autoParallel;
+
+    void copyStringMap(Map<String, String> source, Map<String, String> target) {
+      target
+        ..clear()
+        ..addAll(source);
+    }
+
+    void copySetMap(
+      Map<String, Set<String>> source,
+      Map<String, Set<String>> target,
+    ) {
+      target
+        ..clear()
+        ..addEntries(
+          source.entries.map(
+            (entry) => MapEntry(entry.key, Set<String>.from(entry.value)),
+          ),
+        );
+    }
+
+    copyStringMap(workspace.modulePaths, copy.workspace.modulePaths);
+    copyStringMap(workspace.allModulePaths, copy.workspace.allModulePaths);
+    copySetMap(workspace.moduleDependencies, copy.workspace.moduleDependencies);
+    copySetMap(
+      workspace.allModuleDependencies,
+      copy.workspace.allModuleDependencies,
+    );
+    copySetMap(
+      workspace.moduleUnusedDependencies,
+      copy.workspace.moduleUnusedDependencies,
+    );
+    copySetMap(
+      workspace.modulePackageDependencies,
+      copy.workspace.modulePackageDependencies,
+    );
+    copySetMap(
+      workspace.moduleUnusedPackages,
+      copy.workspace.moduleUnusedPackages,
+    );
+
+    copy.execution.moduleBuildStatus.addAll(execution.moduleBuildStatus);
+    copy.execution.moduleBuildLevel.addAll(execution.moduleBuildLevel);
+    copy.execution.buildOrder.addAll(execution.buildOrder);
+
+    return copy;
+  }
 }
 
 class BuildStateStore {
@@ -87,7 +150,8 @@ class BuildStateStore {
   }) => _state = BuildState()
     ..verbose = verbose
     ..dryRun = dryRun
-    ..maxParallelBuilds = maxParallelBuilds ?? BuildState.maxParallelBuildsDefault
+    ..maxParallelBuilds =
+        maxParallelBuilds ?? BuildState.maxParallelBuildsDefault
     ..targetModule = targetModule
     ..optimized = optimized
     ..autoParallel = autoParallel;

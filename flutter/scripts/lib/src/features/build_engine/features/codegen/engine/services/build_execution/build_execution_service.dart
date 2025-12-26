@@ -23,6 +23,12 @@ class BuildExecutionService {
         moduleBuilder: _moduleBuilder,
       );
 
-  Future<bool> execute(BuildState state, {required bool optimized}) =>
-      _scheduler.execute(state);
+  Future<bool> execute(
+    BuildState state, {
+    required bool optimized,
+    Future<bool> Function(String moduleName)? onModuleComplete,
+  }) => _scheduler.execute(
+    state,
+    onModuleComplete: onModuleComplete,
+  );
 }

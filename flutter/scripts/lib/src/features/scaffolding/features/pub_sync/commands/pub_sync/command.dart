@@ -120,6 +120,7 @@ class PubSyncCommand extends ScriptsCommand {
       ModuleGraphOptions(
         verbose: false,
         maxParallelBuilds: BuildState.maxParallelBuildsDefault,
+        quiet: false,
       ),
     );
     if (graphResult == 0) {

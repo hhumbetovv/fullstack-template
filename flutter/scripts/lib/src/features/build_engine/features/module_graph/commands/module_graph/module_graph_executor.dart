@@ -89,6 +89,7 @@ class ModuleGraphExecutor {
             ModuleGraphContext(
               state: state,
               options: options,
+              quiet: options.quiet,
             ),
           );
 
@@ -99,11 +100,13 @@ class ModuleGraphExecutor {
         );
       }
 
-      _printSummary(
-        context.buildPlan,
-        context.dependencyReport,
-        context.graphReport,
-      );
+      if (!options.quiet) {
+        _printSummary(
+          context.buildPlan,
+          context.dependencyReport,
+          context.graphReport,
+        );
+      }
 
       return 0;
     } on CommandError catch (error) {

@@ -18,7 +18,10 @@ class BuildScheduler {
   final BuildLogManager _logManager;
   final ModuleBuildRunner _moduleBuilder;
 
-  Future<bool> execute(BuildState state) async {
+  Future<bool> execute(
+    BuildState state, {
+    Future<bool> Function(String moduleName)? onModuleComplete,
+  }) async {
     Logger.info('🚀 Starting smart build process...');
 
     if (state.dryRun) {
@@ -46,6 +49,7 @@ class BuildScheduler {
     }
 
     final dependencyTracker = _DependencyTracker.build(state);
+    var stopRequested = false;
     final waveQueues = <int, _WaveBucket>{};
     final waveOrder = ListQueue<_WaveBucket>();
     final moduleWeights = <String, int>{};
@@ -133,8 +137,12 @@ class BuildScheduler {
       }
 
       if (state.verbose) {
-        final dependencies = (state.moduleDependencies[readyModule.name] ?? <String>{}).toList()..sort();
-        final depDescription = dependencies.isEmpty ? 'no deps' : 'deps: ${dependencies.join(', ')}';
+        final dependencies =
+            (state.moduleDependencies[readyModule.name] ?? <String>{}).toList()
+              ..sort();
+        final depDescription = dependencies.isEmpty
+            ? 'no deps'
+            : 'deps: ${dependencies.join(', ')}';
         Logger.info(
           '⚙️ Launching ${readyModule.name} (wave ${readyModule.wave}) | $depDescription',
         );
@@ -144,7 +152,8 @@ class BuildScheduler {
         _moduleBuilder
             .run(state, readyModule.name)
             .then(
-              (result) => _BuildCompletion(readyModule.name, readyModule.wave, result),
+              (result) =>
+                  _BuildCompletion(readyModule.name, readyModule.wave, result),
             )
             .then(notifyCompletion);
       } on Object catch (error, stackTrace) {
@@ -156,7 +165,8 @@ class BuildScheduler {
         }
         state.moduleBuildStatus[readyModule.name] = BuildStatus.failed;
         runningModules.remove(readyModule.name);
-        final fallbackLog = '${state.buildLogsDir}/build_${readyModule.name}.log';
+        final fallbackLog =
+            '${state.buildLogsDir}/build_${readyModule.name}.log';
         notifyCompletion(
           _BuildCompletion(
             readyModule.name,
@@ -172,7 +182,8 @@ class BuildScheduler {
     }
 
     while (resolved < totalModules) {
-      while (runningModules.length < parallelController.limit) {
+      while (!stopRequested &&
+          runningModules.length < parallelController.limit) {
         final readyModule = takeNextReadyModule();
         if (readyModule == null) {
           break;
@@ -181,11 +192,11 @@ class BuildScheduler {
       }
 
       if (runningModules.isEmpty) {
-        if (waveOrder.isEmpty) {
-          _logBuildStall(state, dependencyTracker.blockedByFailure);
-          return false;
+        if (stopRequested || waveOrder.isEmpty) {
+          break;
         }
-        continue;
+        _logBuildStall(state, dependencyTracker.blockedByFailure);
+        return false;
       }
 
       final completion = await waitForNextCompletion();
@@ -195,6 +206,7 @@ class BuildScheduler {
       if (completion.result.succeeded) {
         resolved++;
         successfulModules++;
+        Logger.info('✅ completed: ${completion.moduleName}');
         for (final dependent in dependencyTracker.dependentsOf(
           completion.moduleName,
         )) {
@@ -211,6 +223,7 @@ class BuildScheduler {
       } else {
         failed++;
         resolved++;
+        Logger.error('❌ failed: ${completion.moduleName}');
         final newlySkipped = _blockDependents(
           state,
           dependencyTracker,
@@ -220,12 +233,39 @@ class BuildScheduler {
         resolved += newlySkipped;
       }
 
+      if (onModuleComplete != null) {
+        final continueBuilding = await onModuleComplete(
+          completion.moduleName,
+        );
+        if (!continueBuilding) {
+          stopRequested = true;
+        }
+      }
+
       if (state.verbose) {
         final inProgress = runningModules.length;
         final pending = totalModules - resolved;
         Logger.info(
           '📊 Progress: Successful: $successfulModules/$totalModules | Failed: $failed | Skipped: $skipped | In Progress: $inProgress | Pending: $pending | Slots: ${parallelController.limit}',
         );
+      }
+
+      if (stopRequested && runningModules.isEmpty) {
+        break;
+      }
+    }
+
+    if (!stopRequested && resolved < totalModules) {
+      _logBuildStall(state, dependencyTracker.blockedByFailure);
+      return false;
+    }
+
+    var earlyStopSkipped = 0;
+    if (stopRequested && resolved < totalModules) {
+      earlyStopSkipped = _skipRemainingPending(state, logEach: false);
+      if (earlyStopSkipped > 0) {
+        skipped += earlyStopSkipped;
+        resolved += earlyStopSkipped;
       }
     }
 
@@ -235,6 +275,14 @@ class BuildScheduler {
     Logger.info('════════════════════════════════════');
     _blankLine();
 
+    if (stopRequested) {
+      Logger.info(
+        '🛑 Early stop requested; remaining modules were skipped.',
+      );
+      if (earlyStopSkipped > 0) {
+        Logger.info('ℹ️  Skipped due to early stop: $earlyStopSkipped');
+      }
+    }
     final successful = successfulModules;
     Logger.info('   ✅ Successful: $successful');
     Logger.info('   ❌ Failed: $failed');
@@ -253,13 +301,17 @@ class BuildScheduler {
       }
     }
 
-    if (skipped > 0) {
+    final blockedModules = dependencyTracker.blockedByFailure.entries.where((
+      entry,
+    ) {
+      return state.moduleBuildStatus[entry.key] == BuildStatus.blocked;
+    }).toList();
+
+    if (blockedModules.isNotEmpty) {
       _blankLine();
       Logger.warning('Modules skipped due to failed dependencies:');
-      for (final entry in dependencyTracker.blockedByFailure.entries) {
-        if (state.moduleBuildStatus[entry.key] == BuildStatus.blocked) {
-          Logger.warning('   • ${entry.key} ← ${entry.value.join(', ')}');
-        }
+      for (final entry in blockedModules) {
+        Logger.warning('   • ${entry.key} ← ${entry.value.join(', ')}');
       }
     }
 
@@ -273,6 +325,23 @@ class BuildScheduler {
       '💥 Some builds failed. Check individual log files in ${state.buildLogsDir}/',
     );
     return false;
+  }
+
+  int _skipRemainingPending(
+    BuildState state, {
+    required bool logEach,
+  }) {
+    var skipped = 0;
+    for (final moduleName in state.buildOrder) {
+      if (state.moduleBuildStatus[moduleName] == BuildStatus.pending) {
+        state.moduleBuildStatus[moduleName] = BuildStatus.blocked;
+        skipped++;
+        if (logEach) {
+          Logger.info('ℹ️  Skipping $moduleName (early stop)');
+        }
+      }
+    }
+    return skipped;
   }
 
   int _blockDependents(
@@ -436,7 +505,8 @@ class _DependencyTracker {
   final Map<String, List<String>> dependents;
   final Map<String, Set<String>> blockedByFailure = <String, Set<String>>{};
 
-  List<String> dependentsOf(String module) => dependents[module] ?? const <String>[];
+  List<String> dependentsOf(String module) =>
+      dependents[module] ?? const <String>[];
 
   int decrementDependency(String module) {
     final current = remainingDependencies[module];
@@ -448,10 +518,13 @@ class _DependencyTracker {
     return next;
   }
 
-  bool hasPendingDependencies(String module) => (remainingDependencies[module] ?? 0) > 0;
+  bool hasPendingDependencies(String module) =>
+      (remainingDependencies[module] ?? 0) > 0;
 
   void markBlockedByFailure(String module, String failedDependency) {
-    blockedByFailure.putIfAbsent(module, () => <String>{}).add(failedDependency);
+    blockedByFailure
+        .putIfAbsent(module, () => <String>{})
+        .add(failedDependency);
   }
 }
 
@@ -500,9 +573,11 @@ class _ParallelController {
       (sum, item) => sum + item.inMilliseconds,
     );
     final avg = Duration(milliseconds: totalMillis ~/ _recentDurations.length);
-    if (avg <= _fastThreshold && _limit < BuildEngineConfig.maxParallelAutoCeiling) {
+    if (avg <= _fastThreshold &&
+        _limit < BuildEngineConfig.maxParallelAutoCeiling) {
       _limit++;
-    } else if (avg >= _slowThreshold && _limit > BuildEngineConfig.maxParallelAutoFloor) {
+    } else if (avg >= _slowThreshold &&
+        _limit > BuildEngineConfig.maxParallelAutoFloor) {
       _limit--;
     }
   }

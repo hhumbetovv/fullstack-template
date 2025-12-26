@@ -6,9 +6,15 @@ import 'package:scripts/src/features/build_engine/domain/models/graph_report.dar
 abstract class ModuleGraphPort {
   Future<void> discoverModules(BuildState state);
 
-  Future<DependencyReport> analyzeDependencies(BuildState state);
+  Future<DependencyReport> analyzeDependencies(
+    BuildState state, {
+    bool quiet = false,
+  });
 
   BuildPlan buildPlan(BuildState state);
 
-  Future<GraphReport> generateGraphFiles(BuildState state);
+  Future<GraphReport> generateGraphFiles(
+    BuildState state, {
+    bool quiet = false,
+  });
 }

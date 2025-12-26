@@ -15,14 +15,9 @@ analyzer:
     document_ignores: ignore
   exclude:
     [
-      lib/**.g.dart,
-      lib/**.gen.dart,
-      lib/**.freezed.dart,
       test/.test_coverage.dart,
       bin/cache/**,
-      lib/extended_wrap/**.dart,
       lib/generated_plugin_registrant.dart,
-      lib/**/export.dart,
       templates/**,
     ]
 

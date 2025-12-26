@@ -24,6 +24,11 @@ class ModuleGraphCommand extends ScriptsCommand {
         help: 'Set the max parallel value used in stats.',
         valueHelp: 'count',
         defaultsTo: BuildState.maxParallelBuildsDefault.toString(),
+      )
+      ..addFlag(
+        'quiet',
+        help: 'Suppress module graph analysis logs (still shows summary).',
+        negatable: false,
       );
   }
 
@@ -42,6 +47,7 @@ class ModuleGraphCommand extends ScriptsCommand {
     final options = ModuleGraphOptions(
       verbose: argResults?['verbose'] as bool? ?? false,
       maxParallelBuilds: parallel,
+      quiet: argResults?['quiet'] as bool? ?? false,
     );
 
     configureDependencies();

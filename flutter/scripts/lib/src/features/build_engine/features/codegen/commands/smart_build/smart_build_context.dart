@@ -5,6 +5,7 @@ class SmartBuildContext extends PipelineContext {
   SmartBuildContext({
     required super.state,
     required this.options,
+    super.quiet = false,
   });
 
   final SmartBuildOptions options;

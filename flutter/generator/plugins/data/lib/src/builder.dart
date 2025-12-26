@@ -19,7 +19,7 @@ class DataBuilder extends BaseBuilder<DataConfig, ClassElement2> {
 
   @override
   int calculateUpdatableHash(CompilationUnit unit) {
-    return unit.toSource().hashCode;
+    return 0;
   }
 
   @override

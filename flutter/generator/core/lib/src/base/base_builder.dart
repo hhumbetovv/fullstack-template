@@ -96,13 +96,9 @@ abstract class BaseBuilder<Config, Target> extends Builder {
     var cacheHash = 0;
     if (cacheEnabled) {
       cacheHash = calculateUpdatableHash(unit);
-      final cacheHit = _cacheService.read(buildStep.inputId, cacheHash);
-      final cachedConfig = cacheHit?.config;
-      if (cachedConfig != null) {
-        return _writeGeneratedOutput(context, cachedConfig);
-      }
-      if (cacheHit != null && cachedConfig == null) {
-        return;
+      final cached = _cacheService.read(buildStep.inputId, cacheHash);
+      if (cached != null) {
+        return _writeGeneratedOutput(context, cached);
       }
     }
 
@@ -122,9 +118,7 @@ abstract class BaseBuilder<Config, Target> extends Builder {
       allowSyntaxErrors: allowSyntaxErrors,
     );
     final generated = await onResolve(LibraryReader(lib), buildStep, cacheHash);
-    if (cacheEnabled) {
-      _cacheService.write(buildStep.inputId, cacheHash, generated);
-    }
+    _cacheService.write(buildStep.inputId, generated);
     if (generated == null) return;
     return _writeGeneratedOutput(context, generated);
   }

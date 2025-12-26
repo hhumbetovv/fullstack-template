@@ -58,8 +58,8 @@ void configureDependencies() {
     ..registerLazySingleton<BuildLogMetadataReader>(
       BuildLogMetadataReader.new,
     )
-    ..registerLazySingleton<GitChangeDetector>(GitChangeDetector.new)
     ..registerLazySingleton<AnalyzerService>(AnalyzerService.new)
+    ..registerLazySingleton<GitChangeDetector>(GitChangeDetector.new)
     ..registerLazySingleton<ErrorModuleAnalyzer>(
       () => ErrorModuleAnalyzer(
         analyzerService: _locator.get<AnalyzerService>(),
@@ -116,8 +116,6 @@ void configureDependencies() {
         moduleGraphPort: _locator.get<ModuleGraphPort>(),
         environmentService: _locator.get<EnvironmentService>(),
         buildExecutionService: _locator.get<BuildExecutionService>(),
-        buildLogManager: _locator.get<BuildLogManager>(),
-        moduleBuilder: _locator.get<ModuleBuildRunner>(),
         buildLogReader: _locator.get<BuildLogMetadataReader>(),
         gitChangeDetector: _locator.get<GitChangeDetector>(),
         errorModuleAnalyzer: _locator.get<ErrorModuleAnalyzer>(),

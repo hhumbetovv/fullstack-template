@@ -15,8 +15,12 @@ class GitChangeDetector {
     for (final entry in modulePaths.entries) {
       final moduleName = entry.key;
       final modulePath = entry.value;
-      final lastBuild = logMetadata[moduleName]?.startedAt;
-      final hasChanges = await _hasGitChanges(modulePath, lastBuild);
+      final lastBuild = logMetadata[moduleName];
+      final hasChanges = await _hasGitChanges(
+        modulePath,
+        lastBuild?.finishedAt,
+        hadLog: lastBuild != null,
+      );
       if (hasChanges) {
         changed.add(moduleName);
       }
@@ -24,7 +28,15 @@ class GitChangeDetector {
     return changed;
   }
 
-  Future<bool> _hasGitChanges(String modulePath, DateTime? lastBuild) async {
+  Future<bool> _hasGitChanges(
+    String modulePath,
+    DateTime? lastBuild, {
+    required bool hadLog,
+  }) async {
+    if (!hadLog) {
+      return true;
+    }
+
     final normalizedModulePath = _normalizePath(modulePath);
     final args = <String>['log', '-1', '--pretty=format:%ct'];
     if (lastBuild != null) {

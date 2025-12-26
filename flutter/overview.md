@@ -8,7 +8,6 @@
 - **Total Dependencies**: 67
 - **Average Dependencies**: 2.91
 - **Peak Concurrent Modules**: 3
-- **Configured Parallel Limit**: 8
 
 ## Graph Index
 

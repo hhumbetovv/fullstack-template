@@ -41,6 +41,8 @@ class FilterModulesStage implements Stage<SmartBuildContext> {
       return context;
     }
 
+    context.graphState ??= state.clone();
+
     final logMetadata = await _logReader.read(state.buildLogsDir);
     var selected = await _selectModules(state, mode, logMetadata);
     selected = selected.where(state.modulePaths.containsKey).toSet();

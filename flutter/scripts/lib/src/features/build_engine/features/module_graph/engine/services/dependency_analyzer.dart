@@ -5,8 +5,13 @@ import 'package:scripts/src/features/build_engine/domain/models/build_state.dart
 import 'package:scripts/src/features/scaffolding/engine/services/yaml_service.dart';
 
 class DependencyAnalyzer {
-  Future<void> buildDependencyGraph(BuildState state) async {
-    Logger.info('🕸️  Building dependency graph...');
+  Future<void> buildDependencyGraph(
+    BuildState state, {
+    bool quiet = false,
+  }) async {
+    if (!quiet) {
+      Logger.info('🕸️  Building dependency graph...');
+    }
 
     state.moduleDependencies.clear();
     state.allModuleDependencies.clear();
@@ -15,7 +20,9 @@ class DependencyAnalyzer {
     state.moduleUnusedPackages.clear();
 
     if (state.allModulePaths.isEmpty) {
-      Logger.warning('No modules discovered for dependency analysis');
+      if (!quiet) {
+        Logger.warning('No modules discovered for dependency analysis');
+      }
       return;
     }
 
@@ -28,13 +35,14 @@ class DependencyAnalyzer {
         pubspecFile,
         moduleName,
         state.allModulePaths,
+        quiet: quiet,
       );
       final fullDependencies = dependencySets.moduleDependencies;
       state.allModuleDependencies[moduleName] = fullDependencies;
       state.modulePackageDependencies[moduleName] =
           dependencySets.packageDependencies;
 
-      if (!state.modulePaths.containsKey(moduleName) && state.verbose) {
+      if (!quiet && !state.modulePaths.containsKey(moduleName) && state.verbose) {
         if (fullDependencies.isNotEmpty) {
           Logger.verbose(
             '   🧩 $moduleName (graph) depends on: ${fullDependencies.join(', ')}',
@@ -47,9 +55,9 @@ class DependencyAnalyzer {
       }
     }
 
-    _populateBuildDependencies(state);
+    _populateBuildDependencies(state, quiet: quiet);
 
-    if (state.verbose) {
+    if (!quiet && state.verbose) {
       Logger.info('📊 Dependency Summary:');
       for (final entry in state.moduleDependencies.entries) {
         Logger.verbose(
@@ -59,8 +67,13 @@ class DependencyAnalyzer {
     }
   }
 
-  Future<void> analyzeUnusedModuleDependencies(BuildState state) async {
-    Logger.info('🧹 Analyzing unused module dependencies...');
+  Future<void> analyzeUnusedModuleDependencies(
+    BuildState state, {
+    bool quiet = false,
+  }) async {
+    if (!quiet) {
+      Logger.info('🧹 Analyzing unused module dependencies...');
+    }
 
     state.moduleUnusedDependencies.clear();
     state.moduleUnusedPackages.clear();
@@ -87,34 +100,41 @@ class DependencyAnalyzer {
 
       if (unused.isNotEmpty) {
         state.moduleUnusedDependencies[moduleName] = unused;
-        Logger.info('   🚫 $moduleName unused modules: ${unused.join(', ')}');
-      } else if (state.verbose) {
+        if (!quiet) {
+          Logger.info('   🚫 $moduleName unused modules: ${unused.join(', ')}');
+        }
+      } else if (!quiet && state.verbose) {
         Logger.verbose('   ✅ $moduleName uses all declared modules');
       }
 
       if (unusedPackages.isNotEmpty) {
         state.moduleUnusedPackages[moduleName] = unusedPackages;
-        Logger.info(
-          '   📦 $moduleName unused packages: ${unusedPackages.join(', ')}',
-        );
-      } else if (state.verbose && declaredPackages.isNotEmpty) {
+        if (!quiet) {
+          Logger.info(
+            '   📦 $moduleName unused packages: ${unusedPackages.join(', ')}',
+          );
+        }
+      } else if (!quiet && state.verbose && declaredPackages.isNotEmpty) {
         Logger.verbose('   📦 $moduleName uses all declared packages');
       }
     }
 
-    if (state.moduleUnusedDependencies.isEmpty) {
-      Logger.success('No unused module dependencies detected.');
-    }
-    if (state.moduleUnusedPackages.isEmpty) {
-      Logger.success('No unused external packages detected.');
+    if (!quiet) {
+      if (state.moduleUnusedDependencies.isEmpty) {
+        Logger.success('No unused module dependencies detected.');
+      }
+      if (state.moduleUnusedPackages.isEmpty) {
+        Logger.success('No unused external packages detected.');
+      }
     }
   }
 
   Future<_DependencySets> _parseDependencies(
     String pubspecPath,
     String moduleName,
-    Map<String, String> knownModules,
-  ) async {
+    Map<String, String> knownModules, {
+    bool quiet = false,
+  }) async {
     final dependencies = <String>{};
     final packages = <String>{};
 
@@ -140,15 +160,21 @@ class DependencyAnalyzer {
 
           if (knownModules.containsKey(depName)) {
             dependencies.add(depName);
-            Logger.debug('   Found module dependency: $moduleName → $depName');
+            if (!quiet) {
+              Logger.debug(
+                '   Found module dependency: $moduleName → $depName',
+              );
+            }
             return;
           }
 
           if (includePackages) {
             packages.add(depName);
-            Logger.debug(
-              '   Found external dependency: $moduleName → $depName',
-            );
+            if (!quiet) {
+              Logger.debug(
+                '   Found external dependency: $moduleName → $depName',
+              );
+            }
           }
         });
       }
@@ -157,7 +183,9 @@ class DependencyAnalyzer {
       processDeps(devDeps, includePackages: false);
       processDeps(overrideDeps);
     } on Object catch (e) {
-      Logger.error('Error parsing dependencies from $pubspecPath: $e');
+      if (!quiet) {
+        Logger.error('Error parsing dependencies from $pubspecPath: $e');
+      }
     }
 
     return _DependencySets(
@@ -217,7 +245,10 @@ class DependencyAnalyzer {
     return collected;
   }
 
-  void _populateBuildDependencies(BuildState state) {
+  void _populateBuildDependencies(
+    BuildState state, {
+    bool quiet = false,
+  }) {
     for (final moduleName in state.modulePaths.keys) {
       final fullDependencies =
           state.allModuleDependencies[moduleName] ?? const <String>{};
@@ -228,17 +259,19 @@ class DependencyAnalyzer {
       );
       state.moduleDependencies[moduleName] = buildDependencies;
 
-      if (buildDependencies.isNotEmpty) {
-        Logger.info(
-          '   📦 $moduleName depends on: ${buildDependencies.join(', ')}',
-        );
-      } else {
-        Logger.verbose(
-          '   📦 $moduleName has no internal build_runner dependencies',
-        );
+      if (!quiet) {
+        if (buildDependencies.isNotEmpty) {
+          Logger.info(
+            '   📦 $moduleName depends on: ${buildDependencies.join(', ')}',
+          );
+        } else {
+          Logger.verbose(
+            '   📦 $moduleName has no internal build_runner dependencies',
+          );
+        }
       }
 
-      if (state.verbose) {
+      if (!quiet && state.verbose) {
         final additionalDeps = fullDependencies
             .where((dep) => !state.modulePaths.containsKey(dep))
             .toSet();

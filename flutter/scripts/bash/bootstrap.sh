@@ -232,4 +232,4 @@ if ! command -v icon_font_generator >/dev/null 2>&1; then
   warn "icon_font_generator command not available; ensure pub-cache/bin is in PATH."
 fi
 
-run_step fvm dart run scripts smart-build
+run_step fvm dart run scripts smart-build --all

@@ -8,6 +8,7 @@ class BuildLogMetadataReader {
 
   static final RegExp _logNamePattern = RegExp(r'^build_(.+)\.log$');
   static final RegExp _startPattern = RegExp('=== Build started at (.+?) ===');
+  static final RegExp _finishPattern = RegExp('=== Build finished at (.+?) ===');
   static final RegExp _statusPattern = RegExp(
     '=== Build status: (success|failure) ===',
   );
@@ -46,10 +47,12 @@ class BuildLogMetadataReader {
   Future<BuildLogEntry> _parseLog(File file) async {
     final content = await file.readAsString();
     final startedAt = _parseStart(content);
+    final finishedAt = _parseFinish(content);
     final succeeded = _parseStatus(content);
     return BuildLogEntry(
       path: file.path,
       startedAt: startedAt,
+      finishedAt: finishedAt,
       succeeded: succeeded,
     );
   }
@@ -86,16 +89,31 @@ class BuildLogMetadataReader {
     }
     return null;
   }
+
+  DateTime? _parseFinish(String content) {
+    final finishMatch = _finishPattern.firstMatch(content);
+    final raw = finishMatch?.group(1)?.trim();
+    if (raw == null) {
+      return null;
+    }
+    try {
+      return DateTime.parse(raw);
+    } on Object {
+      return null;
+    }
+  }
 }
 
 class BuildLogEntry {
   const BuildLogEntry({
     required this.path,
     this.startedAt,
+    this.finishedAt,
     this.succeeded,
   });
 
   final String path;
   final DateTime? startedAt;
+  final DateTime? finishedAt;
   final bool? succeeded;
 }

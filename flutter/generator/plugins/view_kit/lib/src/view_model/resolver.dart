@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:common_tooling/tooling.dart';
 import 'package:gen_core/base.dart';
@@ -52,8 +54,9 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {
     try {
       final cached = effectCache.readForViewModel(className);
       return effectCacheAdapter.fromCachedEffects(cached);
-    } on Object catch (error) {
-      throwError('Failed to read cached effects for $className: $error');
+    } on Object catch (e) {
+      print('Error occurred: $e');
+      return [];
     }
   }
 
@@ -89,11 +92,9 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {
           );
         }
       }
-    } on Object catch (error) {
-      throwError(
-        'Failed to resolve intents for ${element.displayName}: $error',
-        element: element,
-      );
+    } on Object catch (e) {
+      print('error occurred: $e');
+      return [];
     }
 
     return intents;

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:io';
 
 import 'package:scripts/src/core/command/errors.dart';
@@ -21,8 +20,6 @@ import 'package:scripts/src/features/build_engine/engine/stages/validate_env_sta
 import 'package:scripts/src/features/build_engine/features/codegen/commands/smart_build/smart_build_context.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/domain/models/smart_build_options.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/build_execution_service.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/log_manager.dart';
-import 'package:scripts/src/features/build_engine/features/codegen/engine/services/build_execution/module_builder.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/build_log_reader.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/error_module_analyzer.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/git_change_detector.dart';
@@ -35,16 +32,12 @@ class SmartBuildExecutor {
     required ModuleGraphPort moduleGraphPort,
     required EnvironmentService environmentService,
     required BuildExecutionService buildExecutionService,
-    required BuildLogManager buildLogManager,
-    required ModuleBuildRunner moduleBuilder,
     required BuildLogMetadataReader buildLogReader,
     required GitChangeDetector gitChangeDetector,
     required ErrorModuleAnalyzer errorModuleAnalyzer,
   }) : _moduleGraphPort = moduleGraphPort,
        _environmentService = environmentService,
        _buildExecutionService = buildExecutionService,
-       _logManager = buildLogManager,
-       _moduleBuilder = moduleBuilder,
        _buildLogReader = buildLogReader,
        _gitChangeDetector = gitChangeDetector,
        _errorModuleAnalyzer = errorModuleAnalyzer;
@@ -52,8 +45,6 @@ class SmartBuildExecutor {
   final ModuleGraphPort _moduleGraphPort;
   final EnvironmentService _environmentService;
   final BuildExecutionService _buildExecutionService;
-  final BuildLogManager _logManager;
-  final ModuleBuildRunner _moduleBuilder;
   final BuildLogMetadataReader _buildLogReader;
   final GitChangeDetector _gitChangeDetector;
   final ErrorModuleAnalyzer _errorModuleAnalyzer;
@@ -61,17 +52,10 @@ class SmartBuildExecutor {
   Future<int> run(SmartBuildOptions options) async {
     final store = BuildStateStore();
     final stopwatch = Stopwatch()..start();
-    final state = store.configure(
-      verbose: options.verbose,
-      dryRun: options.dryRun,
-      maxParallelBuilds: options.maxParallelBuilds,
-      targetModule: options.targetModule,
-      optimized: options.optimized,
-      autoParallel: options.autoParallel,
-    );
     Logger.configure(LoggerConfig(verbose: options.verbose));
 
     final subscriptions = <StreamSubscription<ProcessSignal>>[];
+    BuildState? activeState;
 
     log('');
     Logger.info('🎯 Flutter Smart Build System v2.0 (Dart)');
@@ -79,27 +63,12 @@ class SmartBuildExecutor {
     log('');
 
     try {
-      if (state.verbose) {
-        Logger.debug('Configuration:');
-        Logger.debug('   Verbose: ${state.verbose}');
-        Logger.debug('   Dry Run: ${state.dryRun}');
-        final parallelLabel = state.autoParallel
-            ? '${state.maxParallelBuilds} (auto)'
-            : '${state.maxParallelBuilds}';
-        Logger.debug('   Max Parallel: $parallelLabel');
-        Logger.debug('   Target Module: ${state.targetModule ?? 'all'}');
-        Logger.debug(
-          '   Scheduler: ${state.optimized ? 'optimized' : 'classic'}',
-        );
-        Logger.debug('   Mode: ${options.mode.description}');
-        Logger.debug('   Working Directory: ${Directory.current.path}');
-        log('');
-      }
+      BuildState captureStateForSignals() => activeState ?? store.state;
 
       final sigintSub = listenForSignal(
         ProcessSignal.sigint,
         (_) async {
-          await _environmentService.cleanup(state);
+          await _environmentService.cleanup(captureStateForSignals());
           exit(130);
         },
       );
@@ -110,7 +79,7 @@ class SmartBuildExecutor {
       final sigtermSub = listenForSignal(
         ProcessSignal.sigterm,
         (_) async {
-          await _environmentService.cleanup(state);
+          await _environmentService.cleanup(captureStateForSignals());
           exit(130);
         },
       );
@@ -118,12 +87,49 @@ class SmartBuildExecutor {
         subscriptions.add(sigtermSub);
       }
 
-      final pipelineContext = SmartBuildContext(
-        state: state,
-        options: options,
-      );
-      final pipeline = StageRunner<SmartBuildContext>(
-        stages: <Stage<SmartBuildContext>>[
+      var pass = 0;
+      SmartBuildContext? finalContext;
+      BuildState? finalState;
+
+      while (true) {
+        pass += 1;
+        final state = store.configure(
+          verbose: options.verbose,
+          dryRun: options.dryRun,
+          maxParallelBuilds: options.maxParallelBuilds,
+          targetModule: options.targetModule,
+          optimized: options.optimized,
+          autoParallel: options.autoParallel,
+        );
+        if (options.mode == SmartBuildMode.error) {
+          state.maxParallelBuilds = 1;
+          state.autoParallel = false;
+        }
+        activeState = state;
+
+        if (state.verbose) {
+          Logger.debug('Configuration:');
+          Logger.debug('   Verbose: ${state.verbose}');
+          Logger.debug('   Dry Run: ${state.dryRun}');
+          final parallelLabel = state.autoParallel
+              ? '${state.maxParallelBuilds} (auto)'
+              : '${state.maxParallelBuilds}';
+          Logger.debug('   Max Parallel: $parallelLabel');
+          Logger.debug('   Target Module: ${state.targetModule ?? 'all'}');
+          Logger.debug(
+            '   Scheduler: ${state.optimized ? 'optimized' : 'classic'}',
+          );
+          Logger.debug('   Mode: ${options.mode.description}');
+          Logger.debug('   Working Directory: ${Directory.current.path}');
+          if (pass > 1) {
+            Logger.debug('   Error pass: $pass');
+          }
+          log('');
+        } else if (pass > 1) {
+          Logger.info('♻️  Error mode pass $pass starting...');
+        }
+
+        final pipelineStages = <Stage<SmartBuildContext>>[
           ValidateEnvStage<SmartBuildContext>(_environmentService),
           DiscoverModulesStage<SmartBuildContext>(_moduleGraphPort),
           AnalyzeDependenciesStage<SmartBuildContext>(_moduleGraphPort),
@@ -134,53 +140,98 @@ class SmartBuildExecutor {
           ),
           const RetainTargetModuleStage(),
           BuildPlanStage<SmartBuildContext>(_moduleGraphPort),
-        ],
-      );
+        ];
 
-      final context = await pipeline.run(pipelineContext);
+        final pipelineContext = SmartBuildContext(
+          state: state,
+          options: options,
+          quiet: !state.verbose,
+        );
+        final totalStages = pipelineStages.length;
+        var stageIndex = 0;
+        final pipeline = StageRunner<SmartBuildContext>(
+          stages: pipelineStages,
+          onStageStart: (stageName) {
+            stageIndex += 1;
+            Logger.info(
+              '🔁 Stage $stageIndex/$totalStages → $stageName',
+            );
+          },
+        );
 
-      if (context.skipBuild) {
-        if (context.skipReason != null) {
-          Logger.info(context.skipReason!);
+        final context = await pipeline.run(pipelineContext);
+
+        if (context.skipBuild) {
+          if (context.skipReason != null) {
+            Logger.info(context.skipReason!);
+          }
+          Logger.info('🏁 No modules required building. Exiting.');
+          return 0;
         }
-        Logger.info('🏁 No modules required building. Exiting.');
-        return 0;
-      }
 
-      if (context.state.modulePaths.isEmpty) {
-        throw const CommandError(
-          'No modules with build_runner found!',
-          exitCode: 66,
-        );
-      }
+        if (context.state.modulePaths.isEmpty) {
+          throw const CommandError(
+            'No modules with build_runner found!',
+            exitCode: 66,
+          );
+        }
 
-      _printDependencySummary(context.dependencyReport);
+        if (!context.quiet) {
+          _printDependencySummary(context.dependencyReport);
+        }
 
-      if (state.targetModule != null) {
-        Logger.info(
-          'Building ${state.targetModule} with ${state.modulePaths.length} total modules (including dependencies)',
-        );
-      }
+        if (state.targetModule != null) {
+          Logger.info(
+            'Building ${state.targetModule} with ${state.modulePaths.length} total modules (including dependencies)',
+          );
+        }
 
-      if (state.verbose || state.dryRun) {
-        _printPlan(context.buildPlan);
-      }
+        if (state.verbose || state.dryRun) {
+          _printPlan(context.buildPlan);
+        }
 
-      if (!state.dryRun) {
-        if (options.mode == SmartBuildMode.error) {
-          await _runAdaptiveErrorMode(context);
-        } else {
+        var analyzerVerifiedDuringBuild = false;
+
+        if (!state.dryRun) {
           await _buildExecutionService.execute(
             state,
             optimized: options.optimized,
+            onModuleComplete: options.mode == SmartBuildMode.error
+                ? (moduleName) async {
+                    final continueBuilding = await _handleModuleCompletion(
+                      context,
+                    );
+                    if (!continueBuilding) {
+                      analyzerVerifiedDuringBuild = true;
+                    }
+                    return continueBuilding;
+                  }
+                : null,
           );
         }
+
+        if (options.mode == SmartBuildMode.error &&
+            !state.dryRun &&
+            !analyzerVerifiedDuringBuild) {
+          final remaining = await _findRemainingErrors(context);
+          if (remaining.isNotEmpty) {
+            Logger.warning(
+              'Analyzer still reports issues in: ${remaining.join(', ')}',
+            );
+            Logger.info('Re-running error mode to rebuild remaining modules.');
+            continue;
+          }
+        }
+
+        finalContext = context;
+        finalState = state;
+        break;
       }
 
-      if (!state.dryRun && state.targetModule == null) {
+      if (!finalState.dryRun && finalState.targetModule == null) {
         final graphContext = await GenerateGraphStage<SmartBuildContext>(
           _moduleGraphPort,
-        ).run(context);
+        ).run(finalContext);
         _printGraphSummary(graphContext.graphReport);
       }
 
@@ -189,11 +240,12 @@ class SmartBuildExecutor {
       log('');
 
       const graphOverview = ModuleGraphConfig.overviewFile;
-      if (!state.dryRun && File(graphOverview).existsSync()) {
+      if (!finalState.dryRun && File(graphOverview).existsSync()) {
         Logger.info('📊 View dependency graph: $graphOverview');
       }
-      if (!state.dryRun && Directory(state.buildLogsDir).existsSync()) {
-        Logger.info('📁 Build logs available in: ${state.buildLogsDir}/');
+      if (!finalState.dryRun &&
+          Directory(finalState.buildLogsDir).existsSync()) {
+        Logger.info('📁 Build logs available in: ${finalState.buildLogsDir}/');
       }
 
       return 0;
@@ -204,7 +256,8 @@ class SmartBuildExecutor {
       return error.exitCode;
     } on Object catch (e, stackTrace) {
       Logger.error('Fatal error: $e');
-      if (state.verbose) {
+      final verbose = activeState?.verbose ?? options.verbose;
+      if (verbose) {
         log(stackTrace);
       }
       return 1;
@@ -219,76 +272,6 @@ class SmartBuildExecutor {
     }
   }
 
-  Future<void> _runAdaptiveErrorMode(SmartBuildContext context) async {
-    final state = context.state;
-    await _logManager.prepareLogs(state);
-
-    final ordered = context.buildPlan?.order ?? state.buildOrder;
-    final queue = ListQueue<String>()..addAll(ordered);
-    final planned = ordered.toSet();
-
-    if (planned.isEmpty) {
-      Logger.info('No error modules scheduled. Skipping builds.');
-      return;
-    }
-
-    Logger.info(
-      '🔁 Error mode: sequentially rebuilding up to ${planned.length} module(s).',
-    );
-
-    var outstanding = Set<String>.from(planned);
-    final built = <String>{};
-
-    while (queue.isNotEmpty && outstanding.isNotEmpty) {
-      final module = queue.removeFirst();
-      if (!outstanding.contains(module)) {
-        continue;
-      }
-
-      Logger.info('⚙️  Building $module (error mode)…');
-      final result = await _moduleBuilder.run(state, module);
-      built.add(module);
-
-      if (!result.succeeded) {
-        final logFile = result.logFile;
-        throw CommandError(
-          logFile == null
-              ? '$module failed while resolving error mode.'
-              : '$module failed while resolving error mode. See $logFile.',
-          exitCode: 70,
-        );
-      }
-
-      final refreshedMetadata = await _buildLogReader.read(state.buildLogsDir);
-      final refreshed = await _errorModuleAnalyzer.findProblematicModules(
-        modulePaths: state.modulePaths,
-        logMetadata: refreshedMetadata,
-      );
-      outstanding = refreshed.where(planned.contains).toSet();
-
-      if (outstanding.isEmpty) {
-        Logger.info('✅ Error logs are clean after building $module.');
-        break;
-      }
-
-      for (final candidate in outstanding) {
-        if (built.contains(candidate)) {
-          continue;
-        }
-        if (!queue.contains(candidate)) {
-          queue.addLast(candidate);
-        }
-      }
-    }
-
-    if (outstanding.isNotEmpty) {
-      throw CommandError(
-        'Some modules still report errors: ${outstanding.join(', ')}.',
-        exitCode: 70,
-      );
-    }
-  }
-
   void _printPlan(BuildPlan? plan) {
     if (plan == null) {
       return;
@@ -298,6 +281,37 @@ class SmartBuildExecutor {
     for (final wave in plan.waves) {
       Console.info('  Wave ${wave.level}: ${wave.modules.join(', ')}');
     }
+  }
+
+  Future<bool> _handleModuleCompletion(
+    SmartBuildContext context,
+  ) async {
+    final remaining = await _findRemainingErrors(context);
+    if (remaining.isEmpty) {
+      Logger.success('Analyzer clean. Stopping error-mode builds.');
+      return false;
+    }
+    Logger.info(
+      'Remaining modules with analyzer issues: ${remaining.join(', ')}',
+    );
+    return true;
+  }
+
+  Future<Set<String>> _findRemainingErrors(
+    SmartBuildContext context,
+  ) async {
+    final modulePaths =
+        context.graphState?.modulePaths ?? context.state.modulePaths;
+    if (modulePaths.isEmpty) {
+      return const <String>{};
+    }
+    final logMetadata = await _buildLogReader.read(
+      context.state.buildLogsDir,
+    );
+    return _errorModuleAnalyzer.findProblematicModules(
+      modulePaths: modulePaths,
+      logMetadata: logMetadata,
+    );
   }
 
   void _printGraphSummary(GraphReport? report) {

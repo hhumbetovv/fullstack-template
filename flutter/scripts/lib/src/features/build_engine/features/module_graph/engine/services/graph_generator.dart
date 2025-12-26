@@ -2,20 +2,27 @@
 
 import 'dart:io';
 
-import 'package:common_tooling/tooling.dart' show normalizeLineEndings, preferredLineEndingForContent;
+import 'package:common_tooling/tooling.dart'
+    show normalizeLineEndings, preferredLineEndingForContent;
 import 'package:scripts/src/core/config/scripts_config.dart';
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
-import 'package:scripts/src/features/build_engine/domain/models/graph_config.dart' show classifyModule;
+import 'package:scripts/src/features/build_engine/domain/models/graph_config.dart'
+    show classifyModule;
 import 'package:scripts/src/features/build_engine/domain/models/graph_report.dart';
 
 class GraphGenerator {
   const GraphGenerator();
 
-  Future<GraphReport> generate(BuildState state) async {
+  Future<GraphReport> generate(
+    BuildState state, {
+    bool quiet = false,
+  }) async {
     const moduleGraphFile = ModuleGraphConfig.moduleGraphFile;
     const overviewFile = ModuleGraphConfig.overviewFile;
-    Logger.info('📊 Generating dependency graph ($overviewFile)...');
+    if (!quiet) {
+      Logger.info('📊 Generating dependency graph ($overviewFile)...');
+    }
 
     final modulesWithUnusedDeps = state.moduleUnusedDependencies.keys.toSet();
     final modulesWithUnusedPackages = state.moduleUnusedPackages.keys.toSet();
@@ -87,7 +94,11 @@ _GraphSection _buildBaseToFeatureSection(
 
   final featureModules = _featureModules(state);
   final modulePaths = state.allModulePaths;
-  final baseModules = modulePaths.keys.where((module) => !featureModules.contains(module)).toList()..sort();
+  final baseModules =
+      modulePaths.keys
+          .where((module) => !featureModules.contains(module))
+          .toList()
+        ..sort();
 
   final styles = _GraphStyleTracker();
   for (final module in baseModules) {
@@ -113,7 +124,8 @@ _GraphSection _buildBaseToFeatureSection(
     final source = entry.key;
     if (featureModules.contains(source)) {
       for (final target in entry.value) {
-        if (!featureModules.contains(target) && modulePaths.containsKey(target)) {
+        if (!featureModules.contains(target) &&
+            modulePaths.containsKey(target)) {
           featureDependencySources.add(target);
         }
       }
@@ -211,7 +223,11 @@ _GraphSection _buildWaveGroupedSection(
   final waveClusters = <String>[];
   for (var wave = 0; wave <= maxWave; wave++) {
     final modules =
-        state.moduleBuildLevel.entries.where((entry) => entry.value == wave).map((entry) => entry.key).toList()..sort();
+        state.moduleBuildLevel.entries
+            .where((entry) => entry.value == wave)
+            .map((entry) => entry.key)
+            .toList()
+          ..sort();
     if (modules.isEmpty) continue;
     final clusterId = _nodeId('wave_cluster_$wave');
     waveClusters.add(clusterId);
@@ -260,12 +276,16 @@ Future<void> _writeBuildGraphOverview({
   final totalModules = state.allModulePaths.length;
   final buildRunnerModules = state.modulePaths.length;
   final withoutBuildRunner = totalModules - buildRunnerModules;
-  final avgDependencies = totalModules == 0 ? '0.00' : (totalDependencies / totalModules).toStringAsFixed(2);
+  final avgDependencies = totalModules == 0
+      ? '0.00'
+      : (totalDependencies / totalModules).toStringAsFixed(2);
 
   final waveModules = _collectWaveModules(state, maxWave);
   final peakConcurrent = waveModules.isEmpty
       ? 0
-      : waveModules.map((wave) => wave.modules.length).reduce((a, b) => a > b ? a : b);
+      : waveModules
+            .map((wave) => wave.modules.length)
+            .reduce((a, b) => a > b ? a : b);
 
   final buffer = StringBuffer()
     ..writeln('# Workspace Build Overview')
@@ -278,7 +298,6 @@ Future<void> _writeBuildGraphOverview({
     ..writeln('- **Total Dependencies**: $totalDependencies')
     ..writeln('- **Average Dependencies**: $avgDependencies')
     ..writeln('- **Peak Concurrent Modules**: $peakConcurrent')
-    ..writeln('- **Configured Parallel Limit**: ${state.maxParallelBuilds}')
     ..writeln('')
     ..writeln('## Graph Index')
     ..writeln('')
@@ -337,7 +356,9 @@ String _unusedDependenciesSection(
   }
   final buffer = StringBuffer();
   final entries =
-      state.moduleUnusedDependencies.entries.where((entry) => modulesWithUnused.contains(entry.key)).toList()
+      state.moduleUnusedDependencies.entries
+          .where((entry) => modulesWithUnused.contains(entry.key))
+          .toList()
         ..sort((a, b) => a.key.compareTo(b.key));
   for (final entry in entries) {
     final unused = entry.value.toList()..sort();
@@ -354,8 +375,11 @@ String _unusedPackagesSection(
     return 'None 🎉';
   }
   final buffer = StringBuffer();
-  final entries = state.moduleUnusedPackages.entries.where((entry) => modulesWithUnused.contains(entry.key)).toList()
-    ..sort((a, b) => a.key.compareTo(b.key));
+  final entries =
+      state.moduleUnusedPackages.entries
+          .where((entry) => modulesWithUnused.contains(entry.key))
+          .toList()
+        ..sort((a, b) => a.key.compareTo(b.key));
   for (final entry in entries) {
     final unusedPackages = entry.value.toList()..sort();
     buffer.writeln('- **${entry.key}** → ${unusedPackages.join(', ')}');
@@ -370,7 +394,11 @@ List<_WaveDetail> _collectWaveModules(BuildState state, int maxWave) {
   final waves = <_WaveDetail>[];
   for (var wave = 0; wave <= maxWave; wave++) {
     final modules =
-        state.moduleBuildLevel.entries.where((entry) => entry.value == wave).map((entry) => entry.key).toList()..sort();
+        state.moduleBuildLevel.entries
+            .where((entry) => entry.value == wave)
+            .map((entry) => entry.key)
+            .toList()
+          ..sort();
     if (modules.isNotEmpty) {
       waves.add(_WaveDetail(level: wave, modules: modules));
     }
@@ -566,7 +594,10 @@ String? _classForGroup(String groupName) {
 
 String? _extractFeatureSegment(String path) {
   final normalized = path.replaceFirst(RegExp(r'^\./'), '');
-  final segments = normalized.split('/').where((segment) => segment.isNotEmpty).toList();
+  final segments = normalized
+      .split('/')
+      .where((segment) => segment.isNotEmpty)
+      .toList();
   if (segments.isEmpty || segments.first != 'feature') {
     return null;
   }
@@ -580,15 +611,20 @@ String? _extractFeatureSegment(String path) {
 
 String _titleCase(String value) {
   if (value.isEmpty) return value;
-  final parts = value.split(RegExp('[^a-zA-Z0-9]+')).where((part) => part.isNotEmpty);
+  final parts = value
+      .split(RegExp('[^a-zA-Z0-9]+'))
+      .where((part) => part.isNotEmpty);
   return parts
       .map(
-        (part) => part.substring(0, 1).toUpperCase() + part.substring(1).toLowerCase(),
+        (part) =>
+            part.substring(0, 1).toUpperCase() +
+            part.substring(1).toLowerCase(),
       )
       .join(' ');
 }
 
-String _nodeId(String moduleName) => moduleName.replaceAll(RegExp('[^a-zA-Z0-9_]'), '_');
+String _nodeId(String moduleName) =>
+    moduleName.replaceAll(RegExp('[^a-zA-Z0-9_]'), '_');
 
 class _GraphStyleTracker {
   final Set<String> usedClasses = <String>{};
@@ -634,13 +670,20 @@ void _writeClassDefinitions(StringBuffer buffer, _GraphStyleTracker tracker) {
     'unused',
   ];
   const classStyles = <String, String>{
-    'presentation': '    classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000;',
-    'domain': '    classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000;',
-    'data': '    classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000;',
-    'ui': '    classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000;',
-    'common': '    classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000;',
-    'core': '    classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000;',
-    'unused': '    classDef unused fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000;',
+    'presentation':
+        '    classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000000;',
+    'domain':
+        '    classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000;',
+    'data':
+        '    classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000;',
+    'ui':
+        '    classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000;',
+    'common':
+        '    classDef common fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000;',
+    'core':
+        '    classDef core fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000000;',
+    'unused':
+        '    classDef unused fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000;',
   };
 
   for (final className in classOrder) {
@@ -659,7 +702,10 @@ void _writeClassDefinitions(StringBuffer buffer, _GraphStyleTracker tracker) {
   }
 }
 
-String _graphIndexSection(List<_GraphSection> sections, String moduleGraphPath) {
+String _graphIndexSection(
+  List<_GraphSection> sections,
+  String moduleGraphPath,
+) {
   final buffer = StringBuffer();
   for (final section in sections) {
     final description = _sectionDescriptions[section.title];

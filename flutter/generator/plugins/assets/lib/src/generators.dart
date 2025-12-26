@@ -1,7 +1,8 @@
 import 'models.dart';
 import 'paths.dart';
 
-const _header = '// GENERATED CODE - DO NOT MODIFY BY HAND';
+const _header =
+    '// GENERATED CODE - DO NOT MODIFY BY HAND\n// ignore_for_file: type=lint';
 
 AssetOutputs generateOutputs(
   AssetCollections collections,

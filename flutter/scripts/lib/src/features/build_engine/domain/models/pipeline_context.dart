@@ -5,9 +5,14 @@ import 'package:scripts/src/features/build_engine/domain/models/graph_report.dar
 
 /// Common context used by graph/codegen pipelines.
 class PipelineContext {
-  PipelineContext({required this.state});
+  PipelineContext({
+    required this.state,
+    this.quiet = false,
+  });
 
   final BuildState state;
+  final bool quiet;
+  BuildState? graphState;
   DependencyReport? dependencyReport;
   BuildPlan? buildPlan;
   GraphReport? graphReport;

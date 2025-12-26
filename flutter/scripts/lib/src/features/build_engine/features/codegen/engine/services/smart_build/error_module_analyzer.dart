@@ -4,11 +4,11 @@ import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/analyzer_service.dart';
 import 'package:scripts/src/features/build_engine/features/codegen/engine/services/smart_build/build_log_reader.dart';
-import 'package:scripts/src/features/scaffolding/engine/services/yaml_service.dart';
 
 class ErrorModuleAnalyzer {
-  ErrorModuleAnalyzer({AnalyzerService? analyzerService})
-    : _analyzerService = analyzerService ?? const AnalyzerService();
+  ErrorModuleAnalyzer({
+    required AnalyzerService analyzerService,
+  }) : _analyzerService = analyzerService;
 
   final AnalyzerService _analyzerService;
 
@@ -18,16 +18,73 @@ class ErrorModuleAnalyzer {
   }) async {
     final issues = <String>{};
 
+    issues.addAll(await _collectModulesFromAnalyzer(modulePaths));
+    issues.addAll(
+      await _collectModulesFromLogs(
+        modulePaths: modulePaths,
+        logMetadata: logMetadata,
+      ),
+    );
+
+    if (issues.isNotEmpty) {
+      final sorted = issues.toList()..sort();
+      Logger.info('Problematic modules detected: ${sorted.join(', ')}');
+    }
+
+    return issues;
+  }
+
+  Future<Set<String>> _collectModulesFromAnalyzer(
+    Map<String, String> modulePaths,
+  ) async {
+    final report = await _analyzerService.runAnalyze();
+    if (report == null) {
+      return const <String>{};
+    }
+
+    final workspaceRoot = Directory.current.path;
+    final issues = <String>{};
+    for (final issue in report.issues) {
+      if (!issue.isActionable) continue;
+
+      final owner = _resolveModuleForFile(
+        issue.filePath,
+        modulePaths,
+        workspaceRoot,
+      );
+      if (owner != null) {
+        issues.add(owner);
+      }
+
+      for (final package in _extractPackagesFromMessage(issue.message)) {
+        if (modulePaths.containsKey(package)) {
+          issues.add(package);
+        }
+      }
+    }
+
+    return issues;
+  }
+
+  Future<Set<String>> _collectModulesFromLogs({
+    required Map<String, String> modulePaths,
+    required Map<String, BuildLogEntry> logMetadata,
+  }) async {
+    final issues = <String>{};
+
     for (final entry in logMetadata.entries) {
       final moduleName = entry.key;
       final logEntry = entry.value;
+
       if (logEntry.succeeded == false) {
         issues.add(moduleName);
       }
 
-      final unresolvedSources = await _findModulesFromUnresolvedPublicImports(
-        logEntry.path,
+      final unresolvedSources = await _findModulesFromUnresolvedImports(
+        ownerModule: moduleName,
+        logPath: logEntry.path,
       );
+
       for (final candidate in unresolvedSources) {
         if (modulePaths.containsKey(candidate)) {
           issues.add(candidate);
@@ -35,77 +92,52 @@ class ErrorModuleAnalyzer {
       }
     }
 
-    final analyzerModules = await _analyzerService.findModulesWithErrors(
-      modulePaths: modulePaths,
-    );
-    issues.addAll(analyzerModules);
-
-    for (final entry in modulePaths.entries) {
-      final moduleName = entry.key;
-      if (issues.contains(moduleName)) {
-        continue;
-      }
-
-      final usesExporter = await _usesGenExporter(entry.value);
-      if (!usesExporter) {
-        continue;
-      }
-
-      final publicFile = File(
-        p.join(_normalize(entry.value), 'lib', 'public.dart'),
-      );
-      if (!publicFile.existsSync()) {
-        issues.add(moduleName);
-      }
-    }
-
     return issues;
   }
 
-  final Map<String, Future<bool>> _genExporterCache = <String, Future<bool>>{};
-  static final List<RegExp> _missingPublicImportPatterns = <RegExp>[
-    RegExp(
-      r"Target of URI doesn't exist: 'package:([A-Za-z0-9_]+)/public\.dart'",
-    ),
-    RegExp(
-      r"Not found: 'package:([A-Za-z0-9_]+)/public\.dart'",
-    ),
-  ];
-
-  Future<bool> _usesGenExporter(String modulePath) {
-    return _genExporterCache.putIfAbsent(modulePath, () async {
-      try {
-        final pubspec = await readPubspec(
-          '${_normalize(modulePath)}/pubspec.yaml',
-        );
-        if (pubspec == null) {
-          return false;
-        }
-        bool containsExporter(Map<String, dynamic>? deps) {
-          return deps?.keys.any((key) => key == 'gen_exporter') ?? false;
-        }
-
-        final deps = pubspec['dependencies'] as Map<String, dynamic>?;
-        final devDeps = pubspec['dev_dependencies'] as Map<String, dynamic>?;
-        return containsExporter(deps) || containsExporter(devDeps);
-      } on Object catch (error) {
-        Logger.debug('Failed to parse pubspec for $modulePath: $error');
-        return false;
+  String? _resolveModuleForFile(
+    String filePath,
+    Map<String, String> modulePaths,
+    String workspaceRoot,
+  ) {
+    final normalizedFile = p.normalize(filePath);
+    for (final entry in modulePaths.entries) {
+      final moduleRoot = _absoluteModulePath(entry.value, workspaceRoot);
+      if (normalizedFile == moduleRoot ||
+          normalizedFile.startsWith('$moduleRoot${p.separator}')) {
+        return entry.key;
       }
-    });
-  }
-
-  String _normalize(String rawPath) {
-    final normalized = p.normalize(rawPath);
-    if (normalized.startsWith('./')) {
-      return normalized.substring(2);
     }
-    return normalized;
+    return null;
   }
 
-  Future<Set<String>> _findModulesFromUnresolvedPublicImports(
-    String logPath,
-  ) async {
+  String _absoluteModulePath(String rawPath, String workspaceRoot) {
+    var candidate = rawPath.trim();
+    if (candidate.startsWith('./')) {
+      candidate = candidate.substring(2);
+    }
+
+    if (p.isAbsolute(candidate)) {
+      return p.normalize(candidate);
+    }
+    return p.normalize(p.join(workspaceRoot, candidate));
+  }
+
+  Iterable<String> _extractPackagesFromMessage(String message) sync* {
+    for (final pattern in _unresolvedImportPatterns) {
+      for (final match in pattern.allMatches(message)) {
+        final moduleName = match.group(1);
+        if (moduleName != null && moduleName.isNotEmpty) {
+          yield moduleName;
+        }
+      }
+    }
+  }
+
+  Future<Set<String>> _findModulesFromUnresolvedImports({
+    required String ownerModule,
+    required String logPath,
+  }) async {
     final file = File(logPath);
     if (!file.existsSync()) {
       return const <String>{};
@@ -113,20 +145,38 @@ class ErrorModuleAnalyzer {
     try {
       final contents = await file.readAsString();
       final matches = <String>{};
-      for (final pattern in _missingPublicImportPatterns) {
+      var foundUnresolvedImport = false;
+      for (final pattern in _unresolvedImportPatterns) {
         for (final match in pattern.allMatches(contents)) {
           final moduleName = match.group(1);
           if (moduleName != null && moduleName.isNotEmpty) {
             matches.add(moduleName);
           }
+          foundUnresolvedImport = true;
         }
+      }
+      if (foundUnresolvedImport) {
+        matches.add(ownerModule);
       }
       return matches;
     } on Object catch (error) {
-      Logger.debug(
-        'Failed to parse unresolved imports from $logPath: $error',
-      );
-      return const <String>{};
+      Logger.debug('Failed to parse unresolved imports from $logPath: $error');
+      return <String>{ownerModule};
     }
   }
 }
+
+final List<RegExp> _unresolvedImportPatterns = <RegExp>[
+  RegExp(
+    r"Target of URI doesn't exist: 'package:([A-Za-z0-9_]+)/[^']+'",
+  ),
+  RegExp(
+    r"Couldn't import 'package:([A-Za-z0-9_]+)/[^']+'",
+  ),
+  RegExp(
+    r"Not found: 'package:([A-Za-z0-9_]+)/[^']+'",
+  ),
+  RegExp(
+    r"URI with scheme 'package' not found: 'package:([A-Za-z0-9_]+)/[^']+'",
+  ),
+];

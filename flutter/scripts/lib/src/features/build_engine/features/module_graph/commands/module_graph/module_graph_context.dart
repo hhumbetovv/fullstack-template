@@ -5,6 +5,7 @@ class ModuleGraphContext extends PipelineContext {
   ModuleGraphContext({
     required super.state,
     required this.options,
+    super.quiet = false,
   });
 
   final ModuleGraphOptions options;

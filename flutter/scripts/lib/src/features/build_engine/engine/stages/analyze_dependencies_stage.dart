@@ -14,6 +14,7 @@ class AnalyzeDependenciesStage<T extends PipelineContext> implements Stage<T> {
   Future<T> run(T context) async {
     context.dependencyReport = await _moduleGraphPort.analyzeDependencies(
       context.state,
+      quiet: context.quiet,
     );
     return context;
   }

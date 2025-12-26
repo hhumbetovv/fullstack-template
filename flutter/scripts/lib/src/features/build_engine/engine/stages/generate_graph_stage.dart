@@ -12,8 +12,13 @@ class GenerateGraphStage<T extends PipelineContext> implements Stage<T> {
 
   @override
   Future<T> run(T context) async {
+    final graphState = context.graphState ?? context.state;
+    if (context.graphState != null) {
+      _moduleGraphPort.buildPlan(graphState);
+    }
     context.graphReport = await _moduleGraphPort.generateGraphFiles(
-      context.state,
+      graphState,
+      quiet: context.quiet,
     );
     return context;
   }

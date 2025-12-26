@@ -8,7 +8,6 @@ dependencies:
   - code_builder
   - dart_style
   - source_gen
-  - path
 dev_dependencies: []
 
 build:
