@@ -65,6 +65,8 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F2A3B4C5D6E7F8A9B0C1D2E1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		F2A3B4C5D6E7F8A9B0C1D2E2 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		9D2C0B069A1BA697D89D050E /* Pods-RunnerTests.release-prod.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release-prod.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release-prod.xcconfig"; sourceTree = "<group>"; };
 		AA196D1CD18A941B7BFFC555 /* Pods-RunnerTests.profile-dev.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile-dev.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile-dev.xcconfig"; sourceTree = "<group>"; };
 		B2B46E26B86051B483A439FC /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
@@ -172,12 +174,41 @@
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
 				97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */,
 				97C147021CF9000F007C117D /* Info.plist */,
+				F2A3B4C5D6E7F8A9B0C1D2E3 /* Flavors */,
 				1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */,
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		F2A3B4C5D6E7F8A9B0C1D2E3 /* Flavors */ = {
+			isa = PBXGroup;
+			children = (
+				F2A3B4C5D6E7F8A9B0C1D2E4 /* Dev */,
+				F2A3B4C5D6E7F8A9B0C1D2E5 /* Prod */,
+			);
+			name = Flavors;
+			path = Flavors;
+			sourceTree = "<group>";
+		};
+		F2A3B4C5D6E7F8A9B0C1D2E4 /* Dev */ = {
+			isa = PBXGroup;
+			children = (
+				F2A3B4C5D6E7F8A9B0C1D2E1 /* GoogleService-Info.plist */,
+			);
+			name = Dev;
+			path = Dev;
+			sourceTree = "<group>";
+		};
+		F2A3B4C5D6E7F8A9B0C1D2E5 /* Prod */ = {
+			isa = PBXGroup;
+			children = (
+				F2A3B4C5D6E7F8A9B0C1D2E2 /* GoogleService-Info.plist */,
+			);
+			name = Prod;
+			path = Prod;
 			sourceTree = "<group>";
 		};
 		F6BC17B2F3494EA317AEF0EB /* Frameworks */ = {
@@ -220,6 +251,7 @@
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
+				F2A3B4C5D6E7F8A9B0C1D2E6 /* Copy GoogleService-Info.plist */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				3BB78A2050C636E9F13DE299 /* [CP] Embed Pods Frameworks */,
@@ -331,6 +363,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
+		};
+		F2A3B4C5D6E7F8A9B0C1D2E6 /* Copy GoogleService-Info.plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy GoogleService-Info.plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n\ncase \"${CONFIGURATION}\" in\n  *-dev)\n    GOOGLE_PLIST=\"${PROJECT_DIR}/Runner/Flavors/Dev/GoogleService-Info.plist\"\n    ;;\n  *-prod)\n    GOOGLE_PLIST=\"${PROJECT_DIR}/Runner/Flavors/Prod/GoogleService-Info.plist\"\n    ;;\n  *)\n    echo \"Unknown CONFIGURATION: ${CONFIGURATION}\"\n    exit 1\n    ;;\nesac\n\nif [ ! -f \"${GOOGLE_PLIST}\" ]; then\n  echo \"Missing GoogleService-Info.plist at ${GOOGLE_PLIST}\"\n  exit 1\nfi\n\nDEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist\"\nmkdir -p \"$(dirname \"${DEST}\")\"\ncp \"${GOOGLE_PLIST}\" \"${DEST}\"\n";
+			showEnvVarsInLog = 0;
 		};
 		3BB78A2050C636E9F13DE299 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
