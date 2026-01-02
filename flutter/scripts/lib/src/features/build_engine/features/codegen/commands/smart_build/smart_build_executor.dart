@@ -102,8 +102,9 @@ class SmartBuildExecutor {
           autoParallel: options.autoParallel,
         );
         if (options.mode == SmartBuildMode.error) {
-          state.maxParallelBuilds = 1;
-          state.autoParallel = false;
+          state
+            ..maxParallelBuilds = 1
+            ..autoParallel = false;
         }
         activeState = state;
 
@@ -111,9 +112,7 @@ class SmartBuildExecutor {
           Logger.debug('Configuration:');
           Logger.debug('   Verbose: ${state.verbose}');
           Logger.debug('   Dry Run: ${state.dryRun}');
-          final parallelLabel = state.autoParallel
-              ? '${state.maxParallelBuilds} (auto)'
-              : '${state.maxParallelBuilds}';
+          final parallelLabel = state.autoParallel ? '${state.maxParallelBuilds} (auto)' : '${state.maxParallelBuilds}';
           Logger.debug('   Max Parallel: $parallelLabel');
           Logger.debug('   Target Module: ${state.targetModule ?? 'all'}');
           Logger.debug(
@@ -210,9 +209,7 @@ class SmartBuildExecutor {
           );
         }
 
-        if (options.mode == SmartBuildMode.error &&
-            !state.dryRun &&
-            !analyzerVerifiedDuringBuild) {
+        if (options.mode == SmartBuildMode.error && !state.dryRun && !analyzerVerifiedDuringBuild) {
           final remaining = await _findRemainingErrors(context);
           if (remaining.isNotEmpty) {
             Logger.warning(
@@ -243,8 +240,7 @@ class SmartBuildExecutor {
       if (!finalState.dryRun && File(graphOverview).existsSync()) {
         Logger.info('📊 View dependency graph: $graphOverview');
       }
-      if (!finalState.dryRun &&
-          Directory(finalState.buildLogsDir).existsSync()) {
+      if (!finalState.dryRun && Directory(finalState.buildLogsDir).existsSync()) {
         Logger.info('📁 Build logs available in: ${finalState.buildLogsDir}/');
       }
 
@@ -300,8 +296,7 @@ class SmartBuildExecutor {
   Future<Set<String>> _findRemainingErrors(
     SmartBuildContext context,
   ) async {
-    final modulePaths =
-        context.graphState?.modulePaths ?? context.state.modulePaths;
+    final modulePaths = context.graphState?.modulePaths ?? context.state.modulePaths;
     if (modulePaths.isEmpty) {
       return const <String>{};
     }

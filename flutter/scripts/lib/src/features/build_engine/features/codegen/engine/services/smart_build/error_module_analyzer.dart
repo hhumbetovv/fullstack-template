@@ -16,15 +16,16 @@ class ErrorModuleAnalyzer {
     required Map<String, String> modulePaths,
     required Map<String, BuildLogEntry> logMetadata,
   }) async {
-    final issues = <String>{};
-
-    issues.addAll(await _collectModulesFromAnalyzer(modulePaths));
-    issues.addAll(
-      await _collectModulesFromLogs(
-        modulePaths: modulePaths,
-        logMetadata: logMetadata,
-      ),
-    );
+    final issues = <String>{}
+      ..addAll(
+        await _collectModulesFromAnalyzer(modulePaths),
+      )
+      ..addAll(
+        await _collectModulesFromLogs(
+          modulePaths: modulePaths,
+          logMetadata: logMetadata,
+        ),
+      );
 
     if (issues.isNotEmpty) {
       final sorted = issues.toList()..sort();
@@ -103,8 +104,7 @@ class ErrorModuleAnalyzer {
     final normalizedFile = p.normalize(filePath);
     for (final entry in modulePaths.entries) {
       final moduleRoot = _absoluteModulePath(entry.value, workspaceRoot);
-      if (normalizedFile == moduleRoot ||
-          normalizedFile.startsWith('$moduleRoot${p.separator}')) {
+      if (normalizedFile == moduleRoot || normalizedFile.startsWith('$moduleRoot${p.separator}')) {
         return entry.key;
       }
     }
@@ -168,15 +168,15 @@ class ErrorModuleAnalyzer {
 
 final List<RegExp> _unresolvedImportPatterns = <RegExp>[
   RegExp(
-    r"Target of URI doesn't exist: 'package:([A-Za-z0-9_]+)/[^']+'",
+    "Target of URI doesn't exist: 'package:([A-Za-z0-9_]+)/[^']+'",
   ),
   RegExp(
-    r"Couldn't import 'package:([A-Za-z0-9_]+)/[^']+'",
+    "Couldn't import 'package:([A-Za-z0-9_]+)/[^']+'",
   ),
   RegExp(
-    r"Not found: 'package:([A-Za-z0-9_]+)/[^']+'",
+    "Not found: 'package:([A-Za-z0-9_]+)/[^']+'",
   ),
   RegExp(
-    r"URI with scheme 'package' not found: 'package:([A-Za-z0-9_]+)/[^']+'",
+    "URI with scheme 'package' not found: 'package:([A-Za-z0-9_]+)/[^']+'",
   ),
 ];
