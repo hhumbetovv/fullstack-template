@@ -8,5 +8,6 @@ targets:
         options:
           folders:
             - constants
+            - environment
             - extensions
             - utils

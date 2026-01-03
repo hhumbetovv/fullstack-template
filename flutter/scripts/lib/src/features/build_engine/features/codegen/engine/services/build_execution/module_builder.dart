@@ -26,8 +26,7 @@ class ModuleBuildRunner {
       'build_runner',
       'build',
       '-d',
-      '--build-filter=lib/**',
-      '--build-filter=assets/**',
+      '--build-filter=package:$moduleName/**',
     ];
 
     final logWriter = await _BufferedLogWriter.create(logFile)

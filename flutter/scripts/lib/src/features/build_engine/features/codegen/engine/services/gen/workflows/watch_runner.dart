@@ -26,7 +26,7 @@ class WatchRunnerWorkflow {
       Console.write('👀 ${module.path} (${module.name})');
       final process = await _buildRunner.startWatch(
         module.directory,
-        const ['-d'],
+        ['-d', '--build-filter=package:${module.name}/**'],
       );
       processes.add(process);
       final completer = Completer<void>();

@@ -19,7 +19,7 @@ class BuildRunnerWorkflow {
       Console.write('\n🔨 Building ${module.name} (${module.path})');
       final result = await _buildRunner.runCommand(
         module.directory,
-        const ['build', '-d'],
+        ['build', '-d', '--build-filter=package:${module.name}/**'],
       );
       if (result.exitCode == 0) {
         Console.success('✅ Build complete for ${module.name}');
