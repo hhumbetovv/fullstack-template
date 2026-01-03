@@ -5,7 +5,9 @@ dev_modules:
 dependencies:
   - flutter_dotenv
   - intl
+  - firebase_core
   - firebase_remote_config
+  - firebase_crashlytics
 dev_dependencies:
   - build_runner
 

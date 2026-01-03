@@ -20,11 +20,9 @@ extension FlowUseCaseExt<Data, Params> on FlowUseCase<Params, Data> {
           'MESSAGE: $error\n'
           'TIMESTAMP: ${DateTime.now().toIso8601String()}';
 
-      Console.firebaseLog(errorLog);
       Console.firebaseRecordError(
-        error,
+        errorLog,
         stackTrace,
-        reason: 'UseCase Execution Failed',
       );
 
       return Stream.value(Error(Failure(message: error.toString())));

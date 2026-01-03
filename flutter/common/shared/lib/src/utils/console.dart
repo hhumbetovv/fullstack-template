@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:developer' as dev;
 
 import 'package:common_shared/public.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 typedef LogEntry = ({String message, AnsiColors color, DateTime timestamp, String tag});
 typedef ConsoleFormatter = String Function([String? dateFormat, DateTime? date]);
@@ -23,9 +24,10 @@ sealed class Console {
   static final List<String> _tags = [];
   static List<String> get tags => _tags.where((tag) => tag.isNotEmpty).toList();
 
-  static void log(String message, [AnsiColors color = AnsiColors.blue, String tag = '']) {
+  static void log(dynamic message, [AnsiColors color = AnsiColors.blue, String tag = '']) {
+    FirebaseCrashlytics.instance.log('$message');
     if (!isEnabled) return;
-    _enqueueLog(message, color, tag);
+    _enqueueLog('$message', color, tag);
   }
 
   static void print(dynamic message, [AnsiColors color = AnsiColors.blue]) {
@@ -63,20 +65,15 @@ sealed class Console {
     }
   }
 
-  static void firebaseLog(String log) {
-    // FirebaseCrashlytics.instance.log(log),
-  }
-
   static void firebaseRecordError(
     dynamic exception,
-    StackTrace? trace, {
-    dynamic reason,
-  }) {
-    // FirebaseCrashlytics.instance.recordError(
-    //   exception,
-    //   trace,
-    //   reason,
-    // ),
+    StackTrace? trace,
+  ) {
+    FirebaseCrashlytics.instance.recordError(
+      exception,
+      trace,
+      fatal: false,
+    );
   }
 
   static Future<void> _processQueue() async {

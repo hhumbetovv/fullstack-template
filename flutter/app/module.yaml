@@ -19,6 +19,7 @@ dependencies:
   - injectable
   - intl
   - firebase_core
+  - firebase_crashlytics
 dev_dependencies:
   - build_runner
   - injectable_generator

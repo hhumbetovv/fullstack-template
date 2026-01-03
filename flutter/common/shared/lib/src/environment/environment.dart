@@ -1,3 +1,4 @@
+import 'package:common_shared/public.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final class Environment {
@@ -16,21 +17,11 @@ final class Environment {
   static String firebaseAndroidAppId = dotenv.env['FIREBASE_ANDROID_APP_ID'] ?? '';
   static String firebaseIOSAppId = dotenv.env['FIREBASE_IOS_APP_ID'] ?? '';
   static String firebaseIOSBundleId = dotenv.env['FIREBASE_IOS_BUNDLE_ID'] ?? '';
-}
 
-const String? flavor = String.fromEnvironment('FLAVOR') != '' ? String.fromEnvironment('FLAVOR') : null;
-
-enum Flavor {
-  prod,
-  dev
-  ;
-
-  static Flavor get current {
-    return Flavor.values.firstWhere(
-      (element) => element.name == flavor?.toLowerCase(),
-      orElse: () => Flavor.prod,
-    );
+  static bool get isBeta {
+    const isBetaLocally = bool.fromEnvironment('BETA', defaultValue: false);
+    final isBetaRemotely = ConfigKeys.isBetaEnabled.readAsBool;
+    final isProd = Flavor.current == Flavor.prod;
+    return isBetaLocally && isBetaRemotely && isProd;
   }
-
-  String get file => '.env.$name';
 }

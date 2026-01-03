@@ -22,11 +22,9 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
         'ERROR MESSAGE: ${dioError.message ?? 'Unknown Error'}\n'
         'TIMESTAMP: ${DateTime.now().toIso8601String()}';
 
-    Console.firebaseLog(errorLog);
     Console.firebaseRecordError(
-      dioError,
+      errorLog,
       dioError.stackTrace,
-      reason: 'Dio Request Failed',
     );
     try {
       final data = dioError.response?.data;
@@ -48,7 +46,6 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
       Console.firebaseRecordError(
         dioError,
         dioError.stackTrace,
-        reason: 'Dio Error parse Failed',
       );
       return NetworkResponse(
         isSuccess: false,
@@ -63,11 +60,9 @@ Future<NetworkResponse<Data?>> safeRequest<Data>(
         'ERROR: $error\n'
         'TIMESTAMP: ${DateTime.now().toIso8601String()}';
 
-    Console.firebaseLog(errorLog);
     Console.firebaseRecordError(
-      error,
+      errorLog,
       StackTrace.current,
-      reason: 'Dio Request Failed',
     );
 
     return NetworkResponse(

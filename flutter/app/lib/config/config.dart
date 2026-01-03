@@ -2,10 +2,11 @@ import 'package:app/config/firebase_options.dart';
 import 'package:app/config/injectable.dart';
 import 'package:common_presentation/config.dart';
 import 'package:common_shared/config.dart';
-import 'package:common_shared/environment.dart';
 import 'package:common_shared/exports.dart';
 import 'package:common_shared/public.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ui_components/public.dart';
@@ -15,11 +16,17 @@ final class AppConfig {
   static Future<void> setup() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    Console.isEnabled = Flavor.current == Flavor.dev;
     await Environment.initialize();
 
     await Firebase.initializeApp(
+      name: Flavor.current.name,
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+      Flavor.current == Flavor.prod && kReleaseMode,
     );
 
     await CommonSharedConfig().setup(

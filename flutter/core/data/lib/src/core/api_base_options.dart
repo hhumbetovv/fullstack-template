@@ -1,4 +1,4 @@
-import 'package:common_shared/environment.dart';
+import 'package:common_shared/public.dart';
 import 'package:dio/dio.dart';
 
 final class ApiBaseOptions extends BaseOptions {

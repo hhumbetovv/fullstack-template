@@ -18,11 +18,9 @@ extension UseCaseExt<Data, Params> on UseCase<Params, Data> {
           'MESSAGE: $error\n'
           'TIMESTAMP: ${DateTime.now().toIso8601String()}';
 
-      Console.firebaseLog(errorLog);
       Console.firebaseRecordError(
-        error,
+        errorLog,
         stackTrace,
-        reason: 'UseCase Execution Failed',
       );
 
       return Error(Failure(message: error.toString()));
