@@ -84,6 +84,9 @@ android {
             dimension = "default"
             applicationIdSuffix = ".dev"
         }
+        create("beta") {
+            dimension = "default"
+        }
         create("prod") {
             dimension = "default"
         }

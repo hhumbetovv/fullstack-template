@@ -28,7 +28,7 @@ dev_dependencies:
 flutter:
   assets:
     - .env.dev
+    - .env.beta
     - .env.prod
   default-flavor: prod
   uses-material-design: true
-

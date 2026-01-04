@@ -19,9 +19,8 @@ final class Environment {
   static String firebaseIOSBundleId = dotenv.env['FIREBASE_IOS_BUNDLE_ID'] ?? '';
 
   static bool get isBeta {
-    const isBetaLocally = bool.fromEnvironment('BETA', defaultValue: false);
+    final isBetaFlavor = Flavor.current == Flavor.beta;
     final isBetaRemotely = ConfigKeys.isBetaEnabled.readAsBool;
-    final isProd = Flavor.current == Flavor.prod;
-    return isBetaLocally && isBetaRemotely && isProd;
+    return isBetaFlavor && isBetaRemotely;
   }
 }

@@ -2,7 +2,8 @@ const String? flavor = String.fromEnvironment('FLAVOR') != '' ? String.fromEnvir
 
 enum Flavor {
   prod,
-  dev
+  dev,
+  beta
   ;
 
   static Flavor get current {

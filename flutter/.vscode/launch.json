@@ -93,10 +93,9 @@
       "cwd": "${workspaceFolder}/app",
       "args": [
         "--flavor",
-        "prod",
+        "beta",
         "--dart-define",
-        "FLAVOR=prod",
-        "--dart-define=BETA=true",
+        "FLAVOR=beta",
         "--no-pub"
       ]
     },
@@ -108,10 +107,9 @@
       "cwd": "${workspaceFolder}/app",
       "args": [
         "--flavor",
-        "prod",
+        "beta",
         "--dart-define",
-        "FLAVOR=prod",
-        "--dart-define=BETA=true",
+        "FLAVOR=beta",
         "--no-pub"
       ]
     },
@@ -123,10 +121,9 @@
       "cwd": "${workspaceFolder}/app",
       "args": [
         "--flavor",
-        "prod",
+        "beta",
         "--dart-define",
-        "FLAVOR=prod",
-        "--dart-define=BETA=true",
+        "FLAVOR=beta",
         "--no-pub"
       ]
     }
