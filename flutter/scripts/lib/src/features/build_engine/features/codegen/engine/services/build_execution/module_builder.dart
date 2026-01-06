@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:common_tooling/tooling.dart';
+import 'package:path/path.dart' as p;
 import 'package:scripts/src/core/logging/logging.dart';
 import 'package:scripts/src/features/build_engine/domain/models/build_state.dart';
 
@@ -21,6 +22,8 @@ class ModuleBuildRunner {
       return const ModuleBuildResult.success();
     }
 
+    final gitHead = await _resolveModuleGitHead(modulePath);
+
     final buildArgs = [
       'run',
       'build_runner',
@@ -33,6 +36,7 @@ class ModuleBuildRunner {
       ..writeln('=== Build started at ${DateTime.now().toIso8601String()} ===')
       ..writeln('Module: $moduleName')
       ..writeln('Path: $modulePath')
+      ..writeln('=== Git head: ${gitHead ?? 'unknown'} ===')
       ..writeln('Command: dart ${buildArgs.join(' ')}')
       ..writeln('===================================\n');
 
@@ -96,6 +100,44 @@ class ModuleBuildRunner {
     }
 
     return ModuleBuildResult.failure(logFile: logFile);
+  }
+
+  Future<String?> _resolveModuleGitHead(String modulePath) async {
+    final normalizedModulePath = _normalizePath(modulePath);
+    final result = await Process.run(
+      'git',
+      ['log', '-1', '--pretty=format:%H', '--', normalizedModulePath],
+      workingDirectory: Directory.current.path,
+    );
+
+    if (result.exitCode != 0) {
+      final stderr = (result.stderr is String)
+          ? (result.stderr as String).trim()
+          : result.stderr.toString().trim();
+      final suffix = stderr.isEmpty ? '' : ': $stderr';
+      Logger.debug('git log failed for $normalizedModulePath$suffix');
+      return null;
+    }
+
+    final output = (result.stdout as String).trim();
+    if (output.isEmpty) {
+      return null;
+    }
+    return output.split('\n').last.trim();
+  }
+
+  String _normalizePath(String rawPath) {
+    var normalizedPath = p.normalize(rawPath);
+    if (p.isAbsolute(normalizedPath)) {
+      normalizedPath = p.relative(
+        normalizedPath,
+        from: Directory.current.path,
+      );
+    }
+    if (normalizedPath.startsWith('./')) {
+      return normalizedPath.substring(2);
+    }
+    return normalizedPath;
   }
 }
 

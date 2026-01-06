@@ -9,6 +9,7 @@ class BuildLogMetadataReader {
   static final RegExp _logNamePattern = RegExp(r'^build_(.+)\.log$');
   static final RegExp _startPattern = RegExp('=== Build started at (.+?) ===');
   static final RegExp _finishPattern = RegExp('=== Build finished at (.+?) ===');
+  static final RegExp _gitHeadPattern = RegExp('=== Git head: (.+?) ===');
   static final RegExp _statusPattern = RegExp(
     '=== Build status: (success|failure) ===',
   );
@@ -48,11 +49,13 @@ class BuildLogMetadataReader {
     final content = await file.readAsString();
     final startedAt = _parseStart(content);
     final finishedAt = _parseFinish(content);
+    final gitHead = _parseGitHead(content);
     final succeeded = _parseStatus(content);
     return BuildLogEntry(
       path: file.path,
       startedAt: startedAt,
       finishedAt: finishedAt,
+      gitHead: gitHead,
       succeeded: succeeded,
     );
   }
@@ -90,6 +93,15 @@ class BuildLogMetadataReader {
     return null;
   }
 
+  String? _parseGitHead(String content) {
+    final match = _gitHeadPattern.firstMatch(content);
+    final raw = match?.group(1)?.trim();
+    if (raw == null || raw.isEmpty || raw == 'unknown') {
+      return null;
+    }
+    return raw;
+  }
+
   DateTime? _parseFinish(String content) {
     final finishMatch = _finishPattern.firstMatch(content);
     final raw = finishMatch?.group(1)?.trim();
@@ -109,11 +121,13 @@ class BuildLogEntry {
     required this.path,
     this.startedAt,
     this.finishedAt,
+    this.gitHead,
     this.succeeded,
   });
 
   final String path;
   final DateTime? startedAt;
   final DateTime? finishedAt;
+  final String? gitHead;
   final bool? succeeded;
 }

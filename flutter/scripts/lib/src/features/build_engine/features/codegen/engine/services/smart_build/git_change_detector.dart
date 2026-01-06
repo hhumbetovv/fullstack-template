@@ -19,6 +19,7 @@ class GitChangeDetector {
       final hasChanges = await _hasGitChanges(
         modulePath,
         lastBuild?.finishedAt,
+        lastBuiltCommit: lastBuild?.gitHead,
         hadLog: lastBuild != null,
       );
       if (hasChanges) {
@@ -32,14 +33,18 @@ class GitChangeDetector {
     String modulePath,
     DateTime? lastBuild, {
     required bool hadLog,
+    String? lastBuiltCommit,
   }) async {
     if (!hadLog) {
       return true;
     }
 
     final normalizedModulePath = _normalizePath(modulePath);
-    final args = <String>['log', '-1', '--pretty=format:%ct'];
-    if (lastBuild != null) {
+    final outputFormat = lastBuiltCommit != null ? '%H' : '%ct';
+    final args = <String>['log', '-1', '--pretty=format:$outputFormat'];
+    if (lastBuiltCommit != null) {
+      args.add('$lastBuiltCommit..HEAD');
+    } else if (lastBuild != null) {
       args.add('--since=${lastBuild.toUtc().toIso8601String()}');
     }
     args
@@ -53,9 +58,7 @@ class GitChangeDetector {
     );
 
     if (result.exitCode != 0) {
-      final stderr = (result.stderr is String)
-          ? (result.stderr as String).trim()
-          : result.stderr.toString().trim();
+      final stderr = (result.stderr is String) ? (result.stderr as String).trim() : result.stderr.toString().trim();
       final suffix = stderr.isEmpty ? '' : ': $stderr';
       Logger.debug('git log failed for $normalizedModulePath$suffix');
       return true;
@@ -63,10 +66,13 @@ class GitChangeDetector {
 
     final output = (result.stdout as String).trim();
     if (output.isEmpty) {
+      if (lastBuiltCommit != null) {
+        return false;
+      }
       return lastBuild == null;
     }
 
-    if (lastBuild == null) {
+    if (lastBuiltCommit != null || lastBuild == null) {
       return true;
     }
 
