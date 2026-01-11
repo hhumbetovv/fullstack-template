@@ -13,6 +13,24 @@ generator/plugins/
 └── view_kit/    # @view/@viewModel/@provider builders
 ```
 
+## Assets plugin options
+
+The assets plugin can generate either SVG icon enums or icon fonts. The default
+mode is SVG enum output (matching `AppImages` style helpers).
+
+```yaml
+targets:
+  $default:
+    builders:
+      gen_assets|assets:
+        enabled: true
+        options:
+          icon_mode: assets
+```
+
+Set `icon_mode: font` to generate a `.otf` file plus the corresponding icon
+class. Icon enum output is always `AppIcons` in `icons.dart`.
+
 ## Adding a new plugin
 
 1. `mkdir generator/plugins/<name>` and scaffold a Dart package (`pubspec.yaml`,

@@ -41,8 +41,7 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {
     String? stateType;
     var isStatePrimitive = false;
     for (final field in element.fields2) {
-      if (field.displayName == 'initialState' &&
-          field.type.toString() != Strings.unitType) {
+      if (field.displayName == 'initialState' && field.type.toString() != Strings.unitType) {
         stateType = field.type.toString();
         isStatePrimitive = field.type.isPrimitive;
       }
@@ -72,8 +71,7 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {
         ).hasAnnotationOf(methodElement)) {
           throwIf(
             effects.any((effect) {
-              return effect.name.normalize() ==
-                  methodElement.displayName.normalize();
+              return effect.name.normalize() == methodElement.displayName.normalize();
             }),
             'there is an effect method with this name',
             element: methodElement,

@@ -1,8 +1,7 @@
 import 'models.dart';
 import 'paths.dart';
 
-const _header =
-    '// GENERATED CODE - DO NOT MODIFY BY HAND\n// ignore_for_file: type=lint';
+const _header = '// GENERATED CODE - DO NOT MODIFY BY HAND\n// ignore_for_file: type=lint';
 
 AssetOutputs generateOutputs(
   AssetCollections collections,
@@ -21,6 +20,37 @@ AssetOutputs generateOutputs(
     imageContent: imageContent,
     lottieContent: lottieContent,
   );
+}
+
+String generateIconsContent(List<IconEntry> icons, AssetPaths paths) {
+  final className = paths.iconClassName;
+  final buffer = StringBuffer()
+    ..writeln(_header)
+    ..writeln()
+    ..writeln('enum $className {');
+
+  if (icons.isEmpty) {
+    buffer
+      ..writeln('  // ignore: unused_field')
+      ..writeln("  _placeholder('_placeholder');");
+  } else {
+    for (var i = 0; i < icons.length; i++) {
+      final icon = icons[i];
+      final suffix = i == icons.length - 1 ? ';' : ',';
+      buffer.writeln("  ${icon.enumName}('${icon.assetName}')$suffix");
+    }
+  }
+
+  buffer
+    ..writeln()
+    ..writeln('  const $className(this._name);')
+    ..writeln()
+    ..writeln('  final String _name;')
+    ..writeln()
+    ..writeln("  String get path => '${paths.iconsDir}/\$_name.svg';")
+    ..writeln('}');
+
+  return buffer.toString();
 }
 
 String _generateImagesContent(List<ImageEntry> images, String imagesDir) {

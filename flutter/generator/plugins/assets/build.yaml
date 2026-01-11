@@ -8,4 +8,5 @@ builders:
     defaults:
       options:
         assets_dir: assets
+        icon_mode: assets
         output_dir: lib/src/constants

@@ -57,30 +57,38 @@ class AssetsBuilder implements Builder {
     );
     await _iconNormalizer.renameTree(iconsDirAbsolute);
 
-    final fontOutputAbsolute = _resolveSystemPath(
-      packageRootPath,
-      paths.fontOutputRelative,
-    );
-    await Directory(p.dirname(fontOutputAbsolute)).create(recursive: true);
-
-    final rawClassContent = await _iconFontService.generate(
-      packageRootPath: packageRootPath,
-      packageName: packageName,
-      iconsDirAbsolute: iconsDirAbsolute,
-      fontOutputPath: fontOutputAbsolute,
-      className: paths.iconClassName,
-      classFileName: paths.iconClassFileName,
-      normalize: paths.normalizeIcons,
-    );
-
-    final cleanedClassContent = formatter.format(rawClassContent);
-
-    await buildStep.writeAsString(
-      AssetId(packageName, paths.iconFontClassOutputAbsolute),
-      cleanedClassContent,
-    );
-
     final collections = await collectAssets(buildStep, paths);
+    if (paths.iconMode == IconMode.font) {
+      final fontOutputAbsolute = _resolveSystemPath(
+        packageRootPath,
+        paths.fontOutputRelative,
+      );
+      await Directory(p.dirname(fontOutputAbsolute)).create(recursive: true);
+
+      final rawClassContent = await _iconFontService.generate(
+        packageRootPath: packageRootPath,
+        packageName: packageName,
+        iconsDirAbsolute: iconsDirAbsolute,
+        fontOutputPath: fontOutputAbsolute,
+        className: paths.iconClassName,
+        classFileName: paths.iconClassFileName,
+        normalize: paths.normalizeIcons,
+      );
+
+      final cleanedClassContent = formatter.format(rawClassContent);
+
+      await buildStep.writeAsString(
+        AssetId(packageName, paths.iconFontClassOutputAbsolute),
+        cleanedClassContent,
+      );
+    } else {
+      final iconContent = generateIconsContent(collections.icons, paths);
+      await buildStep.writeAsString(
+        AssetId(packageName, paths.iconFontClassOutputAbsolute),
+        formatter.format(iconContent),
+      );
+    }
+
     final outputs = generateOutputs(collections, paths);
 
     await buildStep.writeAsString(
@@ -99,8 +107,7 @@ class AssetsBuilder implements Builder {
       return root;
     }
 
-    final segments = posixRelative.split('/')
-      ..removeWhere((segment) => segment.isEmpty);
+    final segments = posixRelative.split('/')..removeWhere((segment) => segment.isEmpty);
     return p.joinAll(<String>[root, ...segments]);
   }
 }
