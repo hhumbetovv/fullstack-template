@@ -222,6 +222,7 @@ graph LR
     group_UI_Layer --> group_Feature__Console
     group_Data_Layer --> group_Feature__Console
     group_Core_Layer --> group_Feature__Demo
+    group_UI_Layer --> group_Feature__Demo
     group_Data_Layer --> group_Feature__Demo
 
     classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000;

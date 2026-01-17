@@ -18,7 +18,10 @@ final class FirstViewModel extends _FirstViewModel {
   @intent
   void _method() {
     final result = _demoUseCase();
-
-    setState(state.copy(value: result));
+    if (state.value == result) {
+      postEffect(const FirstEffect.showSnackBar());
+    } else {
+      setState(state.applyValue(result));
+    }
   }
 }

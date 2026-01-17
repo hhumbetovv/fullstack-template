@@ -4,6 +4,7 @@ modules:
   - core_presentation
   - demo_data
   - demo_domain
+  - ui_components
   - processor
 dev_modules:
   - gen_data

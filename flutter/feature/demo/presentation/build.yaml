@@ -19,6 +19,12 @@ targets:
         generate_for:
           include:
             - "**/provider.dart"
+      gen_view_kit|view_effect:
+        enabled: true
+        generate_for:
+          include:
+            - "**/view.dart"
+            - "**/provider.dart"
       gen_view_kit|view_model:
         enabled: true
         generate_for:
@@ -43,5 +49,8 @@ global_options:
     runs_before:
       - gen_view_kit|view_model
   gen_view_kit|provider:
+    runs_before:
+      - gen_view_kit|view_model
+  gen_view_kit|view_effect:
     runs_before:
       - gen_view_kit|view_model

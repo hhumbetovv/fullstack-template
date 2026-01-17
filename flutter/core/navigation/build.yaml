@@ -11,6 +11,7 @@ targets:
             - transitions
             - entry_provider
             - extensions
+            - result
             - widget
       gen_data|data:
         enabled: true
@@ -28,6 +29,13 @@ targets:
         generate_for:
           include:
             - "**/provider.dart"
+      gen_view_kit|view_effect:
+        enabled: true
+        generate_for:
+          include:
+            - "**/view.dart"
+            - "**/provider.dart"
+            - "**/**_listener.dart"
       gen_view_kit|view_model:
         enabled: true
         generate_for:
@@ -42,6 +50,10 @@ global_options:
       - gen_view_kit|view_model
       - gen_exporter|exporter
   gen_view_kit|provider:
+    runs_before:
+      - gen_view_kit|view_model
+      - gen_exporter|exporter
+  gen_view_kit|view_effect:
     runs_before:
       - gen_view_kit|view_model
       - gen_exporter|exporter

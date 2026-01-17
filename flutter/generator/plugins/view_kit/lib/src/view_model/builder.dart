@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/element2.dart';
+import 'package:common_tooling/tooling.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_view_kit/src/view_model/factory.dart';
 import 'package:gen_view_kit/src/view_model/resolver.dart';
@@ -14,6 +15,8 @@ class ViewModelBuilder extends BaseBuilder<ViewModelConfig, ClassElement2> {
         buildFactory: ViewModelFactory(),
         allowSyntaxErrors: true,
       );
+
+  final EffectCache _effectCache = EffectCache();
 
   @override
   Map<String, dynamic>? toJson(ViewModelConfig? config) => config?.toJson();
@@ -34,6 +37,8 @@ class ViewModelBuilder extends BaseBuilder<ViewModelConfig, ClassElement2> {
             hash ^= method.hashCode;
           }
         }
+
+        hash ^= _effectHash(clazz.name.lexeme);
       }
 
       if (clazz.metadata.any((annotation) {
@@ -53,6 +58,24 @@ class ViewModelBuilder extends BaseBuilder<ViewModelConfig, ClassElement2> {
     }
 
     return hash;
+  }
+
+  int _effectHash(String viewModelName) {
+    try {
+      final effects = _effectCache.readForViewModel(viewModelName);
+      var hash = 0;
+      for (final effect in effects) {
+        hash ^= effect.view.hashCode;
+        hash ^= effect.method.name.hashCode;
+        for (final param in effect.method.params) {
+          hash ^= param.name.hashCode;
+          hash ^= param.type.hashCode;
+        }
+      }
+      return hash;
+    } on Object {
+      return 0;
+    }
   }
 }
 

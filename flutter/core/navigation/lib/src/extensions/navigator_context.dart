@@ -3,7 +3,7 @@ import 'package:core_navigation/src/navigator/view_model.dart';
 import 'package:core_presentation/exports.dart';
 
 extension NavigatorContextExtension on BuildContext {
-  void buildStack(NavBuilder builder) {
+  void buildStack(NavStackBuilder builder) {
     NavigatorIntent.buildStack(builder).dispatch(this);
   }
 
@@ -15,7 +15,7 @@ extension NavigatorContextExtension on BuildContext {
 
   void replace(NavKey route) {
     buildStack((stack) {
-      return [...(stack..removeLast()), route];
+      return [...stack..removeLast(), route];
     });
   }
 
@@ -25,15 +25,21 @@ extension NavigatorContextExtension on BuildContext {
     });
   }
 
-  void pop() {
+  void pop([Object? result]) {
     buildStack((stack) {
-      return [...(stack..removeLast())];
+      return stack..removeLast();
     });
+    if (result != null) {
+      setResult(result);
+    }
   }
 
-  void popUntil(bool Function(NavKey route) predicate) {
+  void popUntil(NavKeyPredicate predicate, [Object? result]) {
     buildStack((stack) {
       return stack.takeWhile(predicate).toList();
     });
+    if (result != null) {
+      setResult(result);
+    }
   }
 }

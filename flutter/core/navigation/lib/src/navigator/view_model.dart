@@ -30,10 +30,10 @@ final class NavigatorViewModel extends _NavigatorViewModel {
   bool get logState => false;
 
   @intent
-  void _buildStack(NavBuilder builder) {
+  void _buildStack(NavStackBuilder builder) {
     setState(
       state.applyBackStack(
-        builder(state.backStack),
+        builder([...state.backStack]),
       ),
     );
   }

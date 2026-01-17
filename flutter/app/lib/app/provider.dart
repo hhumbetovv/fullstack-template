@@ -13,6 +13,7 @@ final class AppProviderScope extends MultiProvider {
                FirstNavKey(),
              ],
            ),
+           const ResultProvider(),
          ],
        );
 }

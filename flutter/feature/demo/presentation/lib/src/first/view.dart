@@ -1,6 +1,7 @@
 import 'package:core_presentation/exports.dart';
 import 'package:flutter/material.dart';
 import 'package:processor/processor.dart';
+import 'package:ui_components/public.dart';
 
 import 'view_model.dart';
 
@@ -11,6 +12,11 @@ final class FirstView extends _FirstView {
   const FirstView({
     super.key,
   });
+
+  @effect
+  void _showSnackBar() {
+    SnackBarManager.showError('Already used');
+  }
 
   @override
   Widget buildView(BuildContext context) {

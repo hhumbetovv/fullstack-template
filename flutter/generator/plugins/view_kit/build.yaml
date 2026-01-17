@@ -27,3 +27,9 @@ builders:
     build_extensions: { ".dart": [".g.dart"] }
     auto_apply: dependents
     build_to: source
+  view_effect:
+    import: "package:gen_view_kit/builder.dart"
+    builder_factories: ["viewEffectBuilder"]
+    build_extensions: { ".dart": [".view_effect.json"] }
+    auto_apply: dependents
+    build_to: cache
