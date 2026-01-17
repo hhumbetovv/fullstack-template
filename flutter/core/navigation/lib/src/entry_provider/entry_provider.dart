@@ -13,10 +13,10 @@ class EntryProvider {
   }
 
   void entry<T extends NavKey>({
-    required NavWidgetBuilder builder,
+    required NavWidgetBuilder<T> builder,
     bool initial = false,
   }) {
-    _scope.entry(builder: builder, initial: initial);
+    _scope.entry<T>(builder: builder, initial: initial);
   }
 
   void include(EntryProvider scope) {

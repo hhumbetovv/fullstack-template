@@ -31,7 +31,7 @@ final class NavDisplay extends StatelessWidget {
               return MaterialPage<void>(
                 key: ValueKey(key.name),
                 name: key.name,
-                child: entry.builder(key),
+                child: entry.build(key),
               );
             })
             .whereType<Page<dynamic>>()

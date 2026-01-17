@@ -11,4 +11,5 @@ class NavEntry<T extends NavKey> {
   final bool initial;
 
   bool predicate(NavKey key) => key is T;
+  Widget build(NavKey key) => builder(key as T);
 }

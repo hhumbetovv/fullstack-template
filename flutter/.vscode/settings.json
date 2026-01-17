@@ -37,7 +37,7 @@
     "module.yaml": "pubspec.lock, *.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata",
     "pubspec.yaml": "pubspec.lock, pub_versions.yaml, *_options.yaml, .packages, .flutter-plugins, .flutter-plugins-dependencies, .metadata",
     "readme.*": "authors, backers.md, changelog, citation",
-    "README.md": "*.md",
+    "README.md": "*.md"
   },
   "git.ignoreLimitWarning": true,
   "mobileEmulator.androidSDKPath": "/Users/humbthumbtov/Library/Android/sdk",

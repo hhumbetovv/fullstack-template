@@ -14,10 +14,6 @@ final class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final navigatorObservers = <NavigatorObserver>[
-      if (Console.isEnabled) RouteLogger(),
-      HeroController(),
-    ];
     return MaterialApp(
       title: 'Template',
       scaffoldMessengerKey: messengerKey,
@@ -40,7 +36,10 @@ final class App extends StatelessWidget {
           entryProvider: (provider) {
             provider.include(AppEntryProvider());
           },
-          observers: navigatorObservers,
+          observers: [
+            if (Console.isEnabled) RouteLogger(),
+            HeroController(),
+          ],
         ),
       ),
       debugShowCheckedModeBanner: false,

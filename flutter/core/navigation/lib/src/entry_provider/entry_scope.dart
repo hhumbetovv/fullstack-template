@@ -12,13 +12,13 @@ class EntryScope {
   }
 
   void entry<T extends NavKey>({
-    required NavWidgetBuilder builder,
+    required NavWidgetBuilder<T> builder,
     bool initial = false,
   }) {
     _entries.add(NavEntry<T>(builder: builder, initial: initial));
   }
 
-  void addAll(List<NavEntry<NavKey>> entries) {
+  void addAll(Iterable<NavEntry> entries) {
     _entries.addAll(entries);
   }
 }
