@@ -13,7 +13,6 @@ modules:
   - ui_foundation
 dev_modules: []
 dependencies:
-  - auto_route
   - flutter
   - get_it
   - injectable

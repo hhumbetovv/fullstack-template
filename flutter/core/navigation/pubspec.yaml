@@ -6,8 +6,12 @@ dependencies:
   flutter:
     sdk: flutter
   auto_route: ^10.1.0
+  core_presentation: any
+  processor: any
   ui_foundation: any
 dev_dependencies:
   build_runner: ^2.4.15
+  gen_data: any
   gen_exporter: any
+  gen_view_kit: any
 

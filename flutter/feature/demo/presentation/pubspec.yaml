@@ -5,7 +5,6 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  auto_route: ^10.1.0
   core_navigation: any
   core_presentation: any
   demo_data: any
@@ -18,4 +17,3 @@ dev_dependencies:
   gen_data: any
   gen_view_kit: any
   injectable_generator: ^2.7.0
-

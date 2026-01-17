@@ -1,8 +1,7 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:common_shared/public.dart';
 import 'package:flutter/widgets.dart';
 
-final class RouteLogger extends AutoRouterObserver {
+final class RouteLogger extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     Console.log(

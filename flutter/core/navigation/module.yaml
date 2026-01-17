@@ -1,8 +1,12 @@
 name: core_navigation
 modules:
+  - processor
+  - core_presentation
   - ui_foundation
 dev_modules:
   - gen_exporter
+  - gen_view_kit
+  - gen_data
 dependencies:
   - auto_route
   - flutter

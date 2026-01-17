@@ -62,8 +62,12 @@ graph LR
     common_shared --> core_presentation
     core_domain --> core_presentation
     processor --> core_presentation
+    core_presentation --> core_navigation
+    processor --> core_navigation
     ui_foundation --> core_navigation
+    gen_data --> core_navigation
     gen_exporter --> core_navigation
+    gen_view_kit --> core_navigation
     common_shared --> core_data
     core_domain --> core_data
     gen_exporter --> core_data
@@ -146,13 +150,13 @@ graph TB
         common_presentation:::common
         core_domain["core_domain"]
         core_domain:::core
-        core_navigation["core_navigation"]
-        core_navigation:::core
     end
     subgraph wave_cluster_2["Wave 2"]
         direction TB
         core_data["core_data"]
         core_data:::core
+        core_navigation["core_navigation"]
+        core_navigation:::core
         demo_domain["demo_domain"]
         demo_domain:::domain
         class demo_domain unused

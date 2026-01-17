@@ -9,3 +9,42 @@ targets:
           folders:
             - core
             - transitions
+            - entry_provider
+            - extensions
+            - widget
+      gen_data|data:
+        enabled: true
+        generate_for:
+          include:
+            - "**/state.dart"
+            - "**/source/**"
+      gen_view_kit|view:
+        enabled: true
+        generate_for:
+          include:
+            - "**/view.dart"
+      gen_view_kit|provider:
+        enabled: true
+        generate_for:
+          include:
+            - "**/provider.dart"
+      gen_view_kit|view_model:
+        enabled: true
+        generate_for:
+          include:
+            - "**/view_model.dart"
+        options:
+          enable_cached_builds: true
+
+global_options:
+  gen_view_kit|view:
+    runs_before:
+      - gen_view_kit|view_model
+      - gen_exporter|exporter
+  gen_view_kit|provider:
+    runs_before:
+      - gen_view_kit|view_model
+      - gen_exporter|exporter
+  gen_view_kit|view_model:
+    runs_before:
+      - gen_exporter|exporter

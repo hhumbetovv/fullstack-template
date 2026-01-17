@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:common_shared/public.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -55,7 +54,9 @@ final class LogDetailsSheet extends StatelessWidget {
                 ),
                 Expanded(
                   child: UIButton(
-                    onClick: context.maybePop,
+                    onClick: () {
+                      Navigator.maybePop(context);
+                    },
                     palette: palette.button.outlined,
                     text: 'Close',
                   ),

@@ -5,9 +5,9 @@
 - **Total Modules**: 23
 - **Modules With build_runner**: 13
 - **Modules Without build_runner**: 10
-- **Total Dependencies**: 67
-- **Average Dependencies**: 2.91
-- **Peak Concurrent Modules**: 3
+- **Total Dependencies**: 71
+- **Average Dependencies**: 3.09
+- **Peak Concurrent Modules**: 4
 
 ## Graph Index
 
@@ -28,11 +28,11 @@
 
 - **common_presentation** → depends on: common_shared
 - **core_domain** → depends on: common_shared, processor
-- **core_navigation** → depends on: ui_foundation
 
 ### Wave 2
 
 - **core_data** → depends on: common_shared, core_domain
+- **core_navigation** → depends on: common_presentation, common_shared, core_domain, processor, ui_foundation
 - **demo_domain** → depends on: core_domain
 - **ui_components** → depends on: common_presentation, common_shared, processor, ui_foundation
 

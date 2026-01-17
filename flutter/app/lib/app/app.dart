@@ -1,8 +1,9 @@
 import 'package:app/app/root.dart';
+import 'package:app/navigation/entry_provider.dart';
 import 'package:app/navigation/route_logger.dart';
-import 'package:app/navigation/router.dart';
 import 'package:common_presentation/public.dart';
 import 'package:common_shared/public.dart';
+import 'package:core_navigation/public.dart';
 import 'package:flutter/material.dart';
 import 'package:ui_foundation/public.dart';
 
@@ -13,7 +14,11 @@ final class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    final navigatorObservers = <NavigatorObserver>[
+      if (Console.isEnabled) RouteLogger(),
+      HeroController(),
+    ];
+    return MaterialApp(
       title: 'Template',
       scaffoldMessengerKey: messengerKey,
       key: applicationKey,
@@ -29,15 +34,14 @@ final class App extends StatelessWidget {
       scrollBehavior: AppScrollBehavior().copyWith(
         physics: AppDefaults.scrollPhysics,
       ),
-      builder: (context, child) {
-        return RootView(child: child ?? const SizedBox.shrink());
-      },
       themeAnimationCurve: const AppCurves.fastInFastOut(),
-      routerConfig: AppRouter.instance.config(
-        navigatorObservers: () => [
-          if (Console.isEnabled) RouteLogger(),
-          HeroController(),
-        ],
+      home: RootView(
+        child: NavDisplay(
+          entryProvider: (provider) {
+            provider.include(AppEntryProvider());
+          },
+          observers: navigatorObservers,
+        ),
       ),
       debugShowCheckedModeBanner: false,
     );

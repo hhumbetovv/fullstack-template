@@ -54,25 +54,26 @@ Always regenerate code with `dart run build_runner build -r` after changing anno
 - Providers expose a `buildWithChild` override; wrap child widgets so they inherit the provider’s view-model scope.
 
 ### Navigation (see core/navigation/README.md for shared route utilities)
-1. Define a router in `presentation/router.dart`:
+1. Define nav keys + entries in `presentation/router.dart`:
    ```dart
-   final class ExampleRouter extends Router {
-     @override
-     List<AutoRoute> get routes => [
-       FeatureRoute(
-         name: Routes.example,
-         builder: (_, __) => const ExampleScreen(),
-       ),
-       SheetRoute(
-         name: Routes.exampleSheet,
-         builder: (_, data) => ExampleSheet(data.args),
-       ),
-     ];
+   final class ExampleNavKey extends NavKey {
+     const ExampleNavKey() : super(Routes.example);
+   }
+
+   final class ExampleNavigation {
+     static final EntryProviderScope scope = EntryProviderScope()
+       ..entries((entry) {
+         entry.entry<ExampleNavKey>(
+           (_) => const ExampleScreen(),
+         );
+       });
+    
+     static List<NavEntry> get entries => scope.values;
    }
    ```
-2. Register it with the app module router: add `ExampleRouter()` to the root `BaseRouter` implementation inside the app package. (Core navigation only hosts route name constants, not router wiring.)
+2. Register it with the app module navigation list: append `ExampleNavigation.entries` to `AppNavigation.entries` inside the app package.
 3. Export new route names from `core_navigation/lib/src/core/routes.dart` so features can navigate using `Routes.example` etc.
-4. Handle deep links in a central place (commonly `SplashViewModel`). Parse the incoming URI, determine the target feature route, and dispatch a navigation effect (`postEffect(ExampleEffect.openDeepLink(targetRoute))`). The feature view should react to the effect and call `context.navigateTo(...)`.
+4. Handle deep links in a central place (commonly `SplashViewModel`). Parse the incoming URI, determine the target feature route, and dispatch a navigation effect (`postEffect(ExampleEffect.openDeepLink(targetRoute))`). The feature view should react to the effect and call `context.replaceAll([...])`.
 
 ### Dependency initialization
 - Presentation modules also expose `@InjectableInit.microPackage()` (see `presentation/lib/init.dart`). Call this during application bootstrap **after** data/domain initializers so view-model dependencies are available. Declare external modules from the data and domain packages so injectable replays their registrations:

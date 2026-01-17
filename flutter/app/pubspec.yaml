@@ -7,7 +7,6 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  auto_route: ^10.1.0
   common_presentation: any
   common_shared: any
   console_presentation: any
