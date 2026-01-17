@@ -1,6 +1,7 @@
 name: core_navigation
 modules:
   - processor
+  - common_shared
   - core_presentation
   - ui_foundation
 dev_modules:

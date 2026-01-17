@@ -5,8 +5,8 @@
 - **Total Modules**: 23
 - **Modules With build_runner**: 13
 - **Modules Without build_runner**: 10
-- **Total Dependencies**: 71
-- **Average Dependencies**: 3.09
+- **Total Dependencies**: 72
+- **Average Dependencies**: 3.13
 - **Peak Concurrent Modules**: 4
 
 ## Graph Index

@@ -6,6 +6,7 @@ dependencies:
   flutter:
     sdk: flutter
   auto_route: ^10.1.0
+  common_shared: any
   core_presentation: any
   processor: any
   ui_foundation: any

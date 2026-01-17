@@ -20,11 +20,7 @@ class _KonamiSwipeDetectorState extends State<KonamiSwipeDetector> {
 
   final List<Swipe> _konamiCode = [
     Swipe.up,
-    Swipe.up,
     Swipe.down,
-    Swipe.down,
-    Swipe.left,
-    Swipe.right,
     Swipe.left,
     Swipe.right,
   ];

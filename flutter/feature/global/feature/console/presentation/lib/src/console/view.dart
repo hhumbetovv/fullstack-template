@@ -19,10 +19,10 @@ final class ConsoleView extends _ConsoleView {
 
   @override
   Widget buildView(BuildContext context) {
-    return SafeArea(
-      child: ColoredBox(
-        color: context.palette.color.background,
-        child: const Collapsible(
+    return ColoredBox(
+      color: context.palette.color.background,
+      child: const SafeArea(
+        child: Collapsible(
           appBar: ConsoleAppBar(),
           header: LogSearchBar(),
           child: Column(

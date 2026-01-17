@@ -62,6 +62,7 @@ graph LR
     common_shared --> core_presentation
     core_domain --> core_presentation
     processor --> core_presentation
+    common_shared --> core_navigation
     core_presentation --> core_navigation
     processor --> core_navigation
     ui_foundation --> core_navigation
