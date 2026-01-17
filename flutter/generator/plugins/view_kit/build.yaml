@@ -33,3 +33,9 @@ builders:
     build_extensions: { ".dart": [".view_effect.json"] }
     auto_apply: dependents
     build_to: cache
+  view_effect_vm:
+    import: "package:gen_view_kit/builder.dart"
+    builder_factories: ["viewEffectVmBuilder"]
+    build_extensions: { ".dart": [".view_effect.json"] }
+    auto_apply: dependents
+    build_to: cache

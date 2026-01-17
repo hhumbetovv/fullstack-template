@@ -10,10 +10,12 @@ import 'package:processor/public.dart';
 import 'package:source_gen/source_gen.dart';
 
 class ViewEffectBuilder implements Builder {
-  ViewEffectBuilder()
+  ViewEffectBuilder({BuilderOptions? options})
     : buildExtensions = const {
         '.dart': ['.view_effect.json'],
-      };
+      } {
+    final _ = options;
+  }
 
   final EffectCache _effectCache = EffectCache();
   final EffectCacheAdapter _effectCacheAdapter = const EffectCacheAdapter();
@@ -52,9 +54,12 @@ class ViewEffectBuilder implements Builder {
       );
     }
 
-    final outputId = buildStep.inputId.changeExtension('.view_effect.json');
-    final payload = viewEffects.values.expand((value) => value).map((effect) => effect.toJson()).toList();
-    await buildStep.writeAsString(outputId, jsonEncode(payload));
+    final baseOutput = buildStep.inputId.changeExtension('.view_effect.json');
+    final basePayload = viewEffects.values
+        .expand((value) => value)
+        .map((effect) => effect.toJson())
+        .toList();
+    await buildStep.writeAsString(baseOutput, jsonEncode(basePayload));
   }
 
   List<EffectConfig> _resolveEffects(ClassElement2 element) {
@@ -145,4 +150,5 @@ class ViewEffectBuilder implements Builder {
     }
     return false;
   }
+
 }

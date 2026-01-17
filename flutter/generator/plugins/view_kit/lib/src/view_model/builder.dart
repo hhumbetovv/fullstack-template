@@ -5,7 +5,6 @@ import 'package:common_tooling/tooling.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_view_kit/src/view_model/factory.dart';
 import 'package:gen_view_kit/src/view_model/resolver.dart';
-import 'package:glob/glob.dart';
 import 'package:processor/public.dart';
 
 class ViewModelBuilder extends BaseBuilder<ViewModelConfig, ClassElement2> {
@@ -69,11 +68,9 @@ class ViewModelBuilder extends BaseBuilder<ViewModelConfig, ClassElement2> {
   }
 
   Future<void> _consumeEffectAssets(BuildStep buildStep) async {
-    final assets = buildStep.findAssets(Glob('**/*.view_effect.json'));
-    await for (final asset in assets) {
-      if (!await buildStep.canRead(asset)) continue;
-      await buildStep.readAsString(asset);
-    }
+    final effectAsset = buildStep.inputId.changeExtension('.view_effect.json');
+    if (!await buildStep.canRead(effectAsset)) return;
+    await buildStep.readAsString(effectAsset);
   }
 
   int _effectHash(String viewModelName) {
