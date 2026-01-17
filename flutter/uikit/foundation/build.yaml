@@ -1,0 +1,22 @@
+targets:
+  $default:
+    auto_apply_builders: false
+    builders:
+      #! Project Generators
+      gen_exporter|exporter:
+        enabled: true
+        options:
+          folders:
+            - assets
+            - constants
+      gen_assets|assets:
+        enabled: true
+        options:
+          assets_dir: "assets"
+          output_dir: "lib/src/assets"
+          icon_mode: font
+
+global_options:
+  gen_assets|assets:
+    runs_before:
+      - gen_exporter|exporter

@@ -1,0 +1,11 @@
+targets:
+  $default:
+    auto_apply_builders: false
+    builders:
+      #! Project Generators
+      gen_exporter|exporter:
+        enabled: true
+        options:
+          folders:
+            - core
+            - transitions

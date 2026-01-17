@@ -1,1 +1,0 @@
-sh scripts/gen_clean.sh && sh scripts/gen_watch.sh $1

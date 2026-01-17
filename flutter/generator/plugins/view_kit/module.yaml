@@ -1,0 +1,15 @@
+name: gen_view_kit
+modules:
+  - common_tooling
+  - gen_core
+  - processor
+dev_modules: []
+dependencies:
+  - analyzer
+  - build
+  - code_builder
+  - source_gen
+dev_dependencies: []
+
+build:
+  manual: true

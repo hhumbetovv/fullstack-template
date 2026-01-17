@@ -1,0 +1,13 @@
+name: gen_view_kit
+environment:
+  sdk: ^3.10.1
+resolution: workspace
+dependencies:
+  analyzer: ^7.4.5
+  build: ^3.0.0
+  code_builder: ^4.10.1
+  common_tooling: any
+  gen_core: any
+  processor: any
+  source_gen: ^3.0.0
+

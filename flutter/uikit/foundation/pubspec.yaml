@@ -1,0 +1,21 @@
+name: ui_foundation
+environment:
+  sdk: ^3.10.1
+resolution: workspace
+dependencies:
+  flutter:
+    sdk: flutter
+dev_dependencies:
+  build_runner: ^2.4.15
+  gen_assets: any
+  gen_exporter: any
+flutter:
+  assets:
+    - assets/images/
+  fonts:
+    -
+      family: icon_font_generator Icons
+      fonts:
+        -
+          asset: assets/fonts/icons.otf
+

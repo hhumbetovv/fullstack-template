@@ -1,0 +1,16 @@
+name: core_presentation
+environment:
+  sdk: ^3.10.1
+resolution: workspace
+dependencies:
+  flutter:
+    sdk: flutter
+  auto_route: ^10.1.0
+  common_presentation: any
+  common_shared: any
+  core_domain: any
+  get_it: ^8.0.3
+  nested: ^1.0.0
+  processor: any
+  provider: ^6.1.4
+

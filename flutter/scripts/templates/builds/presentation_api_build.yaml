@@ -1,0 +1,10 @@
+targets:
+  $default:
+    builders:
+      #! Project Generators
+      gen_exporter|exporter:
+        enabled: true
+        options:
+          folders:
+            - components
+            - navigation

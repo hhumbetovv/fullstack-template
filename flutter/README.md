@@ -1,16 +1,69 @@
-# template
+# Project Overview
 
-A new Flutter project.
+Welcome to the Flutter workspace. This README points you to the most important modules and tooling so you can get productive quickly.
 
-## Getting Started
+## Prerequisites
 
-This project is a starting point for a Flutter application.
+- **FVM**: Use Flutter through FVM to ensure everyone builds with the same SDK. Install [fvm.app](https://fvm.app) and run `fvm install` / `fvm use` as needed.
+- **Bootstrap**: After installing FVM, run `sh scripts/bash/bootstrap.sh` once. It performs project-wide cleanup, installs pods, fetches packages, runs smart-build, and activates flutterfire CLI.
+- **Dart CLI**: Scripts are written in Dart; run them with the FVM-managed SDK. After bootstrap use the shortcut `fvms <command>` (maps to `fvm dart run scripts <command>`).
 
-A few resources to get you started if this is your first Flutter project:
+## Module map
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+| Layer     | Description                                           |
+| --------- | ----------------------------------------------------- |
+| Processor | Annotation and config hub for code generation         |
+| Generator | Base generator infrastructure & concrete builders     |
+| Common    | Shared utilities & presentation helpers               |
+| Tooling   | Shared dev-time helpers (toolchain, cache, discovery) |
+| Core      | Data, domain, navigation, presentation foundations    |
+| UI Kit    | Design tokens and reusable widgets                    |
+| Feature   | Example-driven feature layering guide                 |
+| App       | Application shell: DI, router, theming                |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Development workflow
+
+1. **Bootstrap config** – `AppConfig.setup()` wires common/shared configs, environment variables, and dependency injection. Details live in app/README.md.
+2. **Dependency injection** – DI is driven by injectable micro packages. Feature presentation packages depend on their data/domain micro modules; see feature/README.md for the pattern.
+3. **Routing** – Feature routers are composed in `app/config/router.dart`. Add new routes there and export route strings in `core_navigation`. Deep-link resolution happens in the splash feature (see feature/README.md + core/navigation/README.md).
+4. **Console overlay** – A Konami swipe gesture toggles the console screen when `Console.isEnabled` is true (see app/root.dart and common/shared/README.md).
+5. **Code generation** – Generator annotations live in processor/. Run builds via the scripts CLI (below). Generated files land next to their sources (`*.g.dart`).
+6. **Testing** – Widget/unit tests reside next to source files. The `tests/` directory is reserved for Maestro integration suites.
+
+## Scripts CLI
+
+Automation lives in the Dart CLI under `scripts/` (see scripts/README.md). Common commands:
+
+- `fvms gen-build` (alias for `fvm dart run scripts gen-build`) – run `build_runner` across modules. Pass explicit module names or a `<feature>_feature` alias (e.g. `auth_feature`) to auto-expand into `data`, `domain`, `presentation`, `data_api`, `domain_api`, and `presentation_api` packages for that feature.
+- `fvms gen-watch` (alias for `fvm dart run scripts gen-watch`) – launch `build_runner watch` for all or filtered modules. Supports the same `<feature>_feature` shortcuts and can run `smart-build` first via `--pre-build`.
+- `fvms smart-build` – dependency-aware incremental builds.
+- `fvms build` – produce Android/iOS artifacts; supports `--keep-key-properties`, artifact filters (`--android-aab`/`--android-apk`/`--ios-ipa`/`--ios-app`), and obfuscation/split-debug-info/target-platform toggles with sensible defaults.
+- `fvms module-graph` – regenerate both `module_graph.md` (graphs) and `overview.md` (summary stats).
+- `sh scripts/bash/bootstrap.sh` – runs the bootstrap workflow (FVM setup, Flutter clean/pub get, pod install, smart-build, flutterfire CLI activation).
+
+The build command automatically discovers available flavors from `.env.*` files under `app/`. When no filters
+are provided it covers every flavor, platform, and mode. Pass `--flavor myflavor` (repeat as needed) or mix in
+`--debug` / `--release` to target a subset of the matrix.
+
+Artifacts produced by the build command land in `.misc/artifacts/`. Build logs persist under `.misc/build_logs/` for troubleshooting. Use `scripts/bash/deeplink.sh <url>` to trigger Android deep-link tests via ADB.
+
+## Repository conventions
+
+- **Branching**: use `feature/*`, `bugfix/*`, `merge/*`, `release/*` for topic branches. Code flows `feature → test → dev → main`.
+- **Coding style**: follow `analysis_options.yaml` at the repo root; run `dart format` + `flutter analyze` before opening PRs.
+- **Environment**: runtime configuration comes from `.env.*` files. Keep copies in the repository root (shared tooling) and `app/` (platform builds). `Environment.initialize()` loads the correct file at startup; document new keys in both places.
+- **YAML symlinks**: use `fvms yaml-links` to sync all `pubspec.yaml` and `build.yaml` files into `yaml/` for quick access.
+
+## Useful references
+
+- **Dependency graph**: `module_graph.md` (graphs) + `overview.md` (summary) generated by `module-graph`.
+- **Generated logs**: `.misc/build_logs/` captures build_runner output and other automation logs.
+- **Snippets**: Reusable code snippets live under `ignores/snippets/` (if present) and can be imported into IDEs.
+- **Maestro tests**: Add UI flows under `tests/` following Maestro’s spec format.
+
+## Editor snippets
+
+- The workspace snippet pack `sp-core` covers Flutter scaffolding staples—common imports, widget shells, and logging utilities.
+- Module-specific packs are described in the READMEs below; keeping the repository’s snippet setup intact preserves prefixes such as `stless`, `impM`, and `logger`.
+
+Start with app/README.md to understand runtime wiring, then dive into feature/README.md when implementing new features. Cross-module details are linked in each README.

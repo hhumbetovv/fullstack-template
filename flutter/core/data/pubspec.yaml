@@ -1,0 +1,23 @@
+name: core_data
+environment:
+  sdk: ^3.10.1
+resolution: workspace
+dependencies:
+  flutter:
+    sdk: flutter
+  common_shared: any
+  core_domain: any
+  dio: ^5.8.0+1
+  flutter_secure_storage: ^9.2.4
+  get_it: ^8.0.3
+  injectable: ^2.5.2
+  json_annotation: ^4.9.0
+  retrofit: ^4.7.2
+  shared_preferences: ^2.5.3
+dev_dependencies:
+  build_runner: ^2.4.15
+  gen_exporter: any
+  injectable_generator: ^2.7.0
+  json_serializable: ^6.9.4
+  retrofit_generator: ^10.0.5
+

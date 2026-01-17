@@ -1,0 +1,23 @@
+targets:
+  $default:
+    auto_apply_builders: false
+    builders:
+      #! Package Generators
+      source_gen|combining_builder:
+        options:
+          ignore_for_file:
+            - "type=lint"
+
+builders:
+  palette:
+    import: "package:gen_palette/builder.dart"
+    builder_factories: ["paletteBuilder"]
+    build_extensions: { ".dart": [".g.dart"] }
+    auto_apply: dependents
+    build_to: source
+  rootPalette:
+    import: "package:gen_palette/builder.dart"
+    builder_factories: ["rootPaletteBuilder"]
+    build_extensions: { ".dart": [".pal.dart"] }
+    auto_apply: dependents
+    build_to: source

@@ -1,20 +1,34 @@
 name: app
-description: "A template Flutter project."
-publish_to: 'none'
-version: 1.0.0+1
-
+publish_to: none
+version: 0.0.1+1
 environment:
-  sdk: ^3.9.0
+  sdk: ^3.10.1
 resolution: workspace
-
 dependencies:
   flutter:
     sdk: flutter
-
+  auto_route: ^10.1.0
+  common_presentation: any
+  common_shared: any
+  console_presentation: any
+  core_data: any
+  core_navigation: any
+  core_presentation: any
+  demo_presentation: any
+  firebase_core: ^4.2.1
+  firebase_crashlytics: ^5.0.5
+  get_it: ^8.0.3
+  injectable: ^2.5.2
+  intl: ^0.20.2
+  ui_components: any
+  ui_foundation: any
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-
+  build_runner: ^2.4.15
+  injectable_generator: ^2.7.0
 flutter:
-
+  assets:
+    - .env.dev
+    - .env.beta
+    - .env.prod
+  default-flavor: prod
   uses-material-design: true

@@ -9,6 +9,7 @@ class DataConfig {
     required this.name,
     required this.isFactory,
     required this.fields,
+    this.generics = const [],
   });
 
   factory DataConfig.fromJson(Map<String, dynamic> json) {
@@ -18,6 +19,7 @@ class DataConfig {
   final String name;
   final bool isFactory;
   final List<FieldConfig> fields;
+  final List<String> generics;
 
   Map<String, dynamic> toJson() {
     return _$DataConfigToJson(this);

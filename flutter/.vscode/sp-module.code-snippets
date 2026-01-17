@@ -1,0 +1,30 @@
+{
+    "Dependency initialization for Module": {
+        "prefix": "initdi",
+        "scope": "dart",
+        "body": [
+            "import 'package:injectable/injectable.dart';",
+            "",
+            "@InjectableInit.microPackage()",
+            "void initMicroPackage() {}",
+            ""
+        ]
+    },
+    "Router for Module": {
+        "prefix": "initrouter",
+        "scope": "dart",
+        "body": [
+            "import 'package:auto_route/auto_route.dart';",
+            "import 'package:core_navigation/public.dart';",
+            "",
+            "final class ${TM_FILEPATH/.*\\/([^\\/]+)\\/[^\\/]+\\/[^\\/]+\\/[^\\/]+$/${1:/pascalcase}/}Router extends Router {",
+            "\t@override",
+            "\tList<AutoRoute> get routes {",
+            "\t\treturn [",
+            "\t\t\t$1",
+            "\t\t];",
+            "\t}",
+            "}"
+        ]
+    }
+}

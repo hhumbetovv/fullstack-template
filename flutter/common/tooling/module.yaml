@@ -1,0 +1,10 @@
+name: common_tooling
+modules: []
+dev_modules: []
+dependencies:
+  - path
+  - meta
+dev_dependencies: []
+
+build:
+  manual: true

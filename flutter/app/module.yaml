@@ -1,0 +1,33 @@
+name: app
+publish_to: none
+version: 0.0.1+1
+modules:
+  - common_presentation
+  - common_shared
+  - console_presentation
+  - core_data
+  - core_navigation
+  - core_presentation
+  - demo_presentation
+  - ui_components
+  - ui_foundation
+dev_modules: []
+dependencies:
+  - auto_route
+  - flutter
+  - get_it
+  - injectable
+  - intl
+  - firebase_core
+  - firebase_crashlytics
+dev_dependencies:
+  - build_runner
+  - injectable_generator
+# Environments
+flutter:
+  assets:
+    - .env.dev
+    - .env.beta
+    - .env.prod
+  default-flavor: prod
+  uses-material-design: true

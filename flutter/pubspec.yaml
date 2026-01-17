@@ -2,16 +2,43 @@ name: template
 publish_to: none
 
 environment:
-    sdk: ^3.9.0
+  sdk: ^3.10.1
 
 workspace:
-    - app
-    - processor
-    - generator
+  - scripts
+  - app
+  - processor
+  #? Generator
+  - generator/core
+  - generator/plugins/assets
+  - generator/plugins/data
+  - generator/plugins/exporter
+  - generator/plugins/palette
+  - generator/plugins/view_kit
+  #? Common
+  - common/shared
+  - common/presentation
+  - common/tooling
+  #? Core
+  - core/presentation
+  - core/navigation
+  - core/data
+  - core/domain
+  #? UiKit
+  - uikit/foundation
+  - uikit/components
+  - uikit/previews
+  #? Console
+  - feature/global/feature/console/presentation
+  #? Demo
+  - feature/demo/domain
+  - feature/demo/data
+  - feature/demo/presentation
 
 dev_dependencies:
-    #! Analysis
-    very_good_analysis: ^7.0.0
+  #? Analysis
+  very_good_analysis: ^7.0.0
 
 flutter:
-    uses-material-design: true
+  uses-material-design: true
+  default-flavor: prod

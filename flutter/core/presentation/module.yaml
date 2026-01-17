@@ -1,0 +1,17 @@
+name: core_presentation
+modules:
+  - common_presentation
+  - common_shared
+  - core_domain
+  - processor
+dev_modules: []
+dependencies:
+  - auto_route
+  - flutter
+  - get_it
+  - nested
+  - provider
+dev_dependencies: []
+
+build:
+  manual: true

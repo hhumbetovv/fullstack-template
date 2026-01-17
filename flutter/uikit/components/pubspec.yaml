@@ -1,0 +1,17 @@
+name: ui_components
+environment:
+  sdk: ^3.10.1
+resolution: workspace
+dependencies:
+  flutter:
+    sdk: flutter
+  common_presentation: any
+  common_shared: any
+  flutter_svg: ^2.2.1
+  processor: any
+  ui_foundation: any
+dev_dependencies:
+  build_runner: ^2.4.15
+  gen_exporter: any
+  gen_palette: any
+

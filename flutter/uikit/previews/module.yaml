@@ -1,0 +1,11 @@
+name: ui_previews
+modules:
+  - ui_components
+  - ui_foundation
+dev_modules: []
+dependencies:
+  - flutter
+dev_dependencies: []
+
+build:
+  manual: true
