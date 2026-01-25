@@ -5,20 +5,20 @@ environment:
   sdk: ^3.10.1
 
 workspace:
-  - scripts
   - app
-  - processor
+  - tools/scripts
+  - tools/processor
   #? Generator
-  - generator/core
-  - generator/plugins/assets
-  - generator/plugins/data
-  - generator/plugins/exporter
-  - generator/plugins/palette
-  - generator/plugins/view_kit
+  - tools/generator/core
+  - tools/generator/plugins/assets
+  - tools/generator/plugins/data
+  - tools/generator/plugins/exporter
+  - tools/generator/plugins/palette
+  - tools/generator/plugins/view_kit
   #? Common
   - common/shared
   - common/presentation
-  - common/tooling
+  - tools/common
   #? Core
   - core/presentation
   - core/navigation

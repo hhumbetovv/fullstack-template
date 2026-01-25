@@ -1,0 +1,7 @@
+name: tools_common
+environment:
+  sdk: ^3.10.1
+resolution: workspace
+dependencies:
+  meta: ^1.15.0
+  path: ^1.9.0

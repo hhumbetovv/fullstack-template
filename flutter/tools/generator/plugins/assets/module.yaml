@@ -1,0 +1,15 @@
+name: gen_assets
+modules:
+  - tools_common
+dev_modules: []
+dependencies:
+  - build
+  - collection
+  - dart_style
+  - glob
+  - package_config
+  - path
+dev_dependencies: []
+
+build:
+  manual: true

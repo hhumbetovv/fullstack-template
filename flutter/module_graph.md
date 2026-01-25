@@ -9,8 +9,8 @@ graph LR
     common_presentation:::common
     common_shared["common_shared"]
     common_shared:::common
-    common_tooling["common_tooling"]
-    common_tooling:::common
+    tools_common["tools_common"]
+    tools_common:::common
     core_data["core_data"]
     core_data:::core
     core_domain["core_domain"]
@@ -36,7 +36,7 @@ graph LR
     ui_previews["ui_previews"]
     ui_previews:::ui
     class app feature
-    common_tooling --> scripts
+    tools_common --> scripts
     common_presentation --> app
     common_shared --> app
     core_data --> app
@@ -45,14 +45,14 @@ graph LR
     ui_components --> app
     ui_foundation --> app
     gen_exporter --> processor
-    common_tooling --> gen_core
-    common_tooling --> gen_assets
+    tools_common --> gen_core
+    tools_common --> gen_assets
     gen_core --> gen_data
     processor --> gen_data
     gen_core --> gen_palette
     gen_data --> gen_palette
     processor --> gen_palette
-    common_tooling --> gen_view_kit
+    tools_common --> gen_view_kit
     gen_core --> gen_view_kit
     processor --> gen_view_kit
     gen_exporter --> common_shared

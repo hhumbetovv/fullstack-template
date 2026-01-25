@@ -1,0 +1,10 @@
+name: scripts
+modules:
+  - tools_common
+dev_modules: []
+dependencies:
+  - args
+  - get_it
+  - path
+  - yaml
+dev_dependencies: []
