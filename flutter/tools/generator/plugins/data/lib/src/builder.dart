@@ -1,12 +1,12 @@
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:gen_core/base.dart';
 import 'package:processor/public.dart';
 
 import 'factory.dart';
 import 'resolver.dart';
 
-class DataBuilder extends BaseBuilder<DataConfig, ClassElement2> {
+class DataBuilder extends BaseBuilder<DataConfig, ClassElement> {
   DataBuilder({
     super.options,
     super.name = 'data',

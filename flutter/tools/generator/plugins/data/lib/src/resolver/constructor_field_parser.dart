@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:gen_core/extensions.dart';
 import 'package:gen_core/utils.dart';
 import 'package:processor/public.dart';
@@ -7,7 +7,7 @@ import 'package:source_gen/source_gen.dart';
 class ConstructorFieldParser {
   const ConstructorFieldParser();
 
-  List<FieldConfig> parseFields(ConstructorElement2 constructor) {
+  List<FieldConfig> parseFields(ConstructorElement constructor) {
     return constructor.formalParameters
         .map(
           (param) => parseField(
@@ -48,7 +48,7 @@ class ConstructorFieldParser {
 
   String? _getDefault(FormalParameterElement parameter) {
     const matcher = TypeChecker.typeNamed(Default);
-    for (final meta in parameter.metadata2.annotations) {
+    for (final meta in parameter.metadata.annotations) {
       final obj = meta.computeConstantValue();
       if (obj == null) continue;
       if (matcher.isExactlyType(obj.type!)) {

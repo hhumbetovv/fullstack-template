@@ -1,37 +1,37 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_core/extensions.dart';
 import 'package:processor/public.dart';
 
-class ViewResolver extends BaseResolver<ViewConfig, ClassElement2> {
+class ViewResolver extends BaseResolver<ViewConfig, ClassElement> {
   String get suffix => 'view';
 
   @override
-  Future<ViewConfig?> resolve(ClassElement2 element) async {
+  Future<ViewConfig?> resolve(ClassElement element) async {
     final baseName = element.displayName.trimBefore(suffix);
 
     final effects = getEffectConfigs(
       element.displayName,
       baseName,
-      element.methods2,
+      element.methods,
     );
 
-    final isStateful = checkIsStateful(element.methods2);
+    final isStateful = checkIsStateful(element.methods);
 
     return ViewConfig(
       name: baseName,
       effects: effects,
       isStateful: isStateful,
-      customFactory: hasCustomFactory(element.methods2),
+      customFactory: hasCustomFactory(element.methods),
     );
   }
 
-  List<EffectConfig> getEffectConfigs(String className, String baseName, List<MethodElement2> methods) {
+  List<EffectConfig> getEffectConfigs(String className, String baseName, List<MethodElement> methods) {
     final effects = <EffectConfig>[];
 
     for (final method in methods) {
       annotationLoop:
-      for (final annotation in method.metadata2.annotations) {
+      for (final annotation in method.metadata.annotations) {
         final constantValue = annotation.computeConstantValue();
         if (constantValue?.type?.getDisplayString() == 'Effect') {
           final viewModels = (constantValue?.getField('from')?.toListValue() ?? [])
@@ -64,10 +64,10 @@ class ViewResolver extends BaseResolver<ViewConfig, ClassElement2> {
     return effects;
   }
 
-  bool checkIsStateful(List<MethodElement2> methods) {
+  bool checkIsStateful(List<MethodElement> methods) {
     return methods.any((method) {
       if (method.displayName == 'initState' || method.displayName == 'dispose') {
-        return method.metadata2.annotations.any((annotation) {
+        return method.metadata.annotations.any((annotation) {
           return annotation.isOverride;
         });
       }
@@ -76,9 +76,9 @@ class ViewResolver extends BaseResolver<ViewConfig, ClassElement2> {
     });
   }
 
-  bool hasCustomFactory(List<MethodElement2> methods) {
+  bool hasCustomFactory(List<MethodElement> methods) {
     return methods.any((method) {
-      if (method.displayName == 'viewModelFactory' && method.metadata2.annotations.any((ann) => ann.isOverride)) {
+      if (method.displayName == 'viewModelFactory' && method.metadata.annotations.any((ann) => ann.isOverride)) {
         return true;
       }
 

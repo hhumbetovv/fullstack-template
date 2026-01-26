@@ -18,5 +18,5 @@ dev_dependencies:
   - injectable_generator
 
 build:
-  include: scripts/templates/builds/presentation_build.yaml
+  include: templates/builds/presentation_build.yaml
   raw: true

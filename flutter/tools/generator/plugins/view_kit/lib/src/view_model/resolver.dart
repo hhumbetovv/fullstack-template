@@ -1,6 +1,6 @@
 // ignore_for_file: avoid_print
 
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_core/constants.dart';
 import 'package:gen_core/extensions.dart';
@@ -10,7 +10,7 @@ import 'package:processor/public.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:tools_common/tooling.dart';
 
-class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {
+class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement> {
   ViewModelResolver({
     EffectCache? effectCache,
     this.effectCacheAdapter = const EffectCacheAdapter(),
@@ -20,7 +20,7 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {
   final EffectCacheAdapter effectCacheAdapter;
 
   @override
-  Future<ViewModelConfig?> resolve(ClassElement2 element) async {
+  Future<ViewModelConfig?> resolve(ClassElement element) async {
     final baseName = element.displayName.trimBefore('ViewModel');
 
     final effects = getEffectConfigs(element.displayName);
@@ -37,10 +37,10 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {
     );
   }
 
-  StateConfig getStateConfig(ClassElement2 element, String baseName) {
+  StateConfig getStateConfig(ClassElement element, String baseName) {
     String? stateType;
     var isStatePrimitive = false;
-    for (final field in element.fields2) {
+    for (final field in element.fields) {
       if (field.displayName == 'initialState' && field.type.toString() != Strings.unitType) {
         stateType = field.type.toString();
         isStatePrimitive = field.type.isPrimitive;
@@ -60,12 +60,12 @@ class ViewModelResolver extends BaseResolver<ViewModelConfig, ClassElement2> {
   }
 
   List<MethodConfig> getIntentConfigs(
-    ClassElement2 element,
+    ClassElement element,
     List<MethodConfig> effects,
   ) {
     final intents = <MethodConfig>[];
     try {
-      for (final methodElement in element.methods2) {
+      for (final methodElement in element.methods) {
         if (const TypeChecker.typeNamed(
           Intent,
         ).hasAnnotationOf(methodElement)) {

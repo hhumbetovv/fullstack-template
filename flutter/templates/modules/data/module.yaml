@@ -1,0 +1,26 @@
+name: {{module_name}}
+modules:
+  #! Core Modules
+  - core_domain
+  - core_data
+dev_modules: []
+dependencies:
+  # Serialization
+  - json_annotation
+  # Networking
+  - dio
+  - retrofit
+  # Dependency Injection
+  - injectable
+dev_dependencies:
+  - build_runner
+  # Serialization
+  - json_serializable
+  # Networking
+  - retrofit_generator
+  # Dependency Injection
+  - injectable_generator
+
+build:
+  include: templates/builds/data_build.yaml
+  raw: true

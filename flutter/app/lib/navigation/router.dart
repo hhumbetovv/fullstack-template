@@ -1,5 +1,5 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:console_presentation/router.dart';
+import 'package:console/public/router.dart';
 import 'package:core_navigation/public.dart';
 import 'package:demo_presentation/router.dart';
 import 'package:get_it/get_it.dart';

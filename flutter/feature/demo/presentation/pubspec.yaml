@@ -17,5 +17,5 @@ dev_dependencies:
   build_runner: ^2.4.15
   gen_data: any
   gen_view_kit: any
-  injectable_generator: ^2.7.0
+  injectable_generator: ^2.9.0
 

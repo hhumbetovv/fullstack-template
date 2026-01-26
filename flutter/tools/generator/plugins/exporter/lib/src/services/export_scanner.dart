@@ -6,21 +6,23 @@ import 'package:glob/glob.dart';
 class ExportScanner {
   const ExportScanner();
 
-  Stream<String> scanExports(
+  Stream<String> scanFolder(
     BuildStep buildStep,
-    Iterable<String> folders,
+    String folder,
   ) async* {
-    for (final folder in folders) {
-      final glob = Glob('lib/src/$folder/**');
-      final assets = buildStep
-          .findAssets(glob)
-          .where((asset) => asset.path.endsWith('.dart'));
+    final normalized = folder.trim();
+    if (normalized.isEmpty) {
+      return;
+    }
+    final glob = Glob('lib/src/$normalized/**');
+    final assets = buildStep
+        .findAssets(glob)
+        .where((asset) => asset.path.endsWith('.dart'));
 
-      await for (final asset in assets) {
-        final exportUri = await _validateAsset(buildStep, asset);
-        if (exportUri != null) {
-          yield exportUri;
-        }
+    await for (final asset in assets) {
+      final exportUri = await _validateAsset(buildStep, asset);
+      if (exportUri != null) {
+        yield exportUri;
       }
     }
   }

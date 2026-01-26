@@ -23,6 +23,7 @@ class ModuleSpec {
     required this.modules,
     required this.devModules,
     this.buildConfig,
+    this.lintConfig,
     this.additionalFields = const <String, dynamic>{},
   });
 
@@ -33,11 +34,13 @@ class ModuleSpec {
   final List<String> modules;
   final List<String> devModules;
   final dynamic buildConfig;
+  final dynamic lintConfig;
   final Map<String, dynamic> additionalFields;
 
   File get moduleConfigFile => File(p.join(directory.path, 'module.yaml'));
   File get pubspecFile => File(p.join(directory.path, 'pubspec.yaml'));
   File get buildFile => File(p.join(directory.path, 'build.yaml'));
+  File get lintFile => File(p.join(directory.path, 'analysis_options.yaml'));
 }
 
 class ModuleSyncOptions {
@@ -113,6 +116,22 @@ class ModuleBuildChange {
   final bool hadExistingFile;
 }
 
+class ModuleLintChange {
+  ModuleLintChange({
+    required this.moduleName,
+    required this.directoryPath,
+    required this.lintFilePath,
+    required this.previousContent,
+    required this.hadExistingFile,
+  });
+
+  final String moduleName;
+  final String directoryPath;
+  final String lintFilePath;
+  final String? previousContent;
+  final bool hadExistingFile;
+}
+
 class ModuleSyncSummary {
   ModuleSyncSummary({
     required this.changed,
@@ -126,6 +145,7 @@ class ModuleSyncSummary {
     required this.workspaceConfigPath,
     required this.pubspecChanges,
     required this.buildChanges,
+    required this.lintChanges,
   });
 
   final List<String> changed;
@@ -139,6 +159,7 @@ class ModuleSyncSummary {
   final String? workspaceConfigPath;
   final List<ModulePubspecChange> pubspecChanges;
   final List<ModuleBuildChange> buildChanges;
+  final List<ModuleLintChange> lintChanges;
 
   bool get hasFailures => failures.isNotEmpty;
   bool get hasChanges => changed.isNotEmpty || workspaceConfigChanged;

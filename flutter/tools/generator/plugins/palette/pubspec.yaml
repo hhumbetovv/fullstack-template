@@ -3,11 +3,11 @@ environment:
   sdk: ^3.10.1
 resolution: workspace
 dependencies:
-  analyzer: ^7.4.5
-  build: ^3.0.0
+  analyzer: ^8.2.0
+  build: ^4.0.3
   code_builder: ^4.10.1
   gen_core: any
   gen_data: any
   processor: any
-  source_gen: ^3.0.0
+  source_gen: ^4.1.1
 

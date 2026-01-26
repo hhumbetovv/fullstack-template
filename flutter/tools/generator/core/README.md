@@ -23,7 +23,7 @@ flowchart LR
 
 ### BaseBuilder<Config, Target>
 
-- Accepts a `Target` analyzer element type (e.g. `ClassElement2`).
+- Accepts a `Target` analyzer element type (e.g. `ClassElement`).
 - Validates the `generatedExtension` and optional additional outputs.
 - Supports cached builds: a stable hash (supplied by `calculateUpdatableHash`) is stored alongside the JSON-encoded config. If the source hash matches, the builder replays the cached config without re-resolving elements.
 - Provides `hasAnyTopLevelAnnotations` to short-circuit work for libraries that do not use the relevant annotation.

@@ -18,10 +18,10 @@ class BootstrapPubspecStage implements Stage<ModuleCreateContext> {
     final relativePath =
         p.relative(context.moduleDir.path, from: context.workspaceRoot);
     final summary = await _moduleConfigService.syncModules(
-      options: ModuleSyncOptions(
+      options: const ModuleSyncOptions(
         checkOnly: false,
-        targets: [relativePath],
-        packageFilters: const [],
+        targets: [],
+        packageFilters: [],
         formatSpecs: false,
         generateLockFile: false,
         generateReport: false,

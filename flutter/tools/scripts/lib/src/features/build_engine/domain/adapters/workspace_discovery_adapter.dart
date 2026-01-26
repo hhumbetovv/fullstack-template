@@ -16,7 +16,7 @@ class WorkspaceDiscoveryAdapter implements ModuleDiscoveryPort {
     final modules = <ModuleDescriptor>[];
     final walker = DirectoryWalker(root: Directory.current);
     final templatesRoot = p.normalize(
-      p.join(Directory.current.path, 'scripts', 'templates'),
+      p.join(Directory.current.path, 'templates'),
     );
     final hasTemplates = Directory(templatesRoot).existsSync();
     final seen = <String>{};

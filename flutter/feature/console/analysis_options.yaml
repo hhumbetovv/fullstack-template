@@ -1,0 +1,52 @@
+include: package:very_good_analysis/analysis_options.yaml
+formatter:
+  trailing_commas: preserve
+analyzer:
+  plugins:
+    - custom_lint
+  errors:
+    one_member_abstracts: ignore
+    avoid_positional_boolean_parameters: ignore
+    avoid_dynamic_calls: ignore
+    invalid_annotation_target: ignore
+    avoid_redundant_argument_values: ignore
+    inference_failure_on_instance_creation: ignore
+    document_ignores: ignore
+  exclude:
+    - test/.test_coverage.dart
+    - "bin/cache/**"
+    - "**/*.g.dart"
+    - lib/generated_plugin_registrant.dart
+    - "templates/**"
+linter:
+  rules:
+    prefer_const_constructors_in_immutables: true
+    prefer_const_literals_to_create_immutables: true
+    sort_pub_dependencies: false
+    flutter_style_todos: false
+    public_member_api_docs: false
+    always_use_package_imports: false
+    lines_longer_than_80_chars: false
+    use_setters_to_change_properties: false
+    prefer_single_quotes: true
+    sort_child_properties_last: true
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    use_key_in_widget_constructors: true
+feature_layers:
+  data:
+    - retrofit
+    - dio
+    - json_annotation
+    - objectbox
+    - objectbox_flutter_libs
+    - injectable
+  domain:
+    - meta
+    - injectable
+  presentation:
+    - auto_route
+    - flutter
+    - flutter_svg
+    - injectable

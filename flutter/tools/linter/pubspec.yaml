@@ -1,0 +1,11 @@
+name: feature_layer_linter
+environment:
+  sdk: ^3.10.1
+resolution: workspace
+dependencies:
+  analyzer: ^8.2.0
+  args: ^2.5.0
+  custom_lint_builder: ^0.8.1
+  path: ^1.9.0
+  yaml: ^3.1.2
+

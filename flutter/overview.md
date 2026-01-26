@@ -2,11 +2,11 @@
 
 ## Quick Stats
 
-- **Total Modules**: 23
+- **Total Modules**: 24
 - **Modules With build_runner**: 13
-- **Modules Without build_runner**: 10
-- **Total Dependencies**: 67
-- **Average Dependencies**: 2.91
+- **Modules Without build_runner**: 11
+- **Total Dependencies**: 71
+- **Average Dependencies**: 2.96
 - **Peak Concurrent Modules**: 3
 
 ## Graph Index
@@ -38,7 +38,7 @@
 
 ### Wave 3
 
-- **console_presentation** → depends on: common_presentation, common_shared, core_domain, core_navigation, processor, ui_components, ui_foundation
+- **console** → depends on: common_presentation, common_shared, core_data, core_domain, core_navigation, processor, ui_components, ui_foundation
 - **demo_data** → depends on: core_data, demo_domain
 
 ### Wave 4
@@ -47,17 +47,18 @@
 
 ### Wave 5
 
-- **app** → depends on: common_presentation, common_shared, console_presentation, core_data, core_domain, core_navigation, demo_presentation, processor, ui_components, ui_foundation
+- **app** → depends on: common_presentation, common_shared, console, core_data, core_domain, core_navigation, demo_presentation, processor, ui_components, ui_foundation
 
 
 ## Unused Module Dependencies
 
+- **console** → core_data, core_domain, linter
 - **demo_data** → core_data
 - **demo_domain** → core_domain
 
 ## Unused Packages
 
-- **console_presentation** → get_it, injectable
+- **console** → dio, get_it, json_annotation
 - **core_data** → flutter
 - **core_presentation** → auto_route, get_it
 - **demo_data** → get_it

@@ -1,5 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_view_kit/src/shared/effect_cache_adapter.dart';
@@ -9,7 +9,7 @@ import 'package:processor/public.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:tools_common/tooling.dart';
 
-class ViewBuilder extends BaseBuilder<ViewConfig, ClassElement2> {
+class ViewBuilder extends BaseBuilder<ViewConfig, ClassElement> {
   ViewBuilder({
     super.options,
     super.name = 'view',

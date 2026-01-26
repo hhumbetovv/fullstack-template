@@ -1,0 +1,117 @@
+targets:
+  $default:
+    auto_apply_builders: false
+    builders:
+      #! Disable source_gen combining_builder to prevent collisions
+      source_gen:combining_builder:
+        enabled: false
+
+      #! Data layer
+      objectbox_generator|resolver:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/data/model/local/**"
+      objectbox_generator|generator:
+        enabled: true
+      json_serializable|json_serializable:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/data/model/remote/**"
+          exclude:
+            - "lib/src/presentation/**"
+            - "lib/src/domain/**"
+      retrofit_generator|retrofit_generator:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/data/datasource/remote/**"
+
+      #! Domain & Presentation shared generators
+      gen_data|data:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/domain/usecase/**"
+            - "lib/src/domain/orchestrator/**"
+            - "lib/src/domain/entity/**"
+            - "lib/src/presentation/**/state.dart"
+            - "lib/src/presentation/**/source/**"
+
+      #! Presentation layer
+      gen_view_kit|view:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/presentation/**/view.dart"
+      gen_view_kit|provider:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/presentation/**/provider.dart"
+      gen_view_kit|view_model:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/presentation/**/view_model.dart"
+        options:
+          enable_cached_builds: true
+
+      #! Dependency Injection
+      injectable_generator|injectable_builder:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/src/data/module/**"
+            - "lib/src/data/repository/**"
+            - "lib/src/data/datasource/**"
+            - "lib/**"
+          exclude:
+            - "lib/src/presentation/**/state.dart"
+            - "lib/src/presentation/**/source/**"
+      injectable_generator|injectable_config_builder:
+        enabled: true
+        generate_for:
+          include:
+            - "lib/init.dart"
+
+      #! Export Aggregation
+      gen_exporter|exporter:
+        enabled: true
+        options:
+          folders:
+            - data
+            - domain
+            - presentation
+          dedicated:
+            - data
+            - domain
+            - presentation
+          public_file: public.dart
+
+global_options:
+  objectbox_generator|resolver:
+    runs_before:
+      - injectable_generator|injectable_builder
+  objectbox_generator|generator:
+    runs_before:
+      - injectable_generator|injectable_builder
+  json_serializable|json_serializable:
+    runs_before:
+      - injectable_generator|injectable_builder
+  retrofit_generator|retrofit_generator:
+    runs_before:
+      - injectable_generator|injectable_builder
+  gen_exporter|exporter:
+    runs_before:
+      - injectable_generator|injectable_builder
+  gen_data|data:
+    runs_before:
+      - injectable_generator|injectable_builder
+  gen_view_kit|view:
+    runs_before:
+      - gen_view_kit|view_model
+  gen_view_kit|provider:
+    runs_before:
+      - gen_view_kit|view_model

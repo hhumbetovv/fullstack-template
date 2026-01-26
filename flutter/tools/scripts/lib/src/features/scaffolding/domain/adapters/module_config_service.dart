@@ -20,6 +20,7 @@ const _moduleSpecReservedKeys = <String>{
   'environment',
   'resolution',
   'build',
+  'lint',
 };
 
 const _managedPubspecKeys = <String>{
@@ -39,13 +40,36 @@ class ModuleConfigService {
   }) : workspaceConfigFile = workspaceConfigFile ?? ScaffoldingConfig.workspaceConfigFile,
        rootPubspecFile = rootPubspecFile ?? ScaffoldingConfig.rootPubspecFile,
        lockFilePath = lockFilePath ?? ScaffoldingConfig.lockFilePath,
-       dependencyReportPath = dependencyReportPath ?? ScaffoldingConfig.dependencyReportPath;
+       dependencyReportPath = dependencyReportPath ?? ScaffoldingConfig.dependencyReportPath,
+       _root = _findWorkspaceRoot(Directory.current);
 
   final String workspaceConfigFile;
   final String rootPubspecFile;
   final String lockFilePath;
   final String dependencyReportPath;
-  final Directory _root = Directory.current;
+  final Directory _root;
+
+  static Directory _findWorkspaceRoot(Directory start) {
+    var dir = start.absolute;
+    while (true) {
+      final pubspecFile = File(p.join(dir.path, 'pubspec.yaml'));
+      if (pubspecFile.existsSync()) {
+        try {
+          final content = pubspecFile.readAsStringSync();
+          if (content.contains('\nworkspace:') || content.trimLeft().startsWith('workspace:')) {
+            return dir;
+          }
+        } on Object {
+          // ignore and keep walking
+        }
+      }
+      final parent = dir.parent;
+      if (parent.path == dir.path) {
+        return start.absolute;
+      }
+      dir = parent;
+    }
+  }
 
   Future<ModuleSyncSummary> syncModules({
     required ModuleSyncOptions options,
@@ -101,6 +125,7 @@ class ModuleConfigService {
     final snapshots = <ModuleDependencySnapshot>[];
     final pubspecChanges = <ModulePubspecChange>[];
     final buildChanges = <ModuleBuildChange>[];
+    final lintChanges = <ModuleLintChange>[];
 
     for (final module in filtered) {
       final missingModuleDeps = _missingModuleDependencies(module, moduleNames);
@@ -135,9 +160,14 @@ class ModuleConfigService {
           checkOnly: options.checkOnly,
           forceWrite: options.forceAll,
         );
+        final lintResult = _processLintFile(
+          module: module,
+          checkOnly: options.checkOnly,
+          forceWrite: options.forceAll,
+        );
         snapshots.add(pubspecResult.snapshot);
 
-        final moduleChanged = pubspecResult.changed || buildResult.changed;
+        final moduleChanged = pubspecResult.changed || buildResult.changed || lintResult.changed;
         if (moduleChanged) {
           changed.add(module.name);
         } else {
@@ -167,6 +197,18 @@ class ModuleConfigService {
             ),
           );
         }
+
+        if (lintResult.changed) {
+          lintChanges.add(
+            ModuleLintChange(
+              moduleName: module.name,
+              directoryPath: module.directory.path,
+              lintFilePath: module.lintFile.path,
+              previousContent: lintResult.previousContent,
+              hadExistingFile: lintResult.hadExistingLint,
+            ),
+          );
+        }
       } on CommandError catch (error) {
         failures[module.name] = error.message;
       } on Object catch (error) {
@@ -189,6 +231,7 @@ class ModuleConfigService {
       workspaceConfigPath: null,
       pubspecChanges: pubspecChanges,
       buildChanges: buildChanges,
+      lintChanges: lintChanges,
     );
   }
 
@@ -250,6 +293,7 @@ class ModuleConfigService {
       workspaceConfigPath: workspaceResult.path,
       pubspecChanges: const <ModulePubspecChange>[],
       buildChanges: const <ModuleBuildChange>[],
+      lintChanges: const <ModuleLintChange>[],
     );
   }
 
@@ -413,13 +457,16 @@ class ModuleConfigService {
       }
 
       dynamic existingBuildConfig;
+      dynamic existingLintConfig;
       final moduleConfigFile = File(p.join(directory.path, 'module.yaml'));
       if (moduleConfigFile.existsSync()) {
         try {
           final moduleData = _readYaml(moduleConfigFile);
           existingBuildConfig = moduleData['build'];
+          existingLintConfig = moduleData['lint'];
         } on CommandError {
           existingBuildConfig = null;
+          existingLintConfig = null;
         }
       }
 
@@ -429,6 +476,7 @@ class ModuleConfigService {
           directory: directory,
           pubspec: pubspec,
           buildConfig: existingBuildConfig,
+          lintConfig: existingLintConfig,
         ),
       );
     }
@@ -461,6 +509,7 @@ class ModuleConfigService {
       modules: dependencyBreakdown.modules,
       devModules: devDependencyBreakdown.modules,
       buildConfig: data.buildConfig,
+      lintConfig: data.lintConfig,
       additionalFields: additionalFields,
     );
   }
@@ -503,6 +552,7 @@ class ModuleConfigService {
       'dependencies': List<String>.from(module.dependencies)..sort(),
       'dev_dependencies': List<String>.from(module.devDependencies)..sort(),
       if (module.buildConfig != null) 'build': module.buildConfig,
+      if (module.lintConfig != null) 'lint': module.lintConfig,
       ...module.additionalFields,
     };
 
@@ -633,6 +683,7 @@ class ModuleConfigService {
       throw CommandError('`name` missing in ${configFile.path}');
     }
     final buildConfig = data['build'];
+    final lintConfig = data['lint'];
     final additionalFields = Map<String, dynamic>.from(data)
       ..removeWhere((key, _) => _moduleSpecReservedKeys.contains(key));
 
@@ -640,6 +691,7 @@ class ModuleConfigService {
       name: name,
       directory: directory,
       buildConfig: buildConfig,
+      lintConfig: lintConfig,
       additionalFields: additionalFields,
       dependencies: _stringList(
         data['dependencies'],
@@ -789,6 +841,7 @@ class ModuleConfigService {
       'dependencies': module.dependencies,
       'dev_dependencies': module.devDependencies,
       if (module.buildConfig != null) 'build': module.buildConfig,
+      if (module.lintConfig != null) 'lint': module.lintConfig,
       ...module.additionalFields,
     };
 
@@ -890,16 +943,20 @@ class ModuleConfigService {
       return const _BuildFileResult(changed: false);
     }
 
-    final normalized = _normalizeValue(buildSpec);
-    if (normalized == null) {
+    final resolved = _resolveConfigValue(
+      module: module,
+      spec: buildSpec,
+      allowInlineIncludeMerge: true,
+    );
+    if (resolved == null) {
       return const _BuildFileResult(changed: false);
     }
 
-    if (_isManualBuildConfig(normalized)) {
+    if (_isManualBuildConfig(resolved)) {
       return const _BuildFileResult(changed: false, manual: true);
     }
 
-    if (normalized is! Map && normalized is! String) {
+    if (resolved is! Map && resolved is! String) {
       throw CommandError(
         '`build` must be a map or string in ${module.moduleConfigFile.path}',
       );
@@ -909,7 +966,7 @@ class ModuleConfigService {
     final hadExisting = buildFile.existsSync();
     final existingContent = hadExisting ? buildFile.readAsStringSync() : null;
 
-    final serialized = _serializeBuildConfig(normalized);
+    final serialized = _serializeBuildConfig(resolved);
     final withNewline = serialized.endsWith('\n') ? serialized : '$serialized\n';
     final normalizedExisting = existingContent != null
         ? normalizeLineEndings(
@@ -935,6 +992,288 @@ class ModuleConfigService {
       previousContent: existingContent,
       hadExistingBuild: hadExisting,
     );
+  }
+
+  _LintFileResult _processLintFile({
+    required ModuleSpec module,
+    required bool checkOnly,
+    required bool forceWrite,
+  }) {
+    final lintSpec = module.lintConfig;
+    if (lintSpec == null) {
+      return const _LintFileResult(changed: false);
+    }
+
+    final resolved = _resolveConfigValue(
+      module: module,
+      spec: lintSpec,
+      allowInlineIncludeMerge: true,
+    );
+    if (resolved == null) {
+      return const _LintFileResult(changed: false);
+    }
+
+    if (_isManualLintConfig(resolved)) {
+      return const _LintFileResult(changed: false, manual: true);
+    }
+
+    if (resolved is! Map && resolved is! String) {
+      throw CommandError(
+        '`lint` must be a map or string in ${module.moduleConfigFile.path}',
+      );
+    }
+
+    final lintFile = module.lintFile;
+    final hadExisting = lintFile.existsSync();
+    final existingContent = hadExisting ? lintFile.readAsStringSync() : null;
+
+    final serialized = _serializeLintConfig(resolved);
+    final withNewline = serialized.endsWith('\n') ? serialized : '$serialized\n';
+    final normalizedExisting = existingContent != null
+        ? normalizeLineEndings(
+            existingContent,
+            preferredLineEnding: preferredLineEndingForContent(existingContent),
+          )
+        : '';
+    final normalizedNew = normalizeLineEndings(
+      withNewline,
+      preferredLineEnding: preferredLineEndingForContent(existingContent),
+    );
+
+    final hasDiff = normalizedExisting.trimRight() != normalizedNew.trimRight();
+    final shouldWrite = forceWrite || hasDiff;
+
+    if (!checkOnly && shouldWrite) {
+      lintFile.parent.createSync(recursive: true);
+      lintFile.writeAsStringSync(normalizedNew);
+    }
+
+    return _LintFileResult(
+      changed: shouldWrite,
+      previousContent: existingContent,
+      hadExistingLint: hadExisting,
+    );
+  }
+
+  dynamic _resolveConfigValue({
+    required ModuleSpec module,
+    required dynamic spec,
+    bool allowInlineIncludeMerge = false,
+  }) {
+    if (spec == null) {
+      return null;
+    }
+    final normalized = _normalizeValue(spec);
+    if (normalized == null) {
+      return null;
+    }
+    if (!allowInlineIncludeMerge) {
+      return normalized;
+    }
+    final moduleDirectory = module.moduleConfigFile.parent;
+    return _expandInlineIncludes(
+      normalized,
+      moduleDirectory,
+      allowInlineIncludeKey: true,
+    );
+  }
+
+  dynamic _expandInlineIncludes(
+    dynamic value,
+    Directory relativeTo, {
+    required bool allowInlineIncludeKey,
+  }) {
+    if (value is Map) {
+      final map = _asStringKeyedMap(value);
+      if (allowInlineIncludeKey && map.containsKey('include')) {
+        final includeValue = map['include'];
+        final remaining = Map<String, dynamic>.from(map)
+          ..remove('include');
+        final includeEntries = _loadInlineIncludeValues(
+          includeValue,
+          relativeTo,
+        );
+        dynamic merged;
+        final packageIncludes = <String>[];
+        for (final entry in includeEntries) {
+          // Separate package includes from regular includes
+          if (entry is String && entry.startsWith('package:')) {
+            packageIncludes.add(entry);
+            continue;
+          }
+          final expanded = _expandInlineIncludes(
+            entry,
+            relativeTo,
+            allowInlineIncludeKey: true,
+          );
+          merged = _mergeConfigValues(merged, expanded);
+        }
+        // If there are package includes, add them to the result
+        if (packageIncludes.isNotEmpty) {
+          if (merged is Map<String, dynamic>) {
+            merged = Map<String, dynamic>.from(merged)
+              ..['include'] = packageIncludes.length == 1 ? packageIncludes.first : packageIncludes;
+          } else {
+            merged ??= <String, dynamic>{
+              'include': packageIncludes.length == 1 ? packageIncludes.first : packageIncludes,
+            };
+          }
+        }
+        if (remaining.isEmpty) {
+          return merged;
+        }
+        final expandedRemaining = _expandInlineIncludes(
+          remaining,
+          relativeTo,
+          allowInlineIncludeKey: false,
+        );
+        return _mergeConfigValues(merged, expandedRemaining);
+      }
+
+      final result = <String, dynamic>{};
+      map.forEach((key, dynamic entryValue) {
+        result[key] = _expandInlineIncludes(
+          entryValue,
+          relativeTo,
+          allowInlineIncludeKey: false,
+        );
+      });
+      return result;
+    }
+
+    if (value is List) {
+      return value
+          .map(
+            (entry) => _expandInlineIncludes(
+              entry,
+              relativeTo,
+              allowInlineIncludeKey: false,
+            ),
+          )
+          .toList();
+    }
+
+    return value;
+  }
+
+  List<dynamic> _loadInlineIncludeValues(
+    dynamic includeValue,
+    Directory relativeTo,
+  ) {
+    final items = includeValue is List ? includeValue : [includeValue];
+    final resolved = <dynamic>[];
+    for (final entry in items) {
+      final result = _loadInlineIncludeEntry(entry, relativeTo);
+      if (result != null) {
+        resolved.add(result);
+      }
+    }
+    return resolved;
+  }
+
+  dynamic _loadInlineIncludeEntry(dynamic entry, Directory relativeTo) {
+    if (entry == null) {
+      throw CommandError('Empty include entry in ${relativeTo.path}');
+    }
+    final moduleAnalysisOptions = p.normalize(
+      p.join(relativeTo.path, 'analysis_options.yaml'),
+    );
+    if (entry is YamlIncludeNode) {
+      if (entry.type == YamlIncludeType.raw) {
+        return entry.value;
+      }
+      return _normalizeValue(entry.value);
+    }
+    if (entry is String) {
+      // Package includes (package:...) are not merged, returned as special marker
+      if (entry.startsWith('package:')) {
+        return entry; // Return as string to preserve it
+      }
+      final file = _resolveIncludeFile(entry, relativeTo);
+      if (p.normalize(file.path) == moduleAnalysisOptions) {
+        return null; // Skip self-include to avoid circular dependency
+      }
+      final content = file.readAsStringSync();
+      final node = loadYamlNode(content, sourceUrl: file.uri);
+      final data = _convertYamlNode(node, file, {file.path});
+      return data;
+    }
+    if (entry is Map) {
+      final includePath = entry['path'] ?? entry['include'];
+      if (includePath == null) {
+        throw CommandError('Inline include entry is missing a `path` in ${relativeTo.path}');
+      }
+      final includePathStr = includePath.toString();
+      // Package includes (package:...) are not merged, returned as special marker
+      if (includePathStr.startsWith('package:')) {
+        return includePathStr; // Return as string to preserve it
+      }
+      final raw = _parseRawFlag(entry['raw']);
+      final file = _resolveIncludeFile(includePathStr, relativeTo);
+      if (p.normalize(file.path) == moduleAnalysisOptions) {
+        return null; // Skip self-include to avoid circular dependency
+      }
+      if (raw) {
+        return file.readAsStringSync();
+      }
+      final content = file.readAsStringSync();
+      final node = loadYamlNode(content, sourceUrl: file.uri);
+      final data = _convertYamlNode(node, file, {file.path});
+      return data;
+    }
+    throw CommandError('Unsupported include entry type: ${entry.runtimeType}');
+  }
+
+  dynamic _mergeConfigValues(dynamic base, dynamic update) {
+    if (base == null) return update;
+    if (update == null) return base;
+
+    if (base is Map || update is Map) {
+      final baseMap = _asStringKeyedMap(base);
+      final updateMap = _asStringKeyedMap(update);
+      return _mergeConfigMaps(baseMap, updateMap);
+    }
+
+    throw CommandError(
+      'Include merges must be between map values. Got ${base.runtimeType} and ${update.runtimeType}.',
+    );
+  }
+
+  Map<String, dynamic> _asStringKeyedMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return Map<String, dynamic>.from(value);
+    }
+    if (value is Map) {
+      final result = <String, dynamic>{};
+      value.forEach((dynamic key, dynamic entryValue) {
+        final normalizedKey = key?.toString();
+        if (normalizedKey == null || normalizedKey.isEmpty) {
+          return;
+        }
+        result[normalizedKey] = entryValue;
+      });
+      return result;
+    }
+    throw CommandError('Expected map while merging include values, got ${value.runtimeType}.');
+  }
+
+  Map<String, dynamic> _mergeConfigMaps(
+    Map<String, dynamic> base,
+    Map<String, dynamic> update,
+  ) {
+    final result = <String, dynamic>{}..addAll(base);
+    update.forEach((key, value) {
+      final existing = result[key];
+      if (existing is Map && value is Map) {
+        result[key] = _mergeConfigMaps(
+          _asStringKeyedMap(existing),
+          _asStringKeyedMap(value),
+        );
+      } else {
+        result[key] = value;
+      }
+    });
+    return result;
   }
 
   bool _isManualBuildConfig(dynamic value) {
@@ -969,6 +1308,41 @@ class ModuleConfigService {
     }
     throw CommandError(
       'Unsupported `build` configuration. Expected map or string, got ${value.runtimeType}.',
+    );
+  }
+
+  bool _isManualLintConfig(dynamic value) {
+    if (value is Map) {
+      final manual = value['manual'];
+      if (manual is bool) {
+        return manual;
+      }
+      if (manual != null) {
+        final normalized = manual.toString().toLowerCase().trim();
+        return normalized == 'true' || normalized == 'yes';
+      }
+    }
+    return false;
+  }
+
+  String _serializeLintConfig(dynamic value) {
+    if (value is String) {
+      return value;
+    }
+    if (value is Map<String, dynamic>) {
+      const writer = YamlWriter(preserveInputOrder: true);
+      return writer.convert(value);
+    }
+    if (value is Map) {
+      final converted = <String, dynamic>{};
+      value.forEach((dynamic key, dynamic entryValue) {
+        converted[key.toString()] = entryValue;
+      });
+      const writer = YamlWriter(preserveInputOrder: true);
+      return writer.convert(converted);
+    }
+    throw CommandError(
+      'Unsupported `lint` configuration. Expected map or string, got ${value.runtimeType}.',
     );
   }
 
@@ -1231,9 +1605,24 @@ class ModuleConfigService {
     }
 
     final pathValue = map['include'];
+    // Allow include lists at this stage by returning original map unchanged;
+    // include expansion is handled later by _resolveConfigValue/_expandInlineIncludes.
+    if (pathValue is List) {
+      return map;
+    }
+    // If include is a list here, defer handling to later config resolution
+    // where inline include lists are expanded and merged.
+    if (pathValue is List) {
+      return map;
+    }
     final source = pathValue?.toString().trim();
     if (source == null || source.isEmpty) {
       throw CommandError('Empty include path in ${currentFile.path}');
+    }
+
+    // Package includes (package:...) are preserved as-is for Dart analyzer
+    if (source.startsWith('package:')) {
+      return map; // Keep the include directive as-is in the output
     }
 
     final raw = _parseRawFlag(map['raw']);
@@ -1291,9 +1680,7 @@ class ModuleConfigService {
     if (p.isAbsolute(cleaned)) {
       candidates.add(p.normalize(cleaned));
     } else {
-      candidates
-        ..add(p.normalize(p.join(relativeTo.path, cleaned)))
-        ..add(p.normalize(p.join(_root.path, cleaned)));
+      candidates.add(p.normalize(p.join(_root.path, cleaned)));
     }
 
     for (final candidate in candidates) {
@@ -1348,6 +1735,7 @@ class ModuleConfigService {
       'dependencies',
       'dev_dependencies',
       'build',
+      'lint',
     ];
     final order = <String>[...baseOrder];
     final seen = order.toSet();
@@ -1389,18 +1777,34 @@ class _BuildFileResult {
   final bool manual;
 }
 
+class _LintFileResult {
+  const _LintFileResult({
+    required this.changed,
+    this.previousContent,
+    this.hadExistingLint = false,
+    this.manual = false,
+  });
+
+  final bool changed;
+  final String? previousContent;
+  final bool hadExistingLint;
+  final bool manual;
+}
+
 class _ModulePubspecData {
   _ModulePubspecData({
     required this.name,
     required this.directory,
     required this.pubspec,
     this.buildConfig,
+    this.lintConfig,
   });
 
   final String name;
   final Directory directory;
   final Map<String, dynamic> pubspec;
   final dynamic buildConfig;
+  final dynamic lintConfig;
 }
 
 class _DependencyBreakdown {

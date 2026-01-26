@@ -1,0 +1,35 @@
+feature_layers:
+  data:
+    - processor
+    - core_data
+    - core_domain
+    - common_shared
+    - retrofit
+    - dio
+    - json_annotation
+    - objectbox
+    - objectbox_flutter_libs
+    - injectable
+  domain:
+    - processor
+    - common_shared
+    - core_domain
+    - meta
+    - injectable
+  presentation:
+    #! Core Modules
+    - processor
+    - common_shared
+    - common_presentation
+    - core_domain
+    - core_presentation
+    - core_navigation
+    - ui_foundation
+    - ui_components
+    #! Third Party Libs
+    - auto_route
+    - flutter
+    - flutter_svg
+    - injectable
+    - share_plus
+    - path_provider

@@ -14,8 +14,8 @@ class ModuleCreatePipeline {
   })  : _validateInput = ValidateInputStage(workspaceRoot),
         _resolveTemplate = ResolveTemplateStage(workspaceRoot),
         _copyTemplate = CopyTemplateStage(workspaceRoot),
-        _bootstrapPubspec = BootstrapPubspecStage(moduleConfigService),
-        _registerWorkspace = RegisterWorkspaceStage(workspaceRoot);
+        _registerWorkspace = RegisterWorkspaceStage(workspaceRoot),
+        _bootstrapPubspec = BootstrapPubspecStage(moduleConfigService);
 
   final ValidateInputStage _validateInput;
   final ResolveTemplateStage _resolveTemplate;
@@ -29,8 +29,8 @@ class ModuleCreatePipeline {
         _validateInput,
         _resolveTemplate,
         _copyTemplate,
-        _bootstrapPubspec,
         _registerWorkspace,
+        _bootstrapPubspec,
       ],
     ).run(context);
   }

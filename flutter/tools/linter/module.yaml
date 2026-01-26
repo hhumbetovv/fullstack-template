@@ -1,0 +1,13 @@
+name: linter
+modules: []
+dev_modules: []
+dependencies:
+  - analyzer
+  - args
+  - custom_lint_builder
+  - path
+  - yaml
+dev_dependencies: []
+
+build:
+  manual: true

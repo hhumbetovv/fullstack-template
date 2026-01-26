@@ -1,0 +1,31 @@
+name: {{module_name}}
+modules:
+  - core_domain
+  - core_data
+  - core_presentation
+dev_modules:
+  - gen_data
+  - gen_view_kit
+  - gen_exporter
+  - feature_layer_linter
+dependencies:
+  - auto_route
+  - dio
+  - flutter
+  - get_it
+  - injectable
+  - json_annotation
+dev_dependencies:
+  - build_runner
+  - injectable_generator
+  - json_serializable
+  - retrofit_generator
+
+build:
+  include:
+    - templates/builds/feature_build.yaml
+
+lint:
+  include:
+    - analysis_options.yaml
+    - templates/lint/feature_layers.yaml

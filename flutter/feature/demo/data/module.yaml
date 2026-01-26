@@ -11,5 +11,5 @@ dev_dependencies:
   - injectable_generator
 
 build:
-  include: scripts/templates/builds/data_build.yaml
+  include: templates/builds/data_build.yaml
   raw: true

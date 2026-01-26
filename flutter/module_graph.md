@@ -9,8 +9,6 @@ graph LR
     common_presentation:::common
     common_shared["common_shared"]
     common_shared:::common
-    tools_common["tools_common"]
-    tools_common:::common
     core_data["core_data"]
     core_data:::core
     core_domain["core_domain"]
@@ -27,8 +25,11 @@ graph LR
     gen_exporter["gen_exporter"]
     gen_palette["gen_palette"]
     gen_view_kit["gen_view_kit"]
+    linter["linter"]
     processor["processor"]
     scripts["scripts"]
+    tools_common["tools_common"]
+    tools_common:::common
     ui_components["ui_components"]
     ui_components:::ui
     ui_foundation["ui_foundation"]
@@ -36,7 +37,6 @@ graph LR
     ui_previews["ui_previews"]
     ui_previews:::ui
     class app feature
-    tools_common --> scripts
     common_presentation --> app
     common_shared --> app
     core_data --> app
@@ -44,6 +44,7 @@ graph LR
     core_presentation --> app
     ui_components --> app
     ui_foundation --> app
+    tools_common --> scripts
     gen_exporter --> processor
     tools_common --> gen_core
     tools_common --> gen_assets
@@ -52,9 +53,9 @@ graph LR
     gen_core --> gen_palette
     gen_data --> gen_palette
     processor --> gen_palette
-    tools_common --> gen_view_kit
     gen_core --> gen_view_kit
     processor --> gen_view_kit
+    tools_common --> gen_view_kit
     gen_exporter --> common_shared
     common_shared --> common_presentation
     gen_exporter --> common_presentation
@@ -92,6 +93,7 @@ graph LR
     gen_data --> features
     gen_exporter --> features
     gen_view_kit --> features
+    linter --> features
     processor --> features
     ui_components --> features
     ui_foundation --> features
@@ -108,8 +110,8 @@ graph LR
 
 ```mermaid
 graph LR
-    console_presentation["console_presentation"]
-    console_presentation:::presentation
+    console["console"]
+    class console unused
     demo_data["demo_data"]
     demo_data:::data
     class demo_data unused
@@ -161,8 +163,8 @@ graph TB
     end
     subgraph wave_cluster_3["Wave 3"]
         direction TB
-        console_presentation["console_presentation"]
-        console_presentation:::presentation
+        console["console"]
+        class console unused
         demo_data["demo_data"]
         demo_data:::data
         class demo_data unused
@@ -203,21 +205,21 @@ graph LR
     class group_UI_Layer ui
     group_Data_Layer["Data Layer"]
     class group_Data_Layer data
-    group_Feature__Console["Feature: Console"]
-    class group_Feature__Console feature
     group_Feature__Demo["Feature: Demo"]
     class group_Feature__Demo feature
+    group_Feature__Console["Feature: Console"]
+    class group_Feature__Console feature
     group_Common_Layer --> group_Core_Layer
     group_Core_Layer --> group_Data_Layer
     group_UI_Layer --> group_Core_Layer
     group_Data_Layer --> group_Core_Layer
     group_Common_Layer --> group_UI_Layer
+    group_Core_Layer --> group_Feature__Demo
+    group_Data_Layer --> group_Feature__Demo
     group_Common_Layer --> group_Feature__Console
     group_Core_Layer --> group_Feature__Console
     group_UI_Layer --> group_Feature__Console
     group_Data_Layer --> group_Feature__Console
-    group_Core_Layer --> group_Feature__Demo
-    group_Data_Layer --> group_Feature__Demo
 
     classDef data fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000000;
     classDef ui fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000;

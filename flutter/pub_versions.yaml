@@ -1,9 +1,9 @@
 dart_sdk: ^3.10.1
 packages:
-  analyzer: ^7.4.5
+  analyzer: ^8.2.0
   args: ^2.5.0
   auto_route: ^10.1.0
-  build: ^3.0.0
+  build: ^4.0.3
   build_runner: ^2.4.15
   code_builder: ^4.10.1
   collection: ^1.18.0
@@ -18,7 +18,7 @@ packages:
   get_it: ^8.0.3
   glob: ^2.1.3
   injectable: ^2.5.2
-  injectable_generator: ^2.7.0
+  injectable_generator: ^2.9.0
   intl: ^0.20.2
   json_annotation: ^4.9.0
   json_serializable: ^6.9.4
@@ -32,6 +32,8 @@ packages:
   retrofit_generator: ^10.0.5
   share_plus: ^11.0.0
   shared_preferences: ^2.5.3
-  source_gen: ^3.0.0
+  source_gen: ^4.1.1
   yaml: ^3.1.2
-
+  custom_lint: ^0.8.1
+  custom_lint_builder: ^0.8.1
+  very_good_analysis: ^7.0.0

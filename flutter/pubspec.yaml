@@ -8,32 +8,27 @@ workspace:
   - app
   - tools/scripts
   - tools/processor
-  #? Generator
+  - tools/linter
   - tools/generator/core
   - tools/generator/plugins/assets
   - tools/generator/plugins/data
   - tools/generator/plugins/exporter
   - tools/generator/plugins/palette
   - tools/generator/plugins/view_kit
-  #? Common
   - common/shared
   - common/presentation
   - tools/common
-  #? Core
   - core/presentation
   - core/navigation
   - core/data
   - core/domain
-  #? UiKit
   - uikit/foundation
   - uikit/components
   - uikit/previews
-  #? Console
-  - feature/global/feature/console/presentation
-  #? Demo
   - feature/demo/domain
   - feature/demo/data
   - feature/demo/presentation
+  - feature/console
 
 dev_dependencies:
   #? Analysis

@@ -10,7 +10,7 @@ dependencies:
   auto_route: ^10.1.0
   common_presentation: any
   common_shared: any
-  console_presentation: any
+  console: any
   core_data: any
   core_navigation: any
   core_presentation: any
@@ -24,7 +24,7 @@ dependencies:
   ui_foundation: any
 dev_dependencies:
   build_runner: ^2.4.15
-  injectable_generator: ^2.7.0
+  injectable_generator: ^2.9.0
 flutter:
   assets:
     - .env.dev
@@ -32,3 +32,4 @@ flutter:
     - .env.prod
   default-flavor: prod
   uses-material-design: true
+

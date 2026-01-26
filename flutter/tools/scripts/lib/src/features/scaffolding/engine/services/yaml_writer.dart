@@ -122,6 +122,9 @@ class YamlWriter {
     if (value.contains('"')) return true;
     if (value.contains("'")) return true;
     if (value.startsWith('~')) return true;
+    // YAML uses * for aliases/anchors and ** for glob patterns
+    // These must be quoted to be interpreted as literal strings
+    if (value.contains('*')) return true;
     return false;
   }
 

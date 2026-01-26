@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:gen_core/base.dart';
 import 'package:gen_data/builder.dart';
 import 'package:gen_palette/src/palette/factory.dart';
@@ -13,7 +13,7 @@ class PaletteBuilder extends DataBuilder {
        );
 
   @override
-  BaseResolver<DataConfig, ClassElement2> get resolver => PaletteResolver();
+  BaseResolver<DataConfig, ClassElement> get resolver => PaletteResolver();
 
   @override
   BaseFactory<DataConfig> get buildFactory => PaletteFactory();

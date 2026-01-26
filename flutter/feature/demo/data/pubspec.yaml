@@ -9,5 +9,5 @@ dependencies:
   injectable: ^2.5.2
 dev_dependencies:
   build_runner: ^2.4.15
-  injectable_generator: ^2.7.0
+  injectable_generator: ^2.9.0
 

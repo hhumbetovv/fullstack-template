@@ -15,6 +15,7 @@ class ExportWriter {
   Future<void> write(
     BuildStep buildStep,
     List<String> exports,
+    String outputRelativePath,
   ) async {
     if (exports.isEmpty) return;
 
@@ -24,7 +25,7 @@ class ExportWriter {
 
     final content = _formatter.format(exports.join('\n'));
     await buildStep.writeAsString(
-      AssetId(buildStep.inputId.package, 'lib/public.dart'),
+      AssetId(buildStep.inputId.package, 'lib/$outputRelativePath'),
       content,
     );
   }
